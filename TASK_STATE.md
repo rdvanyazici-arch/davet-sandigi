@@ -112,6 +112,8 @@
 - 2026-10-13 — `supabase link --project-ref zdksvgtkeeweufuajugd`: `Finished supabase link` sonucu ve yerel `.temp/project-ref` değeri doğrulandı: **başarılı**
 - 2026-10-13 — Vercel `davet-sandigi` projesinde iki Supabase değişkeninin yalnızca Preview ortamında kayıtlı olduğu doğrulandı: **başarılı**
 - 2026-10-13 — Vercel Preview ortamı simülasyonu (`VERCEL_ENV=preview npm run build`), JavaScript sözdizimi ve proje ref'i kontrolü: **başarılı**
+- 2026-10-13 — İlk Vercel Preview deployment'ında build ve Supabase yapılandırma üretimi başarılı oldu; varsayılan `public` çıktı dizini bulunamadığı için deployment hata verdi.
+- 2026-10-13 — Statik site çıktısı için `vercel.json` içinde `outputDirectory: "."` tanımlandı; yeni Preview deployment doğrulaması bekleniyor.
 - 2026-10-13 — Faz 1 kaynak karşılaştırması: Firebase yedeği ile `index.html` ana kataloğu **20 ürün / 7 kategori / 4 koleksiyon / 6 yorum / 5 SSS** olarak eşleşti.
 - 2026-10-13 — Görsel envanteri: `index.html` içinde **30 benzersiz görsel**, Firebase `images` koleksiyonunda bunlardan farklı **3 görsel** bulundu.
 - 2026-10-13 — Görsel tekrar kontrolü: `hero` Base64 verisi 2, `cta` Base64 verisi 3 kez gömülü bulundu.
@@ -133,5 +135,5 @@
 
 ## Sonraki adım
 
-- Faz 3 commit'i GitHub'a gönderildiğinde Vercel Preview deployment sonucu kontrol edilmeli.
+- Vercel çıktı dizini düzeltme commit'i GitHub'a gönderildiğinde yeni Preview deployment sonucu kontrol edilmeli.
 - Kullanıcı onayı olmadan Faz 4'e geçilmeyecek.

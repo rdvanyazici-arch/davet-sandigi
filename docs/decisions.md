@@ -55,7 +55,7 @@ Bu dosyada gizli anahtar veya veritabanı parolası tutulmaz.
 9. Preview deploy çıktısında proje ref'inin `zdksvgtkeeweufuajugd` olduğunu doğrula.
 10. Kullanıcı onayı olmadan Production değişkenlerini değiştirme veya production deploy yapma.
 
-2026-10-13 tarihinde `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` yalnızca **Preview** ortamına eklendi. `package.json` içindeki `npm run build` komutu yapılandırma dosyasını üretir. Vercel'in proje geneli Build Command ayarı Production'ı da etkileyebileceği için dashboard üzerinden değiştirilmedi.
+2026-10-13 tarihinde `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` yalnızca **Preview** ortamına eklendi. `package.json` içindeki `npm run build` komutu yapılandırma dosyasını üretir. Vercel'in proje geneli Build Command ayarı Production'ı da etkileyebileceği için dashboard üzerinden değiştirilmedi. Statik çıktı kök dizinde bulunduğundan `vercel.json` içinde `outputDirectory` değeri `.` olarak tanımlandı.
 
 ## Production güvenliği
 
