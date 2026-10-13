@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 3 tamamlandı; Supabase projesi, yerel bağlantı ve Vercel Preview yapılandırması doğru proje ref'iyle doğrulandı.
-- Aktif faz: Yok; sonraki faz için kullanıcı onayı bekleniyor.
-- Beklenen: Faz 4'e başlamadan önce kullanıcı onayı.
+- Güncel durum: Faz 4 tamamlandı; şema, indeksler, grant/RLS, seed ve testler yerel Supabase ortamında doğrulandı.
+- Aktif faz: Yok; Faz 5 için kullanıcı onayı bekleniyor.
+- Beklenen: Sonraki faza geçmeden önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
@@ -12,7 +12,7 @@
 - Faz 1 — İçerik envanteri ve doğruluk kararı: **tamamlandı**
 - Faz 2 — Kod yapısını güvenli biçimde ayırma: **tamamlandı**
 - Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **tamamlandı**
-- Faz 4 — Database şeması, grant ve RLS: **bekliyor**
+- Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
 - Faz 5 — Storage ve görsel kütüphanesi: **bekliyor**
 - Faz 6 — Yönetici kimlik doğrulaması: **bekliyor**
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **bekliyor**
@@ -31,6 +31,7 @@
 - 2026-10-13 — Faz 1 tamamlandı: Mevcut içeriklerin örnek olduğu, gerçek veri olarak taşınmayacağı ve tüm içerik alanlarının yönetim panelinden yönetileceği onaylandı.
 - 2026-10-13 — Faz 2 tamamlandı: Base64 görseller ayrıldı, CSS/JavaScript modüllere bölündü, yönetim ekranı `admin.html` dosyasına taşındı ve Firebase kodu tek legacy modülde toplandı.
 - 2026-10-13 — Faz 3 tamamlandı: Supabase CLI kuruldu ve bağlandı; build sırasında tarayıcı yapılandırması üretildi; Vercel Preview değişkenleri doğru projeye eklendi.
+- 2026-10-13 — Faz 4 tamamlandı: 12 içerik tablosu, constraint ve indeksler, grant/RLS politikaları, idempotent seed ve 24 RLS testi yerelde doğrulandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -51,6 +52,9 @@
 - Statik site için build sırasında ortam yapılandırması üretme yöntemi kullanıcı tarafından onaylandı ve uygulandı.
 - Vercel Preview ortamında `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` tanımlandı; Production ortamına eklenmedi.
 - Vercel'in proje geneli Build Command ayarı Production'ı da etkileyebileceği için değiştirilmedi; repodaki `package.json` build scripti kullanılacak.
+- Faz 4 migration'ları yalnızca yerelde hazırlandı; remote Supabase projesine `db push` yapılmadı.
+- Docker Desktop kuruldu ve yerel Supabase çalışma zamanı doğrulandı.
+- Remote Supabase projesine `db push` yapılmadı; bu işlem açık kullanıcı onayı gerektirir.
 
 ## Bilinen riskler
 
@@ -65,6 +69,7 @@
 - Firebase Storage SDK'sı başlatılıyor ancak kaynakta Storage dosya çağrısı yok; ilgili bucket mevcut değil ve manifestte 0 dosya olarak kaydedildi.
 - Firebase istemci yapılandırması davranış değişmemesi için `assets/js/legacy-firebase.js` içinde tutuluyor; Faz 12'ye kadar legacy bağımlılık devam edecek.
 - Davet Sandığı; GitHub, Vercel veya Supabase üzerinde diğer projelerle karıştırılmamalı.
+- Yerel Supabase konteynerleri çalışıyor; bilgisayar yeniden başlatılırsa Faz 5 öncesinde Docker Desktop'ın açık olduğu doğrulanmalı.
 
 ## Kimlikler
 
@@ -99,6 +104,14 @@
 - 2026-10-13 — Yedek JSON dosyaları ayrıştırıldı, belge sayıları manifestlerle karşılaştırıldı ve SHA-256 değerleri alındı: **başarılı**
 - 2026-10-13 — İndirilemeyen ilk service account anahtarı silindi; çalışan ikinci anahtar doğrulandı: **başarılı**
 - 2026-10-13 — `git diff --check`: **başarılı**
+- 2026-10-13 — Supabase CLI `2.120.0` ile şema, indeks ve grant/RLS migration dosyaları ayrı ayrı oluşturuldu: **başarılı**
+- 2026-10-13 — Faz 4 statik kapsam kontrolü: 12 tablo, 12 RLS etkinleştirmesi, 54 ayrı politika ve 24 RLS test iddiası doğrulandı: **başarılı**
+- 2026-10-13 — `orders`/`customers` tablosu ve yetkilendirmede `user_metadata` kullanımı bulunmadı: **başarılı**
+- 2026-10-13 — `package.json` ayrıştırması ve `git diff --check`: **başarılı**
+- 2026-10-13 — Docker Desktop `4.95.0` ve yerel Supabase servisleri başlatıldı: **başarılı**
+- 2026-10-13 — `supabase db reset`: üç migration ve idempotent seed temiz yerel veritabanına uygulandı: **başarılı**
+- 2026-10-13 — `npm run test:rls`: **24/24 test başarılı**
+- 2026-10-13 — `supabase db lint --local --fail-on warning`: **No schema errors found**
 - 2026-10-13 — Supabase proje adı dashboard üzerinden `Davet Sandığı` olarak değiştirildi; ref ve bölge yeniden doğrulandı: **başarılı**
 - 2026-10-13 — Supabase CLI `2.120.0`, npm güncel sürümü `2.120.0`: **güncel**
 - 2026-10-13 — `supabase init`: `config.toml`, `migrations/`, `seed.sql` ve `tests/` yapısı oluşturuldu: **başarılı**
@@ -135,5 +148,5 @@
 
 ## Sonraki adım
 
-- Vercel çıktı dizini düzeltme commit'i GitHub'a gönderildiğinde yeni Preview deployment sonucu kontrol edilmeli.
-- Kullanıcı onayı olmadan Faz 4'e geçilmeyecek.
+- Faz 5'e yalnızca kullanıcı onayıyla geçilecek.
+- Remote `supabase db push` kullanıcı onayı olmadan çalıştırılmayacak.

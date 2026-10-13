@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "npm run build:config",
-    "build:config": "node scripts/generate-supabase-config.mjs"
+    "build:config": "node scripts/generate-supabase-config.mjs",
+    "test:rls": "npx supabase test db supabase/tests/database/rls_test.sql"
   }
 }
