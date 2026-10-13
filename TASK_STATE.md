@@ -1,43 +1,74 @@
-# Task State
+# Davet Sandığı — Görev Durumu
 
-## Current task
+## Güncel faz
 
-- [x] Create a clean desktop folder from the current GitHub repository.
-- [x] Track `origin/main` from `rdvanyazici-arch/davet-sandigi`.
-- [x] Open the clean folder in a separate trusted VS Code window.
-- [x] Add the clean folder to GitHub Desktop.
-- [x] Verify the current site locally.
-- [x] Close the old VS Code project window.
-- [x] Remove the old `Davet-Sandigi-Claude` entry from GitHub Desktop without deleting its files.
-- [x] Verify the production deployment after publishing.
-- [x] Audit the live site for content, functionality, mobile layout, accessibility, SEO, performance, and security risks.
-- [x] Define the Supabase migration, showroom, admin panel, media library, WhatsApp ordering, testing, deployment, and final legal-text roadmap.
+- Güncel durum: Hazırlık tamamlandı; Faz 0 henüz başlatılmadı.
+- Aktif faz: Yok.
+- Başlangıç için gereken: Kullanıcının Faz 0 onayı.
 
-## Verified facts
+### Faz 0–15 durumları
 
-- Local folder: `/Users/mac/Desktop/Davet-Sandigi-Guncel`
-- Production source: root `index.html`
-- Stack: single-file HTML/CSS/JavaScript
+- Faz 0 — Güvenli başlangıç ve yedek: **bekliyor**
+- Faz 1 — İçerik envanteri ve doğruluk kararı: **bekliyor**
+- Faz 2 — Kod yapısını güvenli biçimde ayırma: **bekliyor**
+- Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **bekliyor**
+- Faz 4 — Database şeması, grant ve RLS: **bekliyor**
+- Faz 5 — Storage ve görsel kütüphanesi: **bekliyor**
+- Faz 6 — Yönetici kimlik doğrulaması: **bekliyor**
+- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **bekliyor**
+- Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
+- Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
+- Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
+- Faz 11 — SEO, hız ve erişilebilirlik: **bekliyor**
+- Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **bekliyor**
+- Faz 13 — Test, güvenlik ve kabul: **bekliyor**
+- Faz 14 — GitHub ve Vercel yayını: **bekliyor**
+- Faz 15 — Yasal metinler ve son yayın kontrolü: **bekliyor**
+
+## Tamamlanan fazlar
+
+- Henüz tamamlanan uygulama fazı yok.
+- 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
+
+## Açık kararlar / bekleyen onaylar
+
+- Faz 0'ın başlatılması için kullanıcı onayı bekleniyor.
+- Supabase projesinin oluşturulacağı hesap/organizasyon henüz doğrulanmadı.
+- Supabase proje ref'i henüz belirlenmedi.
+- Supabase bölgesi henüz belirlenmedi.
+- Gerçek ürünler, fiyatlar, görseller, yorumlar ve pazarlama iddiaları Faz 1'de kullanıcıyla doğrulanacak.
+- Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
+
+## Bilinen riskler
+
+- Canlı kaynak halen Firebase kullanıyor; Supabase geçişi başlamadı.
+- Mevcut `index.html` yaklaşık 6,3 MB ve Base64 görseller içeriyor.
+- Canlı yasal metinler taslak durumunda.
+- Bazı müşteri yorumları ve sayısal pazarlama iddiaları doğrulanmış değil.
+- Yönetim bağlantısı mevcut sitede görünür ve eski demo parola kaynak kodunda bulunuyor.
+- Sipariş talebi doğrulaması eksik; mevcut talep numarası cihaz bazlı olduğu için çakışabilir.
+- Firebase verileri ve görselleri yedeklenmeden taşıma veya silme yapılmamalı.
+- Davet Sandığı; GitHub, Vercel veya Supabase üzerinde diğer projelerle karıştırılmamalı.
+
+## Kimlikler
+
+- GitHub deposu: `rdvanyazici-arch/davet-sandigi`
 - GitHub remote: `https://github.com/rdvanyazici-arch/davet-sandigi.git`
-- Vercel project: `rdvanyazici/davet-sandigi`
-- Production URL: `https://davet-sandigi.vercel.app`
-- Current local preview: `http://127.0.0.1:4174/`
-- The cloned `index.html` is the current `origin/main` version.
-- Before the latest task-state update, `main` was synchronized with `origin/main`.
-- Latest synchronized commit: `f0e3e11` (`proje kuralları`).
-- Production deployment was verified at `https://davet-sandigi.vercel.app` after publishing.
-- VS Code and GitHub Desktop are currently focused on the clean, current project.
-- The live site is broadly aligned with its invitation and personalized-gift purpose.
-- Priority findings: draft legal texts, unverified marketing/testimonial claims, public admin link, incomplete order validation, duplicate-prone local order numbers, missing SEO metadata, weak modal accessibility, and a 6.3 MB single-file payload with no lazy-loaded images.
-- Target architecture: public showroom without customer accounts, admin-only Supabase Auth, public-read/admin-write database access, Supabase Storage media library, local cart, and WhatsApp order requests.
-- Detailed implementation order is recorded in `PROJECT_ROADMAP.md`; legal texts are intentionally the final implementation phase.
+- Vercel proje adı: `davet-sandigi`
+- Canlı adres: `https://davet-sandigi.vercel.app`
+- Supabase proje ref'i: **henüz belirlenmedi**
+- Supabase bölgesi: **henüz belirlenmedi**
+- Gizli anahtarlar: Bu dosyada tutulmaz.
 
-## Pending decisions
+## Son çalıştırılan testler ve sonuçları
 
-- Make future site changes only in this clean folder.
-- Apply the approved audit fixes in priority order; do not publish before user approval.
-- Start with Phase 0 in `PROJECT_ROADMAP.md` only after user approval.
+- 2026-10-13 — `PROJECT_ROADMAP.md` kökte bulundu ve 936 satırın tamamı okundu: **başarılı**
+- 2026-10-13 — Yol haritasındaki 1–18 bölüm başlıkları doğrulandı: **başarılı**
+- 2026-10-13 — `AGENTS.md` satır sayısı ve zorunlu kuralları doğrulandı: **başarılı**
+- 2026-10-13 — `git diff --check -- AGENTS.md`: **başarılı**
+- Uygulama kodunda bu dokümantasyon çalışması sırasında değişiklik yapılmadığı için yeni site testi çalıştırılmadı.
 
-## Safety note
+## Sonraki adım
 
-Before pushing or deploying, verify the local folder, GitHub repository, and Vercel project names so this project is not mixed with `softrandevum`.
+- Kullanıcı onayından sonra `PROJECT_ROADMAP.md` içindeki Faz 0 — Güvenli başlangıç ve yedek başlatılacak.
+- Faz 0 tamamlanmadan Faz 1'e geçilmeyecek.
