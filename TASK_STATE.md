@@ -2,8 +2,8 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 4 tamamlandı; şema, indeksler, grant/RLS ve seed hem yerel hem uzak Supabase ortamında doğrulandı.
-- Aktif faz: Yok; Faz 5 için kullanıcı onayı bekleniyor.
+- Güncel durum: Faz 5 tamamlandı; Storage bucket/politikaları, görsel kütüphanesi ve arşiv güvenliği yerelde doğrulandı.
+- Aktif faz: Yok; Faz 6 için kullanıcı komutu bekleniyor.
 - Beklenen: Sonraki faza geçmeden önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
@@ -13,7 +13,7 @@
 - Faz 2 — Kod yapısını güvenli biçimde ayırma: **tamamlandı**
 - Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **tamamlandı**
 - Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
-- Faz 5 — Storage ve görsel kütüphanesi: **bekliyor**
+- Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
 - Faz 6 — Yönetici kimlik doğrulaması: **bekliyor**
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **bekliyor**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
@@ -32,6 +32,7 @@
 - 2026-10-13 — Faz 2 tamamlandı: Base64 görseller ayrıldı, CSS/JavaScript modüllere bölündü, yönetim ekranı `admin.html` dosyasına taşındı ve Firebase kodu tek legacy modülde toplandı.
 - 2026-10-13 — Faz 3 tamamlandı: Supabase CLI kuruldu ve bağlandı; build sırasında tarayıcı yapılandırması üretildi; Vercel Preview değişkenleri doğru projeye eklendi.
 - 2026-10-13 — Faz 4 tamamlandı: 12 içerik tablosu, constraint ve indeksler, grant/RLS politikaları, idempotent seed ve 24 RLS testi yerelde doğrulandı.
+- 2026-10-13 — Faz 5 tamamlandı: `site-media` bucket, Storage RLS, WebP yükleme/doğrulama, görsel kullanım sorguları, önizleme, arşivleme ve güvenli kalıcı silme akışı hazırlandı; 10 Storage testi geçti.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -55,6 +56,9 @@
 - Faz 4 migration'ları uzak `Davet Sandığı` Supabase projesine uygulandı; yerel ve uzak migration geçmişleri eşleşiyor.
 - Docker Desktop kuruldu ve yerel Supabase çalışma zamanı doğrulandı.
 - İdempotent `supabase/seed.sql` uzak projeye uygulandı; `site_settings` başlangıç satırı oluşturuldu.
+- `site-media` için 6 MiB sınırı ve JPEG/PNG/WebP türleri seçildi; SVG kapalıdır. İleride SVG logo gerekirse ayrı, yalnızca yönetici yazabilen bucket güvenlik incelemesiyle değerlendirilecek.
+- Faz 5 migration'ı kullanıcı onayıyla uzak `Davet Sandığı` Supabase projesine uygulandı; yerel ve uzak migration geçmişleri eşleşiyor.
+- Görsel kütüphanesindeki Supabase yönetici yazma işlemleri, Faz 6'da Supabase Auth yönetici oturumu bağlandıktan sonra kullanılabilir olacaktır.
 
 ## Bilinen riskler
 
@@ -70,6 +74,7 @@
 - Firebase istemci yapılandırması davranış değişmemesi için `assets/js/legacy-firebase.js` içinde tutuluyor; Faz 12'ye kadar legacy bağımlılık devam edecek.
 - Davet Sandığı; GitHub, Vercel veya Supabase üzerinde diğer projelerle karıştırılmamalı.
 - Yerel Supabase konteynerleri çalışıyor; bilgisayar yeniden başlatılırsa Faz 5 öncesinde Docker Desktop'ın açık olduğu doğrulanmalı.
+- Görsel değiştirme işlemi bağlantıları yeni kayda taşıyıp eski kaydı arşivler; işlem sırasında bağlantı hatası olursa yeni görsel kaydı korunur ve panel açık hata gösterir.
 
 ## Kimlikler
 
@@ -104,6 +109,16 @@
 - 2026-10-13 — Yedek JSON dosyaları ayrıştırıldı, belge sayıları manifestlerle karşılaştırıldı ve SHA-256 değerleri alındı: **başarılı**
 - 2026-10-13 — İndirilemeyen ilk service account anahtarı silindi; çalışan ikinci anahtar doğrulandı: **başarılı**
 - 2026-10-13 — `git diff --check`: **başarılı**
+- 2026-10-13 — Faz 5 migration'ı `supabase migration up --local` ile sıfırlama yapılmadan uygulandı: **başarılı**
+- 2026-10-13 — `npm run test:storage`: **10/10 test başarılı**
+- 2026-10-13 — Faz 5 kısıtlarıyla `npm run test:rls`: **24/24 test başarılı**
+- 2026-10-13 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-13 — Görsel Kütüphanesi DOM kontrolü: sekme, yükleme alanları, 8 filtre ve masaüstü iki sütunlu düzen doğrulandı: **başarılı**
+- 2026-10-13 — Faz 5 JavaScript sözdizimi, paket JSON ayrıştırması, satır içi olay taraması ve `git diff --check`: **başarılı**
+- 2026-10-13 — `supabase db push --linked --skip-vault --yes`: Faz 5 Storage migration'ı `zdksvgtkeeweufuajugd` uzak projesine uygulandı: **başarılı**
+- 2026-10-13 — Uzak migration doğrulaması: `Remote database is up to date`: **başarılı**
+- 2026-10-13 — Uzak bucket sorgusu: `site-media`, public okuma, 6 MiB, JPEG/PNG/WebP ve 4 Storage politikası doğrulandı: **başarılı**
+- 2026-10-13 — `supabase db lint --linked --fail-on warning`: **No schema errors found**
 - 2026-10-13 — Supabase CLI `2.120.0` ile şema, indeks ve grant/RLS migration dosyaları ayrı ayrı oluşturuldu: **başarılı**
 - 2026-10-13 — Faz 4 statik kapsam kontrolü: 12 tablo, 12 RLS etkinleştirmesi, 54 ayrı politika ve 24 RLS test iddiası doğrulandı: **başarılı**
 - 2026-10-13 — `orders`/`customers` tablosu ve yetkilendirmede `user_metadata` kullanımı bulunmadı: **başarılı**
@@ -153,5 +168,5 @@
 
 ## Sonraki adım
 
-- Faz 5'e yalnızca kullanıcı onayıyla geçilecek.
-- Uzak Supabase Faz 5 Storage migration'ları için hazır; Faz 5 komutu kullanıcıdan beklenecek.
+- Faz 6'ya yalnızca kullanıcı komutuyla geçilecek.
+- Faz 5 kod değişikliklerinin Git commit/push işlemi kullanıcıya aittir; çalışma ağacında 9 değişiklik bulunuyor.

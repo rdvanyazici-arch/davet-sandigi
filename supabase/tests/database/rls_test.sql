@@ -74,8 +74,8 @@ select ok(
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.media_assets', 'DELETE'),
-  'media assets cannot be deleted directly'
+  has_table_privilege('authenticated', 'public.media_assets', 'DELETE'),
+  'media asset delete is delegated to owner-only archive RLS'
 );
 
 insert into auth.users (
@@ -126,7 +126,7 @@ insert into public.media_assets (
 )
 overriding system value
 values (
-  9001, 'tests/product.webp', 'product.webp', 'image/webp', 1024,
+  9001, 'products/9001/product.webp', 'product.webp', 'image/webp', 1024,
   800, 800, 'Test product', 'product', 'active'
 );
 

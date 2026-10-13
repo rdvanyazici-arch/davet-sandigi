@@ -195,7 +195,7 @@ function renderHomeAdmin(){
   applySettings();alert('Ana sayfa kaydedildi.');
  };
 }
-function switchView(v){$all('.admin-tabs button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')==v);});$all('.admin-view').forEach(function(x){x.classList.remove('show');});$('#view-'+v).classList.add('show');}
+function switchView(v){$all('.admin-tabs button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')==v);});$all('.admin-view').forEach(function(x){x.classList.remove('show');});$('#view-'+v).classList.add('show');if(v==='media'&&typeof renderMediaLibrary==='function')renderMediaLibrary();}
 $all('.admin-tabs button').forEach(function(b){b.addEventListener('click',function(){var v=b.getAttribute('data-view');if(v=='add'){editingId=null;renderProductForm();}switchView(v);});});
 $('#admin-login-btn').addEventListener('click',adminLogin);
 $('#admin-pw').addEventListener('keydown',function(e){if(e.key=='Enter')adminLogin();});
@@ -205,7 +205,7 @@ $('#admin-exit').addEventListener('click',closeAdmin);
 $('#admin-logout').addEventListener('click',adminLogout);
 $('#admin-export').addEventListener('click',function(){var data={settings:settings,categories:categories,occasions:occasions,products:products};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='davet-sandigi-yedek.json';a.click();});
 $('#admin-import').addEventListener('click',function(){var i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=function(){var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.settings){settings=d.settings;save(LS.s,settings);}if(d.categories){categories=d.categories;save(LS.c,categories);}if(d.occasions){occasions=d.occasions;save(LS.o,occasions);}if(d.products){products=d.products;save(LS.p,products);}renderAdmin();refreshSite();alert('Yedek yüklendi.');}catch(e){alert('Geçersiz dosya.');}};r.readAsText(i.files[0]);};i.click();});
-function refreshSite(){renderCollections();renderFilter();renderProducts();applySettings();}
+function refreshSite(){if(typeof renderCollections==='function')renderCollections();if(typeof renderFilter==='function')renderFilter();if(typeof renderProducts==='function')renderProducts();applySettings();}
 openAdmin();
 (function(){var note=$('#admin-login-note');
  if(note)note.textContent='Bağlantı kuruluyor…';

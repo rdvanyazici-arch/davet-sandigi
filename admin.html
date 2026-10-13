@@ -31,6 +31,7 @@
         <button data-view="home">Ana Sayfa</button>
         <button data-view="products" class="active">Ürünler</button>
         <button data-view="add">＋ Yeni Ürün</button>
+        <button data-view="media">Görsel Kütüphanesi</button>
         <button data-view="collections">Koleksiyonlar</button>
         <button data-view="categories">Kategoriler</button>
         <button data-view="reviews">Sizden Gelenler</button>
@@ -58,6 +59,39 @@
       <div class="admin-view" id="view-add">
         <h1 id="form-title">Yeni Ürün</h1>
         <div class="admin-form" id="product-form"></div>
+      </div>
+      <div class="admin-view" id="view-media">
+        <h1>Görsel Kütüphanesi</h1>
+        <p class="admin-note">JPEG, PNG veya WebP yükleyin. Dosyalar en fazla 6 MiB olabilir; SVG güvenlik nedeniyle kabul edilmez.</p>
+        <div class="media-upload-panel">
+          <div class="media-upload-grid">
+            <label>Görsel dosyası<input type="file" id="media-file" accept="image/jpeg,image/png,image/webp"></label>
+            <label>Kullanım alanı<select id="media-usage">
+              <option value="product">Ürün</option><option value="collection">Koleksiyon</option>
+              <option value="banner">Banner</option><option value="story">Hikâye</option>
+              <option value="testimonial">Yorum</option><option value="campaign">Kampanya</option>
+              <option value="brand">Marka</option>
+            </select></label>
+            <label id="media-related-wrap">Bağlı kayıt kimliği<input type="number" min="1" step="1" id="media-related-id" placeholder="Örn. 12"></label>
+            <label>Alt metin<input type="text" id="media-alt" maxlength="300" placeholder="Görseli kısa ve doğal biçimde açıklayın"></label>
+          </div>
+          <div id="media-validation" class="media-validation" role="status" aria-live="polite"></div>
+          <div id="media-local-preview" class="media-local-preview media-hidden"></div>
+          <button class="admin-save" id="media-upload" type="button" disabled>WebP Olarak Yükle</button>
+          <button class="a-btn media-hidden" id="media-replace-cancel" type="button">Değiştirmeyi İptal Et</button>
+        </div>
+        <div class="admin-toolbar media-toolbar">
+          <label for="media-filter">Filtre</label>
+          <select id="media-filter">
+            <option value="all">Tümü</option><option value="used">Kullanılan</option>
+            <option value="unused">Kullanılmayan</option><option value="product">Ürün</option>
+            <option value="collection">Koleksiyon</option><option value="banner">Banner</option>
+            <option value="testimonial">Yorum</option><option value="archived">Arşivlenmiş</option>
+          </select>
+          <button class="a-btn" id="media-refresh" type="button">Yenile</button>
+        </div>
+        <div id="media-library-status" class="admin-note" role="status" aria-live="polite"></div>
+        <div id="media-library" class="media-library"></div>
       </div>
       <div class="admin-view" id="view-collections"><h1>Koleksiyonlar (Etkinlik)</h1><div id="coll-admin"></div></div>
       <div class="admin-view" id="view-categories"><h1>Kategoriler (Ürün Türü)</h1><div id="cat-admin"></div></div>
