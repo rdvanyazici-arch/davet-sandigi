@@ -2,13 +2,13 @@
 
 ## Güncel faz
 
-- Güncel durum: Hazırlık tamamlandı; Faz 0 henüz başlatılmadı.
+- Güncel durum: Faz 0 tamamlandı; Git koruma noktaları, Firebase yedeği ve canlı site referansları doğrulandı.
 - Aktif faz: Yok.
-- Başlangıç için gereken: Kullanıcının Faz 0 onayı.
+- Beklenen: Faz 1'e başlamadan önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
-- Faz 0 — Güvenli başlangıç ve yedek: **bekliyor**
+- Faz 0 — Güvenli başlangıç ve yedek: **tamamlandı**
 - Faz 1 — İçerik envanteri ve doğruluk kararı: **bekliyor**
 - Faz 2 — Kod yapısını güvenli biçimde ayırma: **bekliyor**
 - Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **bekliyor**
@@ -27,12 +27,14 @@
 
 ## Tamamlanan fazlar
 
-- Henüz tamamlanan uygulama fazı yok.
+- 2026-10-13 — Faz 0 tamamlandı: Git etiketi/branch'i, Firestore yedeği, Storage kontrolü, geri dönüş rehberi ve canlı site referans görüntüleri hazırlandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
 
-- Faz 0'ın başlatılması için kullanıcı onayı bekleniyor.
+- Çalışma ağacı başlangıçta temiz olduğu için `chore: faz 0 öncesi mevcut durum` commit'i oluşturulmadı; commit edilecek mevcut değişiklik yoktu.
+- Yerelde `vercel.json` ve `.vercel/project.json` bulunmadı; Vercel proje adı yalnızca mevcut proje kaydından doğrulanabildi.
+- Yedek için oluşturulan Firebase Admin anahtarı halen aktif; güvenli saklama veya iptal işlemi ayrıca kullanıcı onayı gerektirir.
 - Supabase projesinin oluşturulacağı hesap/organizasyon henüz doğrulanmadı.
 - Supabase proje ref'i henüz belirlenmedi.
 - Supabase bölgesi henüz belirlenmedi.
@@ -47,7 +49,9 @@
 - Bazı müşteri yorumları ve sayısal pazarlama iddiaları doğrulanmış değil.
 - Yönetim bağlantısı mevcut sitede görünür ve eski demo parola kaynak kodunda bulunuyor.
 - Sipariş talebi doğrulaması eksik; mevcut talep numarası cihaz bazlı olduğu için çakışabilir.
-- Firebase verileri ve görselleri yedeklenmeden taşıma veya silme yapılmamalı.
+- Firebase yedeği yalnızca yerel `backups/` altında ve Git dışında tutuluyor; ayrıca şifreli ikinci konuma kopyalanmalı.
+- Firebase Storage SDK'sı başlatılıyor ancak kaynakta Storage dosya çağrısı yok; ilgili bucket mevcut değil ve manifestte 0 dosya olarak kaydedildi.
+- `index.html` içinde 33 base64 görsel var; çözülmüş toplam boyut 4.414 MiB.
 - Davet Sandığı; GitHub, Vercel veya Supabase üzerinde diğer projelerle karıştırılmamalı.
 
 ## Kimlikler
@@ -59,6 +63,10 @@
 - Supabase proje ref'i: **henüz belirlenmedi**
 - Supabase bölgesi: **henüz belirlenmedi**
 - Gizli anahtarlar: Bu dosyada tutulmaz.
+- Firebase proje kimliği: `davetsandigi-3ae7b`
+- Firebase Storage bucket: `davetsandigi-3ae7b.firebasestorage.app`
+- Git koruma etiketi: `backup-pre-supabase-20261013`
+- Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
 
@@ -66,9 +74,19 @@
 - 2026-10-13 — Yol haritasındaki 1–18 bölüm başlıkları doğrulandı: **başarılı**
 - 2026-10-13 — `AGENTS.md` satır sayısı ve zorunlu kuralları doğrulandı: **başarılı**
 - 2026-10-13 — `git diff --check -- AGENTS.md`: **başarılı**
-- Uygulama kodunda bu dokümantasyon çalışması sırasında değişiklik yapılmadığı için yeni site testi çalıştırılmadı.
+- 2026-10-13 — Proje yolu, `origin`, `main` branch ve temiz başlangıç durumu doğrulandı: **başarılı**
+- 2026-10-13 — Git etiketi ve yedek branch'in `10c99237a3186444b66d5ad5701dceefb0f42f3b` commit'ini gösterdiği doğrulandı: **başarılı**
+- 2026-10-13 — Firebase yedek scriptleri `node --check` ile doğrulandı: **başarılı**
+- 2026-10-13 — Kimlik bilgisi yokken scriptlerin veri yazmadan güvenli biçimde durduğu doğrulandı: **başarılı**
+- 2026-10-13 — `index.html` base64 taraması: **33 görsel / 4.414 MiB**
+- 2026-10-13 — Canlı sitenin Playwright masaüstü ve mobil tam sayfa referans görüntüleri alındı: **başarılı**
+- 2026-10-13 — Firestore yedeği: `site` 1 belge, `images` 3 belge: **başarılı**
+- 2026-10-13 — Storage kontrolü: bucket mevcut değil, 0 dosya manifestlendi: **başarılı**
+- 2026-10-13 — Yedek JSON dosyaları ayrıştırıldı, belge sayıları manifestlerle karşılaştırıldı ve SHA-256 değerleri alındı: **başarılı**
+- 2026-10-13 — İndirilemeyen ilk service account anahtarı silindi; çalışan ikinci anahtar doğrulandı: **başarılı**
+- 2026-10-13 — `git diff --check`: **başarılı**
 
 ## Sonraki adım
 
-- Kullanıcı onayından sonra `PROJECT_ROADMAP.md` içindeki Faz 0 — Güvenli başlangıç ve yedek başlatılacak.
-- Faz 0 tamamlanmadan Faz 1'e geçilmeyecek.
+- Kullanıcı onayı gelirse Faz 1 — İçerik envanteri ve doğruluk kararı başlatılacak.
+- Faz 1'e kendiliğinden geçilmeyecek.
