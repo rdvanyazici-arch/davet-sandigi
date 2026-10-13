@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Davet Sandığı — Yönetim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+<!-- ===== ADMIN ===== -->
+<div class="admin" id="admin">
+  <div class="admin-login" id="admin-login">
+    <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20h28v18H10z"/><path d="M8 14h32v6H8z"/><path d="M24 38V14"/><path d="M24 14s-3-6-7-5a3 3 0 000 6h7M24 14s3-6 7-5a3 3 0 010 6h-7"/><path d="M6 31c-2-2-3-6-2.5-9M42 31c2-2 3-6 2.5-9" opacity=".55"/></svg></div>
+    <h2>Yönetim Girişi</h2>
+    <p>Katalog ve ayarları düzenlemek için giriş yapın.</p>
+    <div class="err" id="admin-err"></div>
+    <input class="admin-email-field" type="email" id="admin-email" placeholder="E-posta" autocomplete="username">
+    <input type="password" id="admin-pw" placeholder="Parola" autocomplete="current-password">
+    <button class="btn btn-primary" id="admin-login-btn">Giriş Yap</button>
+    <p class="admin-note admin-login-note" id="admin-login-note"></p>
+  </div>
+  <div class="admin-panel" id="admin-panel">
+    <aside class="admin-side" id="admin-side">
+      <div class="a-head"><span class="brand-mark admin-brand-mark"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20h28v18H10z"/><path d="M8 14h32v6H8z"/><path d="M24 38V14"/><path d="M24 14s-3-6-7-5a3 3 0 000 6h7M24 14s3-6 7-5a3 3 0 010 6h-7"/><path d="M6 31c-2-2-3-6-2.5-9M42 31c2-2 3-6 2.5-9" opacity=".55"/></svg></span><span class="brand-txt"><strong>Yönetim</strong><span class="count" id="admin-count"></span></span></div>
+      <div class="admin-tabs">
+        <button data-view="banner">Banner</button>
+        <button data-view="home">Ana Sayfa</button>
+        <button data-view="products" class="active">Ürünler</button>
+        <button data-view="add">＋ Yeni Ürün</button>
+        <button data-view="collections">Koleksiyonlar</button>
+        <button data-view="categories">Kategoriler</button>
+        <button data-view="reviews">Sizden Gelenler</button>
+        <button data-view="faq">S.S.S.</button>
+        <button data-view="content">Hikaye & Üst Bant</button>
+        <button data-view="campaign">Kampanya Pop-up</button>
+        <button data-view="legal">Yasal Metinler</button>
+        <button data-view="settings">Site Ayarları</button>
+      </div>
+      <div class="admin-actions">
+        <button id="admin-export">Yedek Al (JSON)</button>
+        <button id="admin-import">Yedek Yükle</button>
+        <button id="admin-exit">Siteye Dön</button>
+        <button id="admin-logout">Çıkış Yap</button>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <div class="admin-view" id="view-banner"><h1>Banner (Üst Slider)</h1><div class="admin-settings" id="banner-admin"></div></div>
+      <div class="admin-view" id="view-home"><h1>Ana Sayfa İçeriği</h1><div class="admin-settings" id="home-admin"></div></div>
+      <div class="admin-view show" id="view-products">
+        <h1>Ürünler</h1>
+        <div class="admin-toolbar"><input id="admin-search" placeholder="Ürün ara..."><select id="admin-filter"></select></div>
+        <div id="admin-rows"></div>
+      </div>
+      <div class="admin-view" id="view-add">
+        <h1 id="form-title">Yeni Ürün</h1>
+        <div class="admin-form" id="product-form"></div>
+      </div>
+      <div class="admin-view" id="view-collections"><h1>Koleksiyonlar (Etkinlik)</h1><div id="coll-admin"></div></div>
+      <div class="admin-view" id="view-categories"><h1>Kategoriler (Ürün Türü)</h1><div id="cat-admin"></div></div>
+      <div class="admin-view" id="view-reviews"><h1>Yorumlar</h1><div class="admin-settings" id="reviews-admin"></div></div>
+      <div class="admin-view" id="view-faq"><h1>Sıkça Sorulan Sorular</h1><div class="admin-settings" id="faq-admin"></div></div>
+      <div class="admin-view" id="view-content"><h1>Hikaye & Üst Bant</h1><div class="admin-settings" id="content-admin"></div></div>
+      <div class="admin-view" id="view-campaign"><h1>Kampanya Pop-up</h1><div class="admin-settings" id="campaign-admin"></div></div>
+      <div class="admin-view" id="view-legal"><h1>Yasal Metinler</h1><div class="admin-settings" id="legal-admin"></div></div>
+      <div class="admin-view" id="view-settings"><h1>Site Ayarları</h1><div class="admin-settings" id="settings-form"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal camp" id="campaign-modal">
+  <div class="camp-card"><button class="pm-close" id="camp-close" aria-label="Kapat">✕</button><div class="camp-media" id="camp-media"><img id="camp-img" src="" alt=""></div><div class="camp-body"><span class="eyebrow">Davet Sandığı</span><h3 id="camp-title"></h3><p id="camp-text"></p><a class="btn btn-primary" id="camp-btn"></a></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="assets/js/legacy-firebase.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/admin-media.js"></script>
+<script src="assets/js/admin-auth.js"></script>
+<script src="assets/js/admin-products.js"></script>
+<script src="assets/js/admin-content.js"></script>
+</body>
+</html>
