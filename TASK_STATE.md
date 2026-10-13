@@ -2,7 +2,7 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 4 tamamlandı; şema, indeksler, grant/RLS, seed ve testler yerel Supabase ortamında doğrulandı.
+- Güncel durum: Faz 4 tamamlandı; şema, indeksler, grant/RLS ve seed hem yerel hem uzak Supabase ortamında doğrulandı.
 - Aktif faz: Yok; Faz 5 için kullanıcı onayı bekleniyor.
 - Beklenen: Sonraki faza geçmeden önce kullanıcı onayı.
 
@@ -52,9 +52,9 @@
 - Statik site için build sırasında ortam yapılandırması üretme yöntemi kullanıcı tarafından onaylandı ve uygulandı.
 - Vercel Preview ortamında `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` tanımlandı; Production ortamına eklenmedi.
 - Vercel'in proje geneli Build Command ayarı Production'ı da etkileyebileceği için değiştirilmedi; repodaki `package.json` build scripti kullanılacak.
-- Faz 4 migration'ları yalnızca yerelde hazırlandı; remote Supabase projesine `db push` yapılmadı.
+- Faz 4 migration'ları uzak `Davet Sandığı` Supabase projesine uygulandı; yerel ve uzak migration geçmişleri eşleşiyor.
 - Docker Desktop kuruldu ve yerel Supabase çalışma zamanı doğrulandı.
-- Remote Supabase projesine `db push` yapılmadı; bu işlem açık kullanıcı onayı gerektirir.
+- İdempotent `supabase/seed.sql` uzak projeye uygulandı; `site_settings` başlangıç satırı oluşturuldu.
 
 ## Bilinen riskler
 
@@ -112,6 +112,11 @@
 - 2026-10-13 — `supabase db reset`: üç migration ve idempotent seed temiz yerel veritabanına uygulandı: **başarılı**
 - 2026-10-13 — `npm run test:rls`: **24/24 test başarılı**
 - 2026-10-13 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-13 — `supabase db push`: üç Faz 4 migration'ı `zdksvgtkeeweufuajugd` uzak projesine uygulandı: **başarılı**
+- 2026-10-13 — `supabase db push --include-seed`: idempotent başlangıç ayarı uzak veritabanına eklendi: **başarılı**
+- 2026-10-13 — Yerel ve uzak migration geçmişindeki üç sürümün eşleşmesi doğrulandı: **başarılı**
+- 2026-10-13 — `supabase db lint --linked --fail-on warning`: **No schema errors found**
+- 2026-10-13 — Uzak REST/RLS kontrolü: anonim public ayar okuması `200` ve 1 satır; `admin_profiles` okuması ile kategori yazması `401`: **başarılı**
 - 2026-10-13 — Supabase proje adı dashboard üzerinden `Davet Sandığı` olarak değiştirildi; ref ve bölge yeniden doğrulandı: **başarılı**
 - 2026-10-13 — Supabase CLI `2.120.0`, npm güncel sürümü `2.120.0`: **güncel**
 - 2026-10-13 — `supabase init`: `config.toml`, `migrations/`, `seed.sql` ve `tests/` yapısı oluşturuldu: **başarılı**
@@ -149,4 +154,4 @@
 ## Sonraki adım
 
 - Faz 5'e yalnızca kullanıcı onayıyla geçilecek.
-- Remote `supabase db push` kullanıcı onayı olmadan çalıştırılmayacak.
+- Uzak Supabase Faz 5 Storage migration'ları için hazır; Faz 5 komutu kullanıcıdan beklenecek.
