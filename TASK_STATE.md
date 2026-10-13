@@ -2,16 +2,16 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 2 tamamlandı; tek dosyalı yapı görsel tasarım korunarak HTML, CSS, JavaScript ve görsel dosyalarına ayrıldı.
-- Aktif faz: Yok.
-- Beklenen: Faz 2 değişikliklerinin kullanıcı tarafından incelenmesi ve onaylanması.
+- Güncel durum: Faz 3 tamamlandı; Supabase projesi, yerel bağlantı ve Vercel Preview yapılandırması doğru proje ref'iyle doğrulandı.
+- Aktif faz: Yok; sonraki faz için kullanıcı onayı bekleniyor.
+- Beklenen: Faz 4'e başlamadan önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
 - Faz 0 — Güvenli başlangıç ve yedek: **tamamlandı**
 - Faz 1 — İçerik envanteri ve doğruluk kararı: **tamamlandı**
 - Faz 2 — Kod yapısını güvenli biçimde ayırma: **tamamlandı**
-- Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **bekliyor**
+- Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **tamamlandı**
 - Faz 4 — Database şeması, grant ve RLS: **bekliyor**
 - Faz 5 — Storage ve görsel kütüphanesi: **bekliyor**
 - Faz 6 — Yönetici kimlik doğrulaması: **bekliyor**
@@ -30,6 +30,7 @@
 - 2026-10-13 — Faz 0 tamamlandı: Git etiketi/branch'i, Firestore yedeği, Storage kontrolü, geri dönüş rehberi ve canlı site referans görüntüleri hazırlandı.
 - 2026-10-13 — Faz 1 tamamlandı: Mevcut içeriklerin örnek olduğu, gerçek veri olarak taşınmayacağı ve tüm içerik alanlarının yönetim panelinden yönetileceği onaylandı.
 - 2026-10-13 — Faz 2 tamamlandı: Base64 görseller ayrıldı, CSS/JavaScript modüllere bölündü, yönetim ekranı `admin.html` dosyasına taşındı ve Firebase kodu tek legacy modülde toplandı.
+- 2026-10-13 — Faz 3 tamamlandı: Supabase CLI kuruldu ve bağlandı; build sırasında tarayıcı yapılandırması üretildi; Vercel Preview değişkenleri doğru projeye eklendi.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -37,16 +38,19 @@
 - Çalışma ağacı başlangıçta temiz olduğu için `chore: faz 0 öncesi mevcut durum` commit'i oluşturulmadı; commit edilecek mevcut değişiklik yoktu.
 - Yerelde `vercel.json` ve `.vercel/project.json` bulunmadı; Vercel proje adı yalnızca mevcut proje kaydından doğrulanabildi.
 - Yedek için oluşturulan Firebase Admin anahtarı halen aktif; güvenli saklama veya iptal işlemi ayrıca kullanıcı onayı gerektirir.
-- Supabase projesinin oluşturulacağı hesap/organizasyon henüz doğrulanmadı.
-- Supabase proje ref'i henüz belirlenmedi.
-- Supabase bölgesi henüz belirlenmedi.
+- Supabase organizasyonu `rdvanyazici-arch's Org` olarak doğrulandı.
+- Supabase proje ref'i `zdksvgtkeeweufuajugd` olarak doğrulandı.
+- Supabase bölgesi `ap-southeast-2` — Oceania (Sydney) olarak doğrulandı.
 - Mevcut 20 ürün, 7 kategori, 4 koleksiyon, fiyatlar, adet kuralları, 33 görsel, 6 yorum, 5 SSS, iletişim bilgileri ve pazarlama iddiaları örnektir; Supabase'e gerçek içerik olarak taşınmayacaktır.
 - Gerçek ürünler, kategoriler, koleksiyonlar, fiyatlar, adet kuralları ve görseller canlıya alınmadan önce yönetim panelinden girilecektir.
 - Baby Shower şu anda sunulmamaktadır; ileride yönetim panelinden kategori/koleksiyon olarak eklenebilir.
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
-- Faz 2 değişiklikleri `refactor/faz-2-yapi` branch'inde ve henüz commit edilmedi; kullanıcı onayı bekleniyor.
+- Supabase CLI tarayıcı girişi ve `zdksvgtkeeweufuajugd` proje bağlantısı tamamlandı.
+- Statik site için build sırasında ortam yapılandırması üretme yöntemi kullanıcı tarafından onaylandı ve uygulandı.
+- Vercel Preview ortamında `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` tanımlandı; Production ortamına eklenmedi.
+- Vercel'in proje geneli Build Command ayarı Production'ı da etkileyebileceği için değiştirilmedi; repodaki `package.json` build scripti kullanılacak.
 
 ## Bilinen riskler
 
@@ -68,8 +72,10 @@
 - GitHub remote: `https://github.com/rdvanyazici-arch/davet-sandigi.git`
 - Vercel proje adı: `davet-sandigi`
 - Canlı adres: `https://davet-sandigi.vercel.app`
-- Supabase proje ref'i: **henüz belirlenmedi**
-- Supabase bölgesi: **henüz belirlenmedi**
+- Supabase organizasyonu: `rdvanyazici-arch's Org`
+- Supabase proje adı: `Davet Sandığı`
+- Supabase proje ref'i: `zdksvgtkeeweufuajugd`
+- Supabase bölgesi: `ap-southeast-2` — Oceania (Sydney)
 - Gizli anahtarlar: Bu dosyada tutulmaz.
 - Firebase proje kimliği: `davetsandigi-3ae7b`
 - Firebase Storage bucket: `davetsandigi-3ae7b.firebasestorage.app`
@@ -93,6 +99,19 @@
 - 2026-10-13 — Yedek JSON dosyaları ayrıştırıldı, belge sayıları manifestlerle karşılaştırıldı ve SHA-256 değerleri alındı: **başarılı**
 - 2026-10-13 — İndirilemeyen ilk service account anahtarı silindi; çalışan ikinci anahtar doğrulandı: **başarılı**
 - 2026-10-13 — `git diff --check`: **başarılı**
+- 2026-10-13 — Supabase proje adı dashboard üzerinden `Davet Sandığı` olarak değiştirildi; ref ve bölge yeniden doğrulandı: **başarılı**
+- 2026-10-13 — Supabase CLI `2.120.0`, npm güncel sürümü `2.120.0`: **güncel**
+- 2026-10-13 — `supabase init`: `config.toml`, `migrations/`, `seed.sql` ve `tests/` yapısı oluşturuldu: **başarılı**
+- 2026-10-13 — `.env.local` ve `.env.production` Git dışında, `.env.example` Git'e açık: **başarılı**
+- 2026-10-13 — Supabase gizli anahtar taraması: `sb_secret_` ve JWT biçimli gizli token bulunmadı; `service_role` yalnızca güvenlik kuralı ve yorum metinlerinde geçiyor: **başarılı**
+- 2026-10-13 — `assets/js/config.js` ve `assets/js/supabase-client.js` sözdizimi kontrolü (`node --check`): **başarılı**
+- 2026-10-13 — Faz 3 değişikliklerinde boşluk/patch doğrulaması (`git diff --check`): **başarılı**
+- 2026-10-13 — `npm run build`: Git dışında tutulan Supabase tarayıcı yapılandırması doğru proje ref'i ve publishable key türüyle üretildi: **başarılı**
+- 2026-10-13 — Yerel yapılandırmayla Supabase Auth ayar uç noktasına bağlantı: **başarılı**
+- 2026-10-13 — `supabase login`: tarayıcı doğrulaması tamamlandı: **başarılı**
+- 2026-10-13 — `supabase link --project-ref zdksvgtkeeweufuajugd`: `Finished supabase link` sonucu ve yerel `.temp/project-ref` değeri doğrulandı: **başarılı**
+- 2026-10-13 — Vercel `davet-sandigi` projesinde iki Supabase değişkeninin yalnızca Preview ortamında kayıtlı olduğu doğrulandı: **başarılı**
+- 2026-10-13 — Vercel Preview ortamı simülasyonu (`VERCEL_ENV=preview npm run build`), JavaScript sözdizimi ve proje ref'i kontrolü: **başarılı**
 - 2026-10-13 — Faz 1 kaynak karşılaştırması: Firebase yedeği ile `index.html` ana kataloğu **20 ürün / 7 kategori / 4 koleksiyon / 6 yorum / 5 SSS** olarak eşleşti.
 - 2026-10-13 — Görsel envanteri: `index.html` içinde **30 benzersiz görsel**, Firebase `images` koleksiyonunda bunlardan farklı **3 görsel** bulundu.
 - 2026-10-13 — Görsel tekrar kontrolü: `hero` Base64 verisi 2, `cta` Base64 verisi 3 kez gömülü bulundu.
@@ -114,5 +133,5 @@
 
 ## Sonraki adım
 
-- Kullanıcı Faz 2 değişikliklerini inceler ve onaylarsa commit hazırlanacak.
-- Faz 3'e kendiliğinden geçilmeyecek.
+- Faz 3 commit'i GitHub'a gönderildiğinde Vercel Preview deployment sonucu kontrol edilmeli.
+- Kullanıcı onayı olmadan Faz 4'e geçilmeyecek.

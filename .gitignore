@@ -1,3 +1,5 @@
 backups/
 .env*
+!.env.example
 *.key
+assets/js/supabase-config.generated.js

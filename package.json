@@ -1,0 +1,8 @@
+{
+  "name": "davet-sandigi",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:config",
+    "build:config": "node scripts/generate-supabase-config.mjs"
+  }
+}

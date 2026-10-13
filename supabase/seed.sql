@@ -1,0 +1,2 @@
+-- Faz 3: Yerel Supabase başlangıç dosyası.
+-- Örnek katalog verileri Faz 1 kararı gereği buraya eklenmez.
