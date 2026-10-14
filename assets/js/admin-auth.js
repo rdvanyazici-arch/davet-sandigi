@@ -49,6 +49,13 @@ function setAdminBusy(isBusy){
  if(button){button.disabled=isBusy;button.textContent=isBusy?'Giriş yapılıyor…':'Giriş Yap';}
 }
 
+function setAdminDebugError(stage,error){
+ var node=$('#admin-err');
+ if(!node)return;
+ node.dataset.errorStage=stage||'';
+ node.dataset.errorMessage=String(error&&error.message||'').slice(0,240);
+}
+
 async function signOutUnauthorized(message){
  hideAdminPanel();
  if(adminAuthClient)await adminAuthClient.auth.signOut({scope:'local'}).catch(function(){});
@@ -117,20 +124,40 @@ async function refreshAdminSession(){
 async function authorizeAdminSession(session){
  var run=++adminAuthRun;
  if(!session||!session.user){showAdminLogin('');return false;}
+ var profile=null;
  try{
-  var profile=await loadAdminProfile(session.user.id);
-  if(run!==adminAuthRun)return false;
-  if(!profile||!profile.is_active||['owner','editor'].indexOf(profile.role)===-1){
-   await signOutUnauthorized('Bu hesap yönetim paneline erişemez.');
+  profile=await loadAdminProfile(session.user.id);
+ }catch(error){
+  console.error('[admin-auth] Profile lookup failed',error);
+  setAdminDebugError('profile',error);
+  if(run===adminAuthRun)await signOutUnauthorized('Yönetici profili doğrulanamadı. Lütfen tekrar deneyin.');
+  return false;
+ }
+ if(run!==adminAuthRun)return false;
+ if(!profile||!profile.is_active||['owner','editor'].indexOf(profile.role)===-1){
+  await signOutUnauthorized('Bu hesap yönetim paneline erişemez.');
+  return false;
+ }
+ adminAuthProfile=profile;
+ scheduleSessionRefresh(session);
+ if(profile.role==='owner'){
+  try{
+   if(!(await requireOwnerMfa()))return false;
+  }catch(error){
+   console.error('[admin-auth] MFA check failed',error);
+   setAdminDebugError('mfa',error);
+   if(run===adminAuthRun)await signOutUnauthorized('MFA durumu doğrulanamadı. Lütfen tekrar deneyin.');
    return false;
   }
-  adminAuthProfile=profile;
-  scheduleSessionRefresh(session);
-  if(profile.role==='owner'&&!(await requireOwnerMfa()))return false;
+ }
+ if(run!==adminAuthRun)return false;
+ try{
   showAdminPanel(profile);
   return true;
  }catch(error){
-  await signOutUnauthorized('Yönetici yetkisi doğrulanamadı. Lütfen tekrar deneyin.');
+  console.error('[admin-auth] Panel render failed',error);
+  setAdminDebugError('panel',error);
+  if(run===adminAuthRun)await signOutUnauthorized('Yönetim paneli yüklenemedi. Lütfen tekrar deneyin.');
   return false;
  }
 }
@@ -141,6 +168,8 @@ async function adminLogin(event){
  var password=$('#admin-pw').value;
  var error=$('#admin-err');
  error.textContent='';
+ error.dataset.errorStage='';
+ error.dataset.errorMessage='';
  setAdminBusy(true);
  var result=await adminAuthClient.auth.signInWithPassword({email:email,password:password});
  setAdminBusy(false);
@@ -174,8 +203,16 @@ async function verifyMfaCode(inputId,errorId){
  if(challenge.error){error.textContent='Doğrulama başlatılamadı. Lütfen tekrar deneyin.';return;}
  var verified=await adminAuthClient.auth.mfa.verify({factorId:adminMfaFactorId,challengeId:challenge.data.id,code:code});
  if(verified.error){error.textContent='Doğrulama kodu hatalı veya süresi dolmuş.';return;}
- var session=await adminAuthClient.auth.getSession();
- await authorizeAdminSession(session.data.session);
+ var session=verified.data&&verified.data.session;
+ if(!session){
+  var refreshed=await adminAuthClient.auth.refreshSession();
+  if(refreshed.error||!refreshed.data.session){
+   error.textContent='MFA oturumu yenilenemedi. Lütfen tekrar giriş yapın.';
+   return;
+  }
+  session=refreshed.data.session;
+ }
+ await authorizeAdminSession(session);
 }
 
 async function adminLogout(){

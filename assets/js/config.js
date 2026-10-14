@@ -14,6 +14,8 @@ var ICON={
 
 /* ============ DATA ============ */
 var LS={p:'ds_products_v6',c:'ds_categories_v6',o:'ds_occasions_v6',s:'ds_settings_v6',cart:'ds_cart_v6'};
+var CLOUD_IMG={};
+try{CLOUD_IMG=JSON.parse(localStorage.getItem('ds_cloudimg_v1')||'{}')||{};}catch(e){CLOUD_IMG={};}
 var IMG={
  "baby-1": "assets/images/fallback/baby-1.webp",
  "baby-2": "assets/images/fallback/baby-2.webp",
