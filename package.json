@@ -5,6 +5,7 @@
     "build": "npm run build:config",
     "build:config": "node scripts/generate-supabase-config.mjs",
     "test:rls": "npx supabase test db supabase/tests/database/rls_test.sql",
-    "test:storage": "npx supabase test db supabase/tests/database/storage_rls_test.sql"
+    "test:storage": "npx supabase test db supabase/tests/database/storage_rls_test.sql",
+    "test:admin-auth": "node --test tests/admin-auth.test.mjs"
   }
 }

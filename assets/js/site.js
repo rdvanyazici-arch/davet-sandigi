@@ -1,5 +1,4 @@
 /* ============ SETTINGS APPLY + CONTENT ============ */
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function nl2br(s){return esc(s).replace(/\n/g,'<br>');}
 function applySettings(){
  $('#ft-phone').textContent=settings.phone||'';$('#tb-phone').textContent=settings.phone||'';

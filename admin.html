@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
 <title>Davet Sandığı — Yönetim</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,11 +18,38 @@
     <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20h28v18H10z"/><path d="M8 14h32v6H8z"/><path d="M24 38V14"/><path d="M24 14s-3-6-7-5a3 3 0 000 6h7M24 14s3-6 7-5a3 3 0 010 6h-7"/><path d="M6 31c-2-2-3-6-2.5-9M42 31c2-2 3-6 2.5-9" opacity=".55"/></svg></div>
     <h2>Yönetim Girişi</h2>
     <p>Katalog ve ayarları düzenlemek için giriş yapın.</p>
-    <div class="err" id="admin-err"></div>
-    <input class="admin-email-field" type="email" id="admin-email" placeholder="E-posta" autocomplete="username">
-    <input type="password" id="admin-pw" placeholder="Parola" autocomplete="current-password">
-    <button class="btn btn-primary" id="admin-login-btn">Giriş Yap</button>
+    <form id="admin-login-form">
+      <div class="err" id="admin-err" role="alert" aria-live="polite"></div>
+      <label class="admin-auth-label" for="admin-email">E-posta</label>
+      <input class="admin-email-field" type="email" id="admin-email" autocomplete="username" required>
+      <label class="admin-auth-label" for="admin-pw">Parola</label>
+      <input type="password" id="admin-pw" autocomplete="current-password" required>
+      <button class="btn btn-primary" id="admin-login-btn" type="submit">Giriş Yap</button>
+    </form>
     <p class="admin-note admin-login-note" id="admin-login-note"></p>
+  </div>
+  <div class="admin-login admin-auth-hidden" id="admin-mfa-enroll">
+    <h2>İki Aşamalı Doğrulama</h2>
+    <p>Owner hesabı için Authenticator uygulaması zorunludur.</p>
+    <div class="err" id="admin-mfa-enroll-err" role="alert" aria-live="polite"></div>
+    <button class="btn btn-primary" id="admin-mfa-start" type="button">MFA Kurulumunu Başlat</button>
+    <div class="admin-auth-hidden" id="admin-mfa-enroll-fields">
+      <img class="admin-mfa-qr" id="admin-mfa-qr" alt="Authenticator uygulaması için QR kodu">
+      <p class="admin-mfa-secret">QR kodu okunmazsa: <code id="admin-mfa-secret"></code></p>
+      <label class="admin-auth-label" for="admin-mfa-enroll-code">6 haneli doğrulama kodu</label>
+      <input id="admin-mfa-enroll-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      <button class="btn btn-primary" id="admin-mfa-enroll-verify" type="button">Doğrula ve Devam Et</button>
+    </div>
+    <button class="a-btn admin-auth-cancel" data-admin-signout type="button">Çıkış Yap</button>
+  </div>
+  <div class="admin-login admin-auth-hidden" id="admin-mfa-challenge">
+    <h2>Doğrulama Kodu</h2>
+    <p>Authenticator uygulamanızdaki 6 haneli kodu girin.</p>
+    <div class="err" id="admin-mfa-challenge-err" role="alert" aria-live="polite"></div>
+    <label class="admin-auth-label" for="admin-mfa-code">Doğrulama kodu</label>
+    <input id="admin-mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+    <button class="btn btn-primary" id="admin-mfa-verify" type="button">Doğrula</button>
+    <button class="a-btn admin-auth-cancel" data-admin-signout type="button">Çıkış Yap</button>
   </div>
   <div class="admin-panel" id="admin-panel">
     <aside class="admin-side" id="admin-side">
@@ -109,7 +137,6 @@
   <div class="camp-card"><button class="pm-close" id="camp-close" aria-label="Kapat">✕</button><div class="camp-media" id="camp-media"><img id="camp-img" src="" alt=""></div><div class="camp-body"><span class="eyebrow">Davet Sandığı</span><h3 id="camp-title"></h3><p id="camp-text"></p><a class="btn btn-primary" id="camp-btn"></a></div></div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="assets/js/legacy-firebase.js"></script>
 <script src="assets/js/supabase-config.generated.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/supabase-client.js"></script>

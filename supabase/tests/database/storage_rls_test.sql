@@ -102,6 +102,11 @@ select set_config(
   '55555555-5555-5555-5555-555555555555',
   true
 );
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"55555555-5555-5555-5555-555555555555","aal":"aal2","role":"authenticated"}',
+  true
+);
 
 select lives_ok(
   $$insert into storage.objects (bucket_id, name, metadata) values

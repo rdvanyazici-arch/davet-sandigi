@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 5 tamamlandı; Storage bucket/politikaları, görsel kütüphanesi ve arşiv güvenliği yerelde doğrulandı.
-- Aktif faz: Yok; Faz 6 için kullanıcı komutu bekleniyor.
-- Beklenen: Sonraki faza geçmeden önce kullanıcı onayı.
+- Güncel durum: Faz 6 migration'ı uzak Supabase'e uygulandı; Auth kullanıcısı aktif owner olarak bağlandı. Parola politikası tamamlandı; owner TOTP sonrası panel açılışındaki ortak yardımcı yükleme hatası düzeltildi ve yeniden doğrulama bekleniyor.
+- Aktif faz: Faz 6 — Yönetici kimlik doğrulaması.
+- Beklenen: Kullanıcının yönetim paneline yeniden girerek mevcut TOTP koduyla AAL2 oturumunu ve panel açılışını doğrulaması.
 
 ### Faz 0–15 durumları
 
@@ -14,7 +14,7 @@
 - Faz 3 — Supabase proje ve yerel geliştirme kurulumu: **tamamlandı**
 - Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
 - Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
-- Faz 6 — Yönetici kimlik doğrulaması: **bekliyor**
+- Faz 6 — Yönetici kimlik doğrulaması: **uzak kurulum tamamlandı — parola politikası/TOTP bekliyor**
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **bekliyor**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
 - Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
@@ -59,6 +59,12 @@
 - `site-media` için 6 MiB sınırı ve JPEG/PNG/WebP türleri seçildi; SVG kapalıdır. İleride SVG logo gerekirse ayrı, yalnızca yönetici yazabilen bucket güvenlik incelemesiyle değerlendirilecek.
 - Faz 5 migration'ı kullanıcı onayıyla uzak `Davet Sandığı` Supabase projesine uygulandı; yerel ve uzak migration geçmişleri eşleşiyor.
 - Görsel kütüphanesindeki Supabase yönetici yazma işlemleri, Faz 6'da Supabase Auth yönetici oturumu bağlandıktan sonra kullanılabilir olacaktır.
+- Faz 6 migration'ı kullanıcı onayıyla uzak `Davet Sandığı` Supabase projesine uygulandı.
+- Public sign-up kapalı ve e-posta onayı açık olarak dashboard'dan doğrulandı.
+- Auth kullanıcısı `7590fe38-46b1-47dd-bd17-b83a0212e87c`, `admin_profiles` tablosuna aktif `owner` olarak eklendi.
+- Rate limit değerleri varsayılan güvenli değerlerde bırakıldı; değişiklik gerekmiyor.
+- Parola politikası ve ilk yönetim paneli girişindeki TOTP kurulumu kullanıcı tarafından tamamlanacak.
+- Apple Parolalar ile TOTP kaydı oluşturuldu. Doğrulama sonrası paneli kapatan hatanın, `esc()` ortak yardımcısının `admin.html` tarafında yüklenmemesinden kaynaklandığı belirlendi ve düzeltildi.
 
 ## Bilinen riskler
 
@@ -67,7 +73,7 @@
 - Canlı yasal metinler taslak durumunda.
 - Mevcut müşteri yorumları ve sayısal pazarlama iddiaları örnektir; yeni sisteme taşınmamalıdır.
 - Canlı site hâlen örnek ürünler, görseller, fiyatlar, yorumlar ve iddialar gösteriyor; gerçek içerik girilmeden nihai production yayını yapılmamalı.
-- Yönetim bağlantısı mevcut sitede görünür ve eski demo parola kaynak kodunda bulunuyor.
+- Eski demo parola güncel koddan kaldırıldı ancak Git geçmişinde `81a3f8c` ve `5fc1878` commit'lerinde bulunuyor; gerçek bir hesapta kullanıldıysa veya başka yerde tekrarlandıysa değiştirilmelidir.
 - Sipariş talebi doğrulaması eksik; mevcut talep numarası cihaz bazlı olduğu için çakışabilir.
 - Firebase yedeği yalnızca yerel `backups/` altında ve Git dışında tutuluyor; ayrıca şifreli ikinci konuma kopyalanmalı.
 - Firebase Storage SDK'sı başlatılıyor ancak kaynakta Storage dosya çağrısı yok; ilgili bucket mevcut değil ve manifestte 0 dosya olarak kaydedildi.
@@ -93,6 +99,21 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-14 — Auth kullanıcısı e-posta/UUID eşleşmesi ve Supabase TOTP durumunun `Enabled` olduğu dashboard'dan doğrulandı: **başarılı**
+- 2026-10-14 — MFA sonrası panel açılış hatası: ortak `esc()` yardımcısı `config.js` içine taşındı; admin script yükleme sırası testi eklendi.
+- 2026-10-13 — `20261013164335_enforce_owner_mfa.sql` uzak `zdksvgtkeeweufuajugd` projesine uygulandı: **başarılı**
+- 2026-10-13 — Uzak migration dry-run: `Remote database is up to date`: **başarılı**
+- 2026-10-13 — İlk yönetici UUID'si aktif `owner` olarak eklendi ve `RETURNING` sonucu doğrulandı: **başarılı**
+- 2026-10-13 — Uzak `supabase db lint --linked --fail-on warning`: **No schema errors found**
+- 2026-10-13 — Dashboard doğrulaması: public sign-up kapalı, Confirm Email açık; rate limitleri token 150/5 dk, verification 30/5 dk, sign-up/sign-in 30/5 dk: **başarılı**
+- 2026-10-13 — Faz 6 migration'ı sıfırlama yapılmadan yerel veritabanına uygulandı: **başarılı**
+- 2026-10-13 — `npm run test:admin-auth`: yetkisiz/pasif kullanıcı, owner MFA, editor ve çıkış/geri tuşu davranışı **4/4 başarılı**
+- 2026-10-13 — `npm run test:rls`: aktif/pasif yönetici, taslak görünürlüğü, editor/owner ve owner AAL2 yetkisi **28/28 başarılı**
+- 2026-10-13 — `npm run test:storage`: owner AAL2 ile Storage yetkisi dahil **10/10 başarılı**
+- 2026-10-13 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-13 — Yerel tarayıcı kontrolü: giriş formu/noindex, ana navigasyonda admin bağlantısının olmaması ve konsol hatası bulunmaması doğrulandı: **başarılı**
+- 2026-10-13 — Demo parola güncel kaynakta bulunmadı; Git geçmişinde iki eski commit'te bulunduğu doğrulandı.
 
 - 2026-10-13 — `PROJECT_ROADMAP.md` kökte bulundu ve 936 satırın tamamı okundu: **başarılı**
 - 2026-10-13 — Yol haritasındaki 1–18 bölüm başlıkları doğrulandı: **başarılı**
@@ -168,5 +189,6 @@
 
 ## Sonraki adım
 
-- Faz 6'ya yalnızca kullanıcı komutuyla geçilecek.
-- Faz 5 kod değişikliklerinin Git commit/push işlemi kullanıcıya aittir; çalışma ağacında 9 değişiklik bulunuyor.
+- `docs/admin-auth-setup.md` içindeki dashboard adımları kullanıcı tarafından tamamlanacak.
+- Yerel yönetim paneli yenilenip gerçek owner girişi ve mevcut Apple Parolalar TOTP koduyla AAL2 yetkisi doğrulanacak.
+- Faz 6 tamamlanmadan Faz 7'ye geçilmeyecek.

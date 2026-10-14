@@ -19,7 +19,9 @@ function startSupabaseClient(done){
    callback(null,'Supabase istemci kütüphanesi yüklenemedi.');
    return;
   }
-  dsSupabaseClient=window.supabase.createClient(config.url,config.publishableKey);
+  dsSupabaseClient=window.supabase.createClient(config.url,config.publishableKey,{
+   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+  });
   callback(dsSupabaseClient,null);
  }
 

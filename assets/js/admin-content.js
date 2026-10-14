@@ -35,14 +35,11 @@ function renderSettingsForm(){
   '<label>Kargo ücreti (₺)<input id="sf-shipfee" type="number" value="'+(s.shipFee||0)+'"></label>'+
   '<label>Ücretsiz kargo (₺ üzeri)<input id="sf-shipfree" type="number" value="'+(s.shipFree||0)+'"></label>'+
   '<label>Sıradaki sipariş no<input id="sf-orderno" type="number" value="'+(s.orderNext||1)+'"></label></div>'+
-  '<h3 class="admin-section-heading">Parola</h3>'+
-  '<label>Yeni yönetim parolası (boş=değişmez)<input id="sf-pw" type="password" placeholder="••••••"></label>'+
   '<button class="admin-save" id="sf-save">Ayarları Kaydet</button>';
  $('#sf-save').onclick=function(){
   s.whatsapp=$('#sf-wa').value.trim();s.instagram=$('#sf-ig').value.trim();s.phone=$('#sf-phone').value.trim();s.mail=$('#sf-mail').value.trim();s.addr=$('#sf-addr').value.trim();
   s.minQty=parseInt($('#sf-min').value)||1;s.stepQty=parseInt($('#sf-step').value)||1;s.quoteThreshold=parseInt($('#sf-quote').value)||0;
   s.shipFee=parseFloat($('#sf-shipfee').value)||0;s.shipFree=parseFloat($('#sf-shipfree').value)||0;s.orderNext=parseInt($('#sf-orderno').value)||1;
-  var pw=$('#sf-pw').value;if(pw)localStorage.setItem(LS.pw,pw);
   save(LS.s,settings);applySettings();alert('Ayarlar kaydedildi.');};
 }
 var rvList=[];
@@ -197,20 +194,8 @@ function renderHomeAdmin(){
 }
 function switchView(v){$all('.admin-tabs button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')==v);});$all('.admin-view').forEach(function(x){x.classList.remove('show');});$('#view-'+v).classList.add('show');if(v==='media'&&typeof renderMediaLibrary==='function')renderMediaLibrary();}
 $all('.admin-tabs button').forEach(function(b){b.addEventListener('click',function(){var v=b.getAttribute('data-view');if(v=='add'){editingId=null;renderProductForm();}switchView(v);});});
-$('#admin-login-btn').addEventListener('click',adminLogin);
-$('#admin-pw').addEventListener('keydown',function(e){if(e.key=='Enter')adminLogin();});
 $('#admin-search').addEventListener('input',renderAdminRows);
 $('#admin-filter').addEventListener('change',renderAdminRows);
-$('#admin-exit').addEventListener('click',closeAdmin);
-$('#admin-logout').addEventListener('click',adminLogout);
 $('#admin-export').addEventListener('click',function(){var data={settings:settings,categories:categories,occasions:occasions,products:products};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='davet-sandigi-yedek.json';a.click();});
 $('#admin-import').addEventListener('click',function(){var i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=function(){var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.settings){settings=d.settings;save(LS.s,settings);}if(d.categories){categories=d.categories;save(LS.c,categories);}if(d.occasions){occasions=d.occasions;save(LS.o,occasions);}if(d.products){products=d.products;save(LS.p,products);}renderAdmin();refreshSite();alert('Yedek yüklendi.');}catch(e){alert('Geçersiz dosya.');}};r.readAsText(i.files[0]);};i.click();});
 function refreshSite(){if(typeof renderCollections==='function')renderCollections();if(typeof renderFilter==='function')renderFilter();if(typeof renderProducts==='function')renderProducts();applySettings();}
-openAdmin();
-(function(){var note=$('#admin-login-note');
- if(note)note.textContent='Bağlantı kuruluyor…';
- startLegacyFirebase(function(available){
-  if(available){if(note)note.textContent='Firebase e-posta ve parolanızla giriş yapın.';fbAuth.onAuthStateChanged(function(u){fbUser=u||null;if(u){if(note)note.textContent='';showAdminPanel();}else{$('#admin-panel').classList.remove('show');$('#admin-login').style.display='';}});loadFromCloud();}
-  else{if(note)note.textContent='Bağlantı yok — demo modu. Parola: davet2026';var em=$('#admin-email');if(em)em.style.display='none';}
- });
-})();

@@ -247,8 +247,6 @@ em{color:var(--gold);font-style:italic;}
 .cv-filter{margin-bottom:30px;}
 .cv-filter[hidden]{display:none;}
 
-.admin-link{position:fixed;left:14px;bottom:12px;z-index:70;font-size:11px;color:var(--moss);opacity:.6;}
-.admin-link:hover{color:var(--gold);opacity:1;}
 /* cart summary + quote + kvkk */
 .cart-sum{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
 .sum-row{display:flex;justify-content:space-between;font-size:14px;color:var(--ink);}

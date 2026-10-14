@@ -13,7 +13,7 @@ var ICON={
 };
 
 /* ============ DATA ============ */
-var LS={p:'ds_products_v6',c:'ds_categories_v6',o:'ds_occasions_v6',s:'ds_settings_v6',cart:'ds_cart_v6',pw:'ds_admin_pw_v1'};
+var LS={p:'ds_products_v6',c:'ds_categories_v6',o:'ds_occasions_v6',s:'ds_settings_v6',cart:'ds_cart_v6'};
 var IMG={
  "baby-1": "assets/images/fallback/baby-1.webp",
  "baby-2": "assets/images/fallback/baby-2.webp",
@@ -122,7 +122,7 @@ var DEF_HOME={
 var DEF_BANNER={eyebrow:'Kişiye özel davet & hatıra tasarımları',title:'Özel anlarınız,\n*unutulmaz hatıralara* dönüşsün.',lead:'Söz, nişan, kına, nikâh ve tüm özel günleriniz için el emeğiyle hazırlanan, kişiye özel hediyelikler.',b1t:'Ürünleri Keşfet',b1l:'#urunler',b2t:'Koleksiyonları İncele',b2l:'#koleksiyonlar',img:'hero'};
 function defSettings(){return{whatsapp:'905399413902',banners:[JSON.parse(JSON.stringify(DEF_BANNER))],instagram:'',phone:'+90 539 941 39 02',mail:'info@davetsandigi.com',addr:"Türkiye'nin her yerine teslimat",heroTitle:'',heroLead:'',minQty:25,stepQty:25,quoteThreshold:100,shipFee:150,shipFree:2500,orderNext:125,topbar:DEF_TOPBAR.slice(),reviews:JSON.parse(JSON.stringify(DEF_REVIEWS)),revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:JSON.parse(JSON.stringify(DEF_FAQ)),story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
-function save(k,v){localStorage.setItem(k,JSON.stringify(v));if(FB&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}}
 function pad3(n){return('000'+n).slice(-3);}
 function pad5(n){return('00000'+n).slice(-5);}
 function seedProducts(){
@@ -145,6 +145,7 @@ var wish=load('ds_wish_v1',[]);
 function $(s,r){return(r||document).querySelector(s);}
 function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmt(n){return'₺'+Number(n||0).toFixed(2).replace('.',',');}
 function imgSrc(key){if(key&&key.indexOf){if(key.indexOf('img:')===0)return CLOUD_IMG[key.slice(4)]||'';if(key.indexOf('data:')===0||key.indexOf('http')===0||key.indexOf('blob:')===0)return key;}return IMG[key]||IMG['nisan-1']||'';}
 function galleryOf(p){return(p.gallery&&p.gallery.length)?p.gallery:[p.img];}

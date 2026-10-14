@@ -70,6 +70,11 @@
 }
 .admin-email-field{margin-bottom:12px}
 .admin-login-note{margin-top:16px}
+.admin-auth-hidden{display:none!important}
+.admin-auth-label{display:block;margin:0 0 6px;text-align:left;color:var(--moss);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.admin-auth-cancel{display:block;margin:14px auto 0}
+.admin-mfa-qr{display:block;width:190px;height:190px;margin:16px auto;border:8px solid #fff;border-radius:10px}
+.admin-mfa-secret{overflow-wrap:anywhere}.admin-mfa-secret code{display:block;margin-top:6px;color:var(--espresso);font-size:11px;user-select:all}
 .admin-brand-mark{width:34px;height:34px}
 .admin-badge-row{margin-top:4px}
 .admin-occ-label{color:var(--gold);margin-right:6px}

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(28);
 
 select is(
   (
@@ -203,6 +203,12 @@ select is(
   'authenticated non-admin is not an admin'
 );
 
+select results_eq(
+  $$select count(*) from public.categories where slug = 'inactive-category'$$,
+  array[0::bigint],
+  'authenticated non-admin cannot read draft content'
+);
+
 select set_config(
   'request.jwt.claim.sub',
   '33333333-3333-3333-3333-333333333333',
@@ -220,6 +226,12 @@ select is(
   (select private.is_admin()),
   false,
   'inactive admin fails the active-admin check'
+);
+
+select results_eq(
+  $$select count(*) from public.categories where slug = 'inactive-category'$$,
+  array[0::bigint],
+  'inactive admin cannot read draft content'
 );
 
 select set_config(
@@ -253,11 +265,27 @@ select is(
   'editor does not pass the owner check'
 );
 
+select results_eq(
+  $$select count(*) from public.categories where slug = 'inactive-category'$$,
+  array[1::bigint],
+  'active editor can read draft content'
+);
+
 select set_config(
   'request.jwt.claim.sub',
   '11111111-1111-1111-1111-111111111111',
   true
 );
+
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","aal":"aal1","role":"authenticated"}', true);
+
+select is(
+  (select private.is_admin()),
+  false,
+  'owner without AAL2 MFA cannot use admin policies'
+);
+
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","aal":"aal2","role":"authenticated"}', true);
 
 select lives_ok(
   $$insert into public.admin_profiles (user_id, display_name, role) values
