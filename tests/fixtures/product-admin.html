@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="tr">
+<head><meta charset="utf-8"><title>Ürün Yönetimi Testi</title></head>
+<body>
+<p>Test paneli hazırlanıyor…</p>
+<script>
+Promise.all([
+  fetch('/tests/e2e/product-admin.spec.mjs').then(function(response){return response.text();}),
+  fetch('/admin.html').then(function(response){return response.text();})
+]).then(function(files){
+  var match=files[0].match(/function installFakeSupabase\(\) \{([\s\S]*?)\n\}\n\ntest\.beforeEach/);
+  if(!match)throw new Error('Test Supabase kurulumu bulunamadı.');
+  var adminHtml=files[1]
+    .replace('<head>','<head><base href="/">')
+    .replace(
+      '<script src="assets/js/supabase-config.generated.js"></scr'+'ipt>',
+      '<script>Function('+JSON.stringify(match[1])+')();<\/script><script src="assets/js/supabase-config.generated.js"><\/script>'
+    );
+  document.open();
+  document.write(adminHtml);
+  document.close();
+}).catch(function(error){document.body.textContent='Test paneli hazırlanamadı: '+error.message;});
+</script>
+</body>
+</html>

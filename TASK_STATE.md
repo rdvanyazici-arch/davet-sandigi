@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 6 tamamlandı; owner hesabıyla e-posta/parola, Apple Parolalar TOTP, AAL2 yetkisi ve yönetim paneli açılışı doğrulandı.
-- Aktif faz: Yok — Faz 6 tamamlandı.
-- Beklenen: Kullanıcının Faz 7 komutunu göndermesi.
+- Güncel durum: Faz 7a ürün modülü tamamlandı; ürün taslak/yayın akışı, RLS, galeri, filtreleme, sayfalama ve önizlemeler hazırlandı ve ilgili migration'lar uzak Supabase'e uygulandı.
+- Aktif faz: Faz 7 — 7a ürün modülü tamamlandı; diğer Faz 7 modülleri başlamadı.
+- Beklenen: Faz 7a değişikliklerinin GitHub commit'i ve Faz 7'nin sonraki parçası için kullanıcı komutu.
 
 ### Faz 0–15 durumları
 
@@ -15,7 +15,7 @@
 - Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
 - Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
 - Faz 6 — Yönetici kimlik doğrulaması: **tamamlandı**
-- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **bekliyor**
+- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **devam ediyor — 7a ürün modülü tamamlandı**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
 - Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
 - Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
@@ -34,6 +34,7 @@
 - 2026-10-13 — Faz 4 tamamlandı: 12 içerik tablosu, constraint ve indeksler, grant/RLS politikaları, idempotent seed ve 24 RLS testi yerelde doğrulandı.
 - 2026-10-13 — Faz 5 tamamlandı: `site-media` bucket, Storage RLS, WebP yükleme/doğrulama, görsel kullanım sorguları, önizleme, arşivleme ve güvenli kalıcı silme akışı hazırlandı; 10 Storage testi geçti.
 - 2026-10-14 — Faz 6 tamamlandı: Public sign-up kapatıldı, parola politikası sertleştirildi, owner profili ve TOTP/AAL2 zorunluluğu yapılandırıldı; gerçek owner girişiyle yönetim panelinin açıldığı doğrulandı.
+- 2026-10-14 — Faz 7a tamamlandı: Supabase tabanlı ürün listesi/arama/filtre/sayfalama, ürün ekleme-düzenleme-çoğaltma, ayrı taslak/yayın akışı, yayından kaldırma, arşivleme, fiyat/adet/sıra ayarları, galeri sıralaması ve mobil/masaüstü önizleme hazırlandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -69,6 +70,8 @@
 - MFA doğrulamasından dönen güncel AAL2 oturumu doğrudan yetkilendirmeye aktarılacak şekilde düzeltildi; profil, MFA ve panel yükleme hataları ayrı mesajlarla raporlanıyor.
 - Yerel tarayıcının eski `admin-auth.js` dosyasını önbellekten kullandığı, eski genel hata mesajından doğrulandı; yönetici scriptine sürüm sorgusu eklendi.
 - Panel oluşturma hatasının, eski yerel `img:` referansları okunurken `CLOUD_IMG` değişkeninin yalnızca legacy Firebase modülünde tanımlı olmasından kaynaklandığı belirlendi; yerel görsel önbelleği ortak yapılandırma modülüne taşındı.
+- Faz 7a için `product_drafts`, atomik yayın fonksiyonları ve sahiplik indeksi uzak `zdksvgtkeeweufuajugd` projesine kullanıcı onayıyla uygulandı.
+- Ürün görselleri önce merkezi kütüphaneye bağlantısız yüklenebilir, ardından ürün taslağında ana görsel/galeri olarak seçilebilir.
 
 ## Bilinen riskler
 
@@ -85,6 +88,8 @@
 - Davet Sandığı; GitHub, Vercel veya Supabase üzerinde diğer projelerle karıştırılmamalı.
 - Yerel Supabase konteynerleri çalışıyor; bilgisayar yeniden başlatılırsa Faz 5 öncesinde Docker Desktop'ın açık olduğu doğrulanmalı.
 - Görsel değiştirme işlemi bağlantıları yeni kayda taşıyıp eski kaydı arşivler; işlem sırasında bağlantı hatası olursa yeni görsel kaydı korunur ve panel açık hata gösterir.
+- Uzak Supabase Faz 7a migration'larını aldı; yönetim panelinin `product_drafts` sorgusu için gerekli uzak şema hazırdır.
+- Playwright testleri yazıldı ve keşfedildi; komut satırı Chromium'u macOS çalışma alanı kısıtı nedeniyle başlatamadı. Aynı akış uygulama tarayıcısının Playwright denetimleriyle tamamlandı.
 
 ## Kimlikler
 
@@ -104,6 +109,16 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-15 — Faz 7a migration'ları `zdksvgtkeeweufuajugd` uzak projesine uygulandı; yerel ve uzak migration geçmişi eşleşiyor: **başarılı**
+- 2026-10-15 — Uzak migration tekrar dry-run: `Remote database is up to date`: **başarılı**
+- 2026-10-15 — `supabase db lint --linked --fail-on warning`: **No schema errors found**
+- 2026-10-15 — Uzak sorgu doğrulaması: `product_drafts` tablosu RLS açık; `save_product_draft`, `publish_product_draft` fonksiyonları ve beklenen indeksler mevcut: **başarılı**
+- 2026-10-14 — Faz 7a uygulama tarayıcısı Playwright kontrolü: ürün ekleme → taslak → düzenleme → yayınlama → arşivleme; Türkçe slug; önizleme zorunluluğu; mobil/masaüstü kart ve detay önizlemesi: **başarılı**
+- 2026-10-14 — `product_module_test.sql`: taslak/yayın RPC, anon engeli, pasif ürün görünmezliği ve başarısız yayında canlı içeriğin korunması: **15/15 başarılı**
+- 2026-10-14 — `rls_test.sql`: yeni `product_drafts` tablosu dahil genel RLS matrisi: **28/28 başarılı**
+- 2026-10-14 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-14 — `node --check`, `npm run build`, Playwright test keşfi ve `git diff --check`: **başarılı**
+- 2026-10-14 — `npm run test:products`: testler keşfedildi; Chromium başlatma macOS çalışma alanı izni nedeniyle engellendi. Test akışı uygulama tarayıcısının Playwright denetimleriyle doğrulandı.
 - 2026-10-14 — Yerel yönetim panelinde gerçek owner e-posta/parola girişi, Apple Parolalar TOTP, AAL2 yetkisi ve panel açılışı: **başarılı**
 - 2026-10-14 — Supabase Auth kullanıcı ekranı: owner UUID/e-posta, MFA faktörü ve 19:07 son giriş bilgisi doğrulandı: **başarılı**
 - 2026-10-14 — `npm run test:admin-auth`: güncel MFA oturumu ve ayrıştırılmış hata aşamaları dahil **7/7 başarılı**
@@ -197,5 +212,5 @@
 
 ## Sonraki adım
 
-- Faz 6 değişiklikleri kullanıcı tarafından commit edilip GitHub'a gönderilecek.
-- Kullanıcının Faz 7 komutu beklenecek; onay olmadan sonraki faza geçilmeyecek.
+- Faz 7a değişiklikleri kullanıcı tarafından GitHub'a commit/push edilecek.
+- Faz 7'nin sonraki parçasına kullanıcı komutu olmadan geçilmeyecek.

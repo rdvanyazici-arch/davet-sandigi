@@ -3,3 +3,6 @@ backups/
 !.env.example
 *.key
 assets/js/supabase-config.generated.js
+node_modules/
+test-results/
+playwright-report/

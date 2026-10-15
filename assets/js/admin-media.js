@@ -21,6 +21,7 @@ function mediaUsageLabel(value){return{product:'Ürün',collection:'Koleksiyon',
 function mediaEscape(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
 function mediaPublicUrl(asset){if(!mediaState.client)return'';return mediaState.client.storage.from(MEDIA_BUCKET).getPublicUrl(asset.storage_path).data.publicUrl;}
 function mediaNeedsId(usage){return!!MEDIA_ENTITY_USAGE[usage];}
+function mediaRequiresId(usage){return mediaNeedsId(usage)&&usage!=='product';}
 
 function mediaWireControls(){
  var file=$('#media-file');if(!file||file.dataset.wired)return;file.dataset.wired='true';
@@ -34,8 +35,8 @@ function mediaWireControls(){
  $('#media-replace-cancel').addEventListener('click',mediaCancelReplace);
  mediaToggleRelated();
 }
-function mediaToggleRelated(){var usage=$('#media-usage').value,wrap=$('#media-related-wrap'),input=$('#media-related-id');wrap.classList.toggle('media-hidden',!mediaNeedsId(usage));input.required=mediaNeedsId(usage);mediaUpdateUploadState();}
-function mediaUpdateUploadState(){var button=$('#media-upload');if(!button)return;var needsId=mediaNeedsId($('#media-usage').value),hasId=Number($('#media-related-id').value)>0;button.disabled=!mediaState.selected||!$('#media-alt').value.trim()||(needsId&&!hasId&&!mediaState.replaceId)||mediaState.loading;}
+function mediaToggleRelated(){var usage=$('#media-usage').value,wrap=$('#media-related-wrap'),input=$('#media-related-id'),optional=$('#media-related-optional');wrap.classList.toggle('media-hidden',!mediaNeedsId(usage));input.required=mediaRequiresId(usage);if(optional)optional.textContent=usage==='product'?'(isteğe bağlı)':'';mediaUpdateUploadState();}
+function mediaUpdateUploadState(){var button=$('#media-upload');if(!button)return;var needsId=mediaRequiresId($('#media-usage').value),hasId=Number($('#media-related-id').value)>0;button.disabled=!mediaState.selected||!$('#media-alt').value.trim()||(needsId&&!hasId&&!mediaState.replaceId)||mediaState.loading;}
 function mediaClearPreview(){if(mediaState.previewUrl)URL.revokeObjectURL(mediaState.previewUrl);mediaState.previewUrl='';mediaState.selected=null;var box=$('#media-local-preview');if(box){box.innerHTML='';box.classList.add('media-hidden');}var file=$('#media-file');if(file)file.value='';mediaUpdateUploadState();}
 function mediaCancelReplace(){mediaState.replaceId=null;var cancel=$('#media-replace-cancel');if(cancel)cancel.classList.add('media-hidden');var button=$('#media-upload');if(button)button.textContent='WebP Olarak Yükle';mediaClearPreview();mediaSetValidation('',false);}
 
@@ -56,7 +57,7 @@ function mediaPreviewMarkup(url,alt){return'<div class="media-ratio-previews"><f
 
 async function mediaUploadSelected(){
  if(!mediaState.selected)return;var usage=$('#media-usage').value,relatedId=Number($('#media-related-id').value)||null,alt=$('#media-alt').value.trim();
- if(!alt){mediaSetValidation('Alt metin zorunludur.',true);return;}if(mediaNeedsId(usage)&&!relatedId&&!mediaState.replaceId){mediaSetValidation('Bu kullanım alanı için bağlı kayıt kimliği zorunludur.',true);return;}
+ if(!alt){mediaSetValidation('Alt metin zorunludur.',true);return;}if(mediaRequiresId(usage)&&!relatedId&&!mediaState.replaceId){mediaSetValidation('Bu kullanım alanı için bağlı kayıt kimliği zorunludur.',true);return;}
  mediaState.loading=true;mediaUpdateUploadState();mediaSetValidation('Yönetici oturumu ve tekrar kontrol ediliyor…',false);
  try{
   var client=await mediaClient(),sessionResult=await client.auth.getSession(),session=sessionResult.data.session;if(!session)throw new Error('Yükleme için Supabase yönetici oturumu gerekir. Bu giriş Faz 6’da etkinleştirilecek.');
@@ -72,10 +73,11 @@ async function mediaUploadSelected(){
 
 async function mediaLinkAsset(client,asset,usage,relatedId){
  var result;
- if(usage==='product'){
+ if(usage==='product'&&relatedId){
   var existing=await client.from('product_images').select('id',{count:'exact',head:true}).eq('product_id',relatedId);if(existing.error)throw existing.error;
   result=await client.from('product_images').insert({product_id:relatedId,media_id:asset.id,alt_text:asset.alt_text,sort_order:existing.count||0,is_primary:(existing.count||0)===0});
- }else if(usage==='collection')result=await client.from('collections').update({cover_media_id:asset.id}).eq('id',relatedId);
+ }else if(usage==='product')result={error:null};
+ else if(usage==='collection')result=await client.from('collections').update({cover_media_id:asset.id}).eq('id',relatedId);
  else if(usage==='banner')result=await client.from('banners').update({media_id:asset.id}).eq('id',relatedId);
  else if(usage==='testimonial')result=await client.from('testimonials').update({media_id:asset.id}).eq('id',relatedId);
  else result={error:null};
