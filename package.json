@@ -8,7 +8,9 @@
     "test:storage": "npx supabase test db supabase/tests/database/storage_rls_test.sql",
     "test:admin-auth": "node --test tests/admin-auth.test.mjs",
     "test:products": "playwright test tests/e2e/product-admin.spec.mjs",
-    "test:products:rls": "npx supabase test db supabase/tests/database/product_module_test.sql"
+    "test:taxonomy-settings": "playwright test tests/e2e/taxonomy-settings.spec.mjs",
+    "test:products:rls": "npx supabase test db supabase/tests/database/product_module_test.sql",
+    "test:taxonomy-settings:rls": "npx supabase test db supabase/tests/database/taxonomy_settings_test.sql"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1"

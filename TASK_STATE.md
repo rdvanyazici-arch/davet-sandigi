@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 7a ürün modülü tamamlandı; ürün taslak/yayın akışı, RLS, galeri, filtreleme, sayfalama ve önizlemeler hazırlandı ve ilgili migration'lar uzak Supabase'e uygulandı.
-- Aktif faz: Faz 7 — 7a ürün modülü tamamlandı; diğer Faz 7 modülleri başlamadı.
-- Beklenen: Faz 7a değişikliklerinin GitHub commit'i ve Faz 7'nin sonraki parçası için kullanıcı komutu.
+- Güncel durum: Faz 7b kategori, koleksiyon ve site ayarları modülleri yerelde tamamlandı; önizleme, arşivleme, kullanım sayıları ve RLS korumaları hazırlandı.
+- Aktif faz: Faz 7 — 7a ve 7b tamamlandı; diğer Faz 7 modülleri başlamadı.
+- Beklenen: Faz 7b değişikliklerinin kullanıcı tarafından incelenmesi ve uzak migration için açık onay verilmesi.
 
 ### Faz 0–15 durumları
 
@@ -35,6 +35,7 @@
 - 2026-10-13 — Faz 5 tamamlandı: `site-media` bucket, Storage RLS, WebP yükleme/doğrulama, görsel kullanım sorguları, önizleme, arşivleme ve güvenli kalıcı silme akışı hazırlandı; 10 Storage testi geçti.
 - 2026-10-14 — Faz 6 tamamlandı: Public sign-up kapatıldı, parola politikası sertleştirildi, owner profili ve TOTP/AAL2 zorunluluğu yapılandırıldı; gerçek owner girişiyle yönetim panelinin açıldığı doğrulandı.
 - 2026-10-14 — Faz 7a tamamlandı: Supabase tabanlı ürün listesi/arama/filtre/sayfalama, ürün ekleme-düzenleme-çoğaltma, ayrı taslak/yayın akışı, yayından kaldırma, arşivleme, fiyat/adet/sıra ayarları, galeri sıralaması ve mobil/masaüstü önizleme hazırlandı.
+- 2026-10-15 — Faz 7b yerelde tamamlandı: kategori/koleksiyon ekleme-düzenleme, kapak önizlemesi, bağlı ürün sayısı, pasife alma/arşivleme ve tek satırlık site ayarları önizleme/doğrulama akışı hazırlandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -72,6 +73,8 @@
 - Panel oluşturma hatasının, eski yerel `img:` referansları okunurken `CLOUD_IMG` değişkeninin yalnızca legacy Firebase modülünde tanımlı olmasından kaynaklandığı belirlendi; yerel görsel önbelleği ortak yapılandırma modülüne taşındı.
 - Faz 7a için `product_drafts`, atomik yayın fonksiyonları ve sahiplik indeksi uzak `zdksvgtkeeweufuajugd` projesine kullanıcı onayıyla uygulandı.
 - Ürün görselleri önce merkezi kütüphaneye bağlantısız yüklenebilir, ardından ürün taslağında ana görsel/galeri olarak seçilebilir.
+- Faz 7b migration'ı yalnızca yerel Supabase'e uygulandı; uzak `zdksvgtkeeweufuajugd` projesine gönderilmedi.
+- Kategori ve koleksiyonlarda istemciye kalıcı silme yetkisi verilmedi; bağlı kayıtlar korunarak pasife alma ve arşivleme kullanılır.
 
 ## Bilinen riskler
 
@@ -89,7 +92,7 @@
 - Yerel Supabase konteynerleri çalışıyor; bilgisayar yeniden başlatılırsa Faz 5 öncesinde Docker Desktop'ın açık olduğu doğrulanmalı.
 - Görsel değiştirme işlemi bağlantıları yeni kayda taşıyıp eski kaydı arşivler; işlem sırasında bağlantı hatası olursa yeni görsel kaydı korunur ve panel açık hata gösterir.
 - Uzak Supabase Faz 7a migration'larını aldı; yönetim panelinin `product_drafts` sorgusu için gerekli uzak şema hazırdır.
-- Playwright testleri yazıldı ve keşfedildi; komut satırı Chromium'u macOS çalışma alanı kısıtı nedeniyle başlatamadı. Aynı akış uygulama tarayıcısının Playwright denetimleriyle tamamlandı.
+- Playwright testleri VS Code terminalinden Chromium ile çalıştırıldı; kategori, koleksiyon ve site ayarları akışlarının tamamı geçti.
 
 ## Kimlikler
 
@@ -109,6 +112,13 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-15 — `taxonomy_settings_test.sql`: anonim erişim, aktif/pasif/arşiv görünürlüğü, yönetici/pasif yönetici/yetkisiz kullanıcı, kalıcı silme engeli, WhatsApp doğrulaması ve kullanım sayıları: **20/20 başarılı**
+- 2026-10-15 — Genel `rls_test.sql`: **28/28 başarılı**
+- 2026-10-15 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-15 — Yerel sorgu: `categories`, `collections` ve `site_settings` tablolarında RLS açık: **başarılı**
+- 2026-10-15 — Faz 7b JavaScript/test sözdizimi, `npm run build` ve `git diff --check`: **başarılı**
+- 2026-10-15 — Faz 7b Playwright: kategori ekleme/arşivleme, koleksiyon kapak önizleme/kaydetme ve site ayarları doğrulama/kaydetme: **3/3 başarılı**
+- 2026-10-15 — Uzak migration dry-run: yalnızca `20261015170801_phase_7b_taxonomy_settings.sql` bekliyor; uzak veritabanına değişiklik gönderilmedi.
 - 2026-10-15 — Faz 7a migration'ları `zdksvgtkeeweufuajugd` uzak projesine uygulandı; yerel ve uzak migration geçmişi eşleşiyor: **başarılı**
 - 2026-10-15 — Uzak migration tekrar dry-run: `Remote database is up to date`: **başarılı**
 - 2026-10-15 — `supabase db lint --linked --fail-on warning`: **No schema errors found**
@@ -212,5 +222,6 @@
 
 ## Sonraki adım
 
-- Faz 7a değişiklikleri kullanıcı tarafından GitHub'a commit/push edilecek.
+- Faz 7b değişiklikleri kullanıcı tarafından incelenip commit edilecek.
+- Uzak Supabase'e Faz 7b migration'ının gönderilmesi için kullanıcı onayı beklenecek.
 - Faz 7'nin sonraki parçasına kullanıcı komutu olmadan geçilmeyecek.
