@@ -15,6 +15,14 @@ var PUBLIC_QUERIES={
 };
 var catalogState={settings:'loading',catalog:'loading',banners:'loading',sections:'loading',faqs:'loading',testimonials:'loading'};
 var publicBanners=[],publicSections={},publicFaqs=[],publicTestimonials=[],publicLoadToken=0;
+var PUBLIC_SAMPLE_SETTINGS={
+ whatsapp_number:['905399413902'],
+ instagram_url:['https://www.instagram.com/davetsandigi'],
+ phone:['+905399413902','905399413902'],
+ email:['info@davetsandigi.com'],
+ delivery_text:["türkiye'nin her yerine teslimat",'türkiye geneli teslimat']
+};
+var PUBLIC_SAMPLE_REVIEW_NAMES=['Elif & Burak','Zeynep Y.','Merve & Can','Ayşe & Mert','Selin & Kaan','Deniz & Ece'];
 
 function publicQuery(key){
  var q=PUBLIC_QUERIES[key],cfg=SUPABASE_CONFIG;
@@ -29,6 +37,23 @@ function publicQuery(key){
 }
 function qesc(s){return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function safeUrl(u){u=String(u||'').trim();return PUBLIC_URL_PATTERN.test(u)?u:'';}
+function publicSetting(key,value){
+ var v=String(value==null?'':value).trim();if(!v)return'';
+ var normalized=v.toLocaleLowerCase('tr-TR').replace(/\/$/,'').replace(/[’‘]/g,"'");
+ if(key==='phone'||key==='whatsapp_number')normalized=v.replace(/\D/g,'');
+ if(key==='email')normalized=v.toLowerCase();
+ if((PUBLIC_SAMPLE_SETTINGS[key]||[]).indexOf(normalized)>-1)return'';
+ if(key==='delivery_text'&&/5\s*[-–]\s*7\s*is gunu|turkiye.?nin her yerine|turkiye geneli teslimat/.test(normalized.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')))return'';
+ if(key==='shipping_note'&&/(?:^|\D)(?:150|2[.,]?500)\s*tl|ucretsiz kargo/.test(normalized.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')))return'';
+ if(key==='whatsapp_number')return/^[1-9][0-9]{9,14}$/.test(v)?v:'';
+ if(key==='phone')return/^[+0-9 ()-]{7,24}$/.test(v)?v:'';
+ if(key==='email')return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)?v:'';
+ if(key==='instagram_url'){
+  try{var url=new URL(v);if(url.protocol!=='https:'||!/(^|\.)instagram\.com$/i.test(url.hostname))return'';if(url.pathname.replace(/\/$/,'').toLocaleLowerCase('tr-TR')==='/davetsandigi')return'';return url.href;}
+  catch(e){return'';}
+ }
+ return v;
+}
 function mediaFrom(raw,altOverride,fallbackAlt){
  var m=Array.isArray(raw)?raw[0]:raw;
  if(!m||!m.storage_path||!SUPABASE_CONFIG.url)return null;
@@ -48,7 +73,10 @@ function mapProduct(r){
  if(r.is_quote_only)mode='quote';
  else if(r.is_price_visible===false)mode='hidden';
  else if(r.price!==null&&r.price!==''&&r.price!==undefined&&isFinite(Number(r.price))&&Number(r.price)>=0){mode='price';price=Number(r.price);}
- return{id:String(r.id),slug:r.slug||'',code:r.sku||'',name:r.name||'',cat:r.category_id==null?'':String(r.category_id),occ:(r.product_collections||[]).map(function(x){return String(x.collection_id);}),price:price,priceMode:mode,minQuantity:Number(r.min_quantity)||0,quantityStep:Number(r.quantity_step)||0,img:imgs[0]||null,gallery:imgs,featured:!!r.is_featured,desc:r.description||r.short_description||''};
+ var rawMinimum=Number(r.min_quantity),rawStep=Number(r.quantity_step);
+ var minQuantity=Number.isInteger(rawMinimum)&&rawMinimum>0?rawMinimum:0;
+ var quantityStep=Number.isInteger(rawStep)&&rawStep>0?rawStep:0;
+ return{id:String(r.id),slug:r.slug||'',code:r.sku||'',name:r.name||'',cat:r.category_id==null?'':String(r.category_id),occ:(r.product_collections||[]).map(function(x){return String(x.collection_id);}),price:price,priceMode:mode,minQuantity:minQuantity,quantityStep:quantityStep,img:imgs[0]||null,gallery:imgs,featured:!!r.is_featured,desc:r.description||r.short_description||''};
 }
 function priceText(p){
  if(!p)return PUBLIC_PRICE_ERROR;
@@ -62,19 +90,23 @@ function stateBox(kind,msg,retry){return'<div class="sec-state '+kind+'" role="s
 
 /* Public sayfa yerel örnek verilerle değil yalnızca Supabase verisiyle çalışır. */
 (function resetPublicDefaults(){
- var keep={legal:settings.legal,orderNext:settings.orderNext};
- settings={whatsapp:'',instagram:'',phone:'',mail:'',addr:'',minQty:1,stepQty:1,quoteThreshold:0,shipFee:0,shipFree:0,shippingNote:'',orderNext:keep.orderNext||1,legal:keep.legal||{},campaign:{enabled:false}};
+ var keep={orderNext:settings.orderNext};
+ settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',minQty:1,stepQty:1,quoteThreshold:0,shipFee:0,shipFree:0,shippingNote:'',orderNext:keep.orderNext||1,legal:{},campaign:{enabled:false}};
  products=[];categories=[];occasions=[];
 })();
 
 function applyPublicSettings(rows){
  var r=rows[0];
  if(!r){catalogState.settings='empty';return;}
- settings.whatsapp=String(r.whatsapp_number||'').trim();
- settings.instagram=safeUrl(r.instagram_url);
- settings.phone=r.phone||'';settings.mail=r.email||'';settings.addr=r.delivery_text||'';
- settings.minQty=Number(r.default_min_quantity)||1;settings.stepQty=Number(r.default_quantity_step)||1;
- settings.quoteThreshold=Number(r.quote_threshold)||0;settings.shippingNote=r.shipping_note||'';
+ settings.whatsapp=publicSetting('whatsapp_number',r.whatsapp_number);
+ settings.instagram=publicSetting('instagram_url',r.instagram_url);
+ settings.phone=publicSetting('phone',r.phone);settings.mail=publicSetting('email',r.email);
+ settings.deliveryText=publicSetting('delivery_text',r.delivery_text);
+ var minimum=Number(r.default_min_quantity),step=Number(r.default_quantity_step),threshold=Number(r.quote_threshold);
+ settings.minQty=Number.isInteger(minimum)&&minimum>0?minimum:1;
+ settings.stepQty=Number.isInteger(step)&&step>0?step:1;
+ settings.quoteThreshold=Number.isInteger(threshold)&&threshold>0?threshold:0;
+ settings.shippingNote=publicSetting('shipping_note',r.shipping_note);
 }
 function pruneStoredSelections(){
  var known={};products.forEach(function(p){known[p.id]=1;});
@@ -105,7 +137,7 @@ function openProductFromLocation(){
 }
 function publicFail(group){
  if(group==='catalog'){products=[];categories=[];occasions=[];renderCollections();renderFilter();renderProducts();if(typeof syncCart==='function')syncCart();return;}
- if(group==='settings'&&typeof applyContact==='function'){applyContact();if(typeof syncCart==='function')syncCart();return;}
+ if(group==='settings'&&typeof applyContact==='function'){applyContact();if(typeof renderFaq==='function')renderFaq();if(typeof syncCart==='function')syncCart();return;}
  if(group==='banners'){publicBanners=[];if(typeof renderBanners==='function')renderBanners();return;}
  if(group==='sections'){publicSections={};if(typeof renderSectionContent==='function')renderSectionContent();return;}
  if(group==='faqs'){publicFaqs=[];if(typeof renderFaq==='function')renderFaq();return;}
@@ -127,7 +159,7 @@ function loadPublicSite(){
   });
  }
  run('catalog',Promise.all([publicQuery('categories'),publicQuery('collections'),publicQuery('products')]),applyPublicCatalog);
- run('settings',publicQuery('settings'),function(rows){applyPublicSettings(rows);if(typeof applyContact==='function')applyContact();if(typeof syncCart==='function')syncCart();});
+ run('settings',publicQuery('settings'),function(rows){applyPublicSettings(rows);if(typeof applyContact==='function')applyContact();if(typeof renderFaq==='function')renderFaq();if(typeof syncCart==='function')syncCart();});
  run('banners',publicQuery('banners'),function(rows){
   var now=Date.now();
   publicBanners=rows.filter(function(b){return(!b.starts_at||new Date(b.starts_at).getTime()<=now)&&(!b.ends_at||new Date(b.ends_at).getTime()>now);}).map(function(b){return{eyebrow:b.eyebrow||'',title:b.title||'',lead:b.description||'',b1t:b.primary_button_text||'',b1l:safeUrl(b.primary_button_url),b2t:b.secondary_button_text||'',b2l:safeUrl(b.secondary_button_url),media:mediaFrom(b.media_assets,'',b.title)};});
@@ -139,7 +171,7 @@ function loadPublicSite(){
  });
  run('faqs',publicQuery('faqs'),function(rows){publicFaqs=rows;if(typeof renderFaq==='function')renderFaq();});
  run('testimonials',publicQuery('testimonials'),function(rows){
-  publicTestimonials=rows.map(function(t){return{name:t.customer_display_name||'',event:t.event_name||'',text:t.review_text||'',rating:Math.min(5,Math.max(1,Number(t.rating)||5)),media:mediaFrom(t.media_assets,'',t.customer_display_name||'Müşteri fotoğrafı')};});
+  publicTestimonials=rows.filter(function(t){return PUBLIC_SAMPLE_REVIEW_NAMES.indexOf(String(t.customer_display_name||''))<0;}).map(function(t){return{name:t.customer_display_name||'',event:t.event_name||'',text:t.review_text||'',rating:Math.min(5,Math.max(1,Number(t.rating)||5)),media:mediaFrom(t.media_assets,'',t.customer_display_name||'Müşteri fotoğrafı')};});
   if(typeof renderReviews==='function')renderReviews();
  });
 }

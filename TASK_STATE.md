@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 9 sepet ve WhatsApp sipariş talebi akışı yerelde tamamlandı. Production ve uzak Supabase değiştirilmedi.
-- Aktif faz: Faz 9 — kod ve dört Playwright senaryosu yerelde tamamlandı ve doğrulandı.
-- Beklenen: Faz 9 değişikliklerinin kullanıcı tarafından incelenmesi ve commit edilmesi.
+- Güncel durum: Faz 10 içerik/marka tutarlılığı yerelde tamamlandı; Production, uzak Supabase, commit ve push yapılmadı.
+- Aktif faz: Faz 10 — yerel kod ve doğrulamalar tamamlandı.
+- Beklenen: Faz 10 değişikliklerinin kullanıcı tarafından incelenmesi; Faz 11'e geçmek için kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
@@ -18,7 +18,7 @@
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta, kod GitHub branch'inde)**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **tamamlandı**
 - Faz 9 — Sepet ve WhatsApp akışı: **tamamlandı**
-- Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
+- Faz 10 — İçerik ve marka tutarlılığı: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
 - Faz 11 — SEO, hız ve erişilebilirlik: **bekliyor**
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **bekliyor**
 - Faz 13 — Test, güvenlik ve kabul: **bekliyor**
@@ -40,6 +40,7 @@
 - 2026-10-16 — Faz 8 yerelde tamamlandı: public sayfa ürün, kategori, koleksiyon, banner, content_sections, SSS, yayındaki yorum ve `site_settings_public` verisini yalnızca Supabase REST (publishable key, açık sütun listeleri, `select=*` yok) üzerinden okuyor; yerel örnek veri ve Firebase runtime başlangıcı public akıştan çıkarıldı (legacy modül Faz 12'ye kadar duruyor). Kategori/koleksiyon filtreleri, Storage görsellerinde gerçek alt/width/height, yalnızca hero eager + `fetchpriority=high`, bölüm bazlı loading/empty/error durumları, `#urun/<slug>` ve `?urun=<slug>` doğrudan bağlantı, katalog yüklenince pasif ürünlerin sepet/favoriden temizlenmesi, `Fiyat bilgisi şu an yüklenemedi` fiyat fallback'i ve uydurma kargo ücreti/eşiğinin kaldırılması (kargo etiketi `shipping_note`'tan) eklendi.
 - 2026-10-16 — Faz 8 Vercel Preview tamamlandı: klasör yalnızca `rdvanyazici/davet-sandigi` projesine bağlandı; `target=preview`, `status=Ready` ve `productionUrl=null` doğrulandı. Preview URL masaüstü 1280 px ve mobil 390 px görünümde açıldı; yatay taşma, konsol uyarısı/hatası, eski fiyat, `service_role` veya `sb_secret` bulunmadı. Supabase URL'si `zdksvgtkeeweufuajugd.supabase.co`, anahtar türü yalnızca publishable key olarak doğrulandı.
 - 2026-10-16 — Faz 9 yerelde tamamlandı: sepet yalnızca `product_id`, `quantity`, `note` saklıyor; ürün adı/fiyatı güncel katalogdan çözülüyor; pasif ürün uyarılı biçimde toplam dışı kalıyor; minimum/artış ve teklif kuralları uygulanıyor. WhatsApp mesajı benzersiz referans, ürün/SKU/adet/fiyat, isteğe bağlı tarih/not ve açık bilgilendirme ile önizleniyor; müşteri bilgileri Supabase'e yazılmıyor. Gerçek telefon kontrol adımları `docs/whatsapp-device-test.md` içine eklendi.
+- 2026-10-16 — Faz 10 yerelde tamamlandı: envanterdeki onaysız iletişim değerleri ile altı eski örnek yorum kaydı bastırılıyor; yalnızca envanterdeki beş kesin legacy SSS kaydı tanımlı çiftlerle ele alınıyor. Genel içerik/iddia filtresi yok: yönetim panelinden yayımlanan “el emeği”, “kişiye özel tasarım”, “kaliteli malzeme” gibi metinler aynen gösteriliyor. `min_quantity`, `quantity_step`, `default_min_quantity`, `default_quantity_step` ve `quote_threshold` pozitif tamsayı kısıtlarıyla kaynak değerlerini koruyor (25/25/100 değerleri değiştirilmez). Kargo/teslimat tekrarları yalnız `site_settings_public.shipping_note` / `delivery_text` değerlerinden besleniyor. Instagram ana marka/satış kanalı; WhatsApp sipariş talebi kanalı; telefon/e-posta `tel:`/`mailto:`. Baby Shower mevcut kapsam dışında olduğu için açıkça belirtiliyor. Sahte yorum fallback'i/statik süreç ve Neden Biz içerikleri kaldırıldı; onaylı yasal metin yoksa legal taslak gösterilmiyor.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -89,6 +90,7 @@
 - Fiyat değişikliği bildirimi açık oturumdaki katalog yenilemelerinde çalışır; gizlilik kuralı gereği önceki fiyat localStorage'a yazılmadığından tarayıcı tamamen kapatılıp açıldıktan sonra eski fiyatla karşılaştırma yapılamaz.
 - `legacy-firebase.js` içindeki Firebase web API anahtarı dosyada duruyor; public akışta kullanılmıyor (Faz 12'de kaldırılacak).
 - `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
+- Faz 10 grep'inde public runtime için demo/lorem/örnek/sample kalmadı. Envanterdeki onaysız telefon/e-posta/Instagram, müşteri adları ve iddia ifadeleri `catalog.js`/`site.js` içindeki suppression guard listelerinde literal olarak duruyor; sayfaya render edilmezler. `assets/js/admin-content.js` içindeki geçmiş localStorage editör kodu ve `legacy-firebase.js` Faz 10 kapsamı dışında bırakıldı.
 - `tests/e2e/product-admin.spec.mjs` içindeki "ürün listesini sayfalar…" testi, 7b commit'inin (`76adf86`) temiz bir git worktree'sinde ayrı bir portta yeniden çalıştırıldığında da başarısız (`#product-next` bulunamıyor); 7c'den bağımsız olduğu doğrulandı, kod değiştirilmedi.
 - Uzak güvenlik advisor'ü iki bulgu veriyor: `site_settings_public` görünümü için `security_definer_view` (Faz 4'te bilinçli tasarlanmış, yalnızca güvenli sütunları açan `security_barrier` görünümü) ve `auth_leaked_password_protection` (Auth ayarı). İkisi de 7b/7c'den kaynaklanmıyor; bu adımda değiştirilmedi.
 - Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
@@ -127,6 +129,13 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-16 — Faz 10 kritik düzeltmesi: 25/100 özel değer eşlemeleri kaldırıldı; yayımlanmış yönetici kopyasına uygulanan genel claim filtresi kaldırıldı; örnek SSS bastırması yalnızca inventory'deki beş kesin eski soru/cevap çiftine daraltıldı.
+- 2026-10-16 — Faz 10 hedef Playwright testleri: gerçek 25 minimum / 25 artış / 100 teklif eşiği korunması, onaylı claim metinlerinin render edilmesi, legacy iletişim/yorum örneklerinin bastırılması, Instagram/WhatsApp kanalları ve telefon/e-posta bağlantıları: **5/5 başarılı**.
+- 2026-10-16 — `tests/e2e/public-site.spec.mjs`: **16/16 başarılı** (Faz 8, Faz 9 ve Faz 10); 390 px mobil taşma testi dahil.
+- 2026-10-16 — Tam Playwright: **26/27**; tek başarısız eski `product-admin.spec.mjs` ürün sayfalama (`#product-next` timeout) testi 7b `76adf86` temiz worktree tabanında da başarısız olarak daha önce yeniden doğrulandı; Faz 10 ile ilgisiz, bu adımda değiştirilmedi.
+- 2026-10-16 — `npm run test:cart` **4/4**, `page-content.spec.mjs` + `taxonomy-settings.spec.mjs` **8/8**, `npm run test:admin-auth` **7/7** başarılı.
+- 2026-10-16 — `node --check` (config/catalog/site/cart/whatsapp) ve `git diff --check`: **başarılı**.
+- 2026-10-16 — Runtime source grep: `demo|lorem|örnek|sample` için sonuç yok. Onaysız örnek telefon/e-posta/Instagram ve altı legacy yorum adı sadece exact suppression kayıtlarında bulunur; geniş ifade filtresi kaldırılmıştır.
 - 2026-10-16 — `npm run test:cart`: sepet ekleme/çıkarma ve saklanan veri biçimi, teklif ürünü + WhatsApp mesaj önizlemesi, pasif ürün/güncel fiyat bildirimi, localStorage bellek fallback'i ve 390 px mobil taşma kontrolü: **4/4 başarılı**
 - 2026-10-16 — Faz 9 JavaScript ve Playwright test dosyası sözdizimi, yasaklı satış dili taraması ve `git diff --check`: **başarılı**
 - 2026-10-16 — Faz 9 Playwright senaryoları: sepet ekle/çıkar, minimum/artış, yalnız izinli localStorage alanları, teklif ürünü, WhatsApp mesaj/URL kodlama, müşteri verisinin Supabase'e gitmemesi, pasif ürün, fiyat değişikliği, localStorage bellek fallback'i ve 390 px mobil görünüm. Standart Playwright Chromium kurulumu tamamlandı; VS Code terminalinden çalıştırıldı.
@@ -257,5 +266,5 @@
 
 ## Sonraki adım
 
-- Faz 9 değişiklikleri kullanıcı tarafından incelenip commit edilecek.
-- Faz 10 için kullanıcı onayı/komutu bekleniyor; onay olmadan sonraki faza geçilmeyecek.
+- Faz 10 değişiklikleri kullanıcı tarafından incelenip commit edilecek.
+- Faz 11 — SEO, hız ve erişilebilirlik için kullanıcı onayı/komutu beklenecek; onay olmadan sonraki faza geçilmeyecek.

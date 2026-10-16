@@ -48,81 +48,24 @@ var IMG={
  "nisan-4": "assets/images/fallback/nisan-4.webp",
  "nisan-5": "assets/images/fallback/nisan-5.webp"
 };
-var DEF_OCC=[
- {id:'nisan',label:'Nişan & Söz',sub:'Anılarınızı zarifçe saklayın',glyph:'rings',img:'col-nisan'},
- {id:'kina',label:'Kına',sub:'Geleneksel dokunuşlar',glyph:'henna',img:'col-kina'},
- {id:'nikah',label:'Nikâh',sub:'En özel başlangıçlar',glyph:'leaf',img:'col-nikah'},
- {id:'baby',label:'Baby Shower',sub:'Minikler için özel hatıralar',glyph:'baby',img:'col-baby'}
-];
-var DEF_CAT=[
- {id:'kolonya',label:'Kolonya Şişeleri',prefix:'KOL'},
- {id:'mum',label:'Mum & Kokular',prefix:'MUM'},
- {id:'magnet',label:'Magnetler',prefix:'MAG'},
- {id:'kese',label:'Keseler & Sachet',prefix:'KES'},
- {id:'kahve',label:'Kahve & Fincan',prefix:'KHV'},
- {id:'seker',label:'Şeker & Çikolata',prefix:'SEK'},
- {id:'kurdele',label:'Süsleme & Kurdele',prefix:'KUR'}
-];
-var SEED=[
- ['Nişan Kolonyası · İnci Detay','kolonya',['nisan'],54.90,'nisan-1',1,'Cam şişe, gold kapak ve inci detaylı kişiye özel kolonya.',['nisan-1-b','nisan-1-c','nisan-1-d','nisan-1-e']],
- ['Söz Çikolatası · Özel Kutu','seker',['nisan'],64.90,'nisan-2',0,'Özel kutuda, kişiye özel etiketli çikolata ikramı.'],
- ['İnci Taneli Magnet · Nişan','magnet',['nisan'],21.90,'nisan-3',0,'İnci ve kuru çiçek detaylı, isme özel magnet.'],
- ['Nişan Mumu · Cam Kavanoz','mum',['nisan'],44.90,'nisan-4',0,'Cam kavanozda, gold detaylı kokulu nişan mumu.'],
- ['Kahve İkramlık · Nişan','kahve',['nisan'],49.90,'nisan-5',1,'Fincan ve kolonya ikilisi, nişan ikramı için şık set.'],
- ['Kadife Kına Kesesi · Bordo','kese',['kina'],34.90,'kina-1',1,'Bordo kadife, gold biyeli, kuru çiçekli kına kesesi.'],
- ['Telli Kına Kesesi · Gold','kese',['kina'],37.90,'kina-2',0,'Gold tel ve pul işlemeli, zarif kına gecesi kesesi.'],
- ['Kınalı İkramlık Fincan','kahve',['kina'],52.90,'kina-3',0,'Kırmızı-gold motifli fincan ve kese ikilisi.'],
- ['Nazarlıklı Kına Magneti','magnet',['kina'],23.90,'kina-4',0,'Nazar boncuğu ve kırmızı-gold çiçekli magnet.'],
- ['Kına Gecesi Mumu · Kırmızı','mum',['kina'],42.90,'kina-5',0,'Kırmızı-gold detaylı, kokulu kına gecesi mumu.'],
- ['Beyaz Keten Kese · İnci','kese',['nikah'],32.90,'nikah-1',1,'Beyaz keten, inci detaylı, okaliptüslü nikâh kesesi.'],
- ['Nikah Şekeri · Badem','seker',['nikah'],12.90,'nikah-2',0,'Beyaz kurdeleli kutuda badem şekeri ikramı.'],
- ['Nikâh Kolonyası · Zarif','kolonya',['nikah'],56.90,'nikah-3',0,'Okaliptüslü, beyaz kurdeleli zarif nikâh kolonyası.'],
- ['Okaliptüslü Nikah Mumu','mum',['nikah'],46.90,'nikah-4',0,'Okaliptüs dokunuşlu, cam kavanozda nikâh mumu.'],
- ['Nikâh Magneti · Okaliptüs','magnet',['nikah'],22.90,'nikah-5',1,'Okaliptüs motifli, ivory zeminli nikâh magneti.'],
- ['Sage Müslin Kese · Bebek','kese',['baby'],27.90,'baby-1',1,'Sage yeşili müslin, minik etiketli baby shower kesesi.'],
- ['Bebek Şekeri · Pastel Kutu','seker',['baby'],14.90,'baby-2',0,'Mint-krem pastel kutuda bebek şekeri.'],
- ['Patik Temalı Magnet','magnet',['baby'],19.90,'baby-3',0,'Örgü patik temalı, pastel tonlarda sevimli magnet.'],
- ['Mini Bebek Mumu','mum',['baby'],34.90,'baby-4',0,'Küçük cam kavanozda pastel etiketli mini mum.'],
- ['Kurdeleli Bebek Hediyeliği','kurdele',['baby'],16.90,'baby-5',0,'Pastel saten kurdele ve cipso ile bebek hediyeliği.']
-];
-var DEF_TOPBAR=['Özenli Tasarım','Kişiye Özel Üretim','Özenle Seçilen Malzemeler','Özenli Hazırlık','Zamanında Teslimat'];
-var DEF_REVIEWS=[
- {name:'Elif & Burak',event:'Nişan',text:'Nişanımız için hazırlanan kolonyalar ve magnetler herkesin çok beğendi. İşçilik ve paketleme kusursuzdu, teşekkürler.',img:'nisan-1'},
- {name:'Zeynep Y.',event:'Kına Gecesi',text:'Kına keseleri tam hayal ettiğim gibi oldu. Bordo-gold uyumu ve kuru çiçek dokunuşu çok şıktı.',img:'kina-1'},
- {name:'Merve & Can',event:'Nikâh',text:'Nikâh hediyeliklerimiz zamanında elimize ulaştı, davetlilerimiz çok memnun kaldı. Kişiye özel etiketler harikaydı.',img:'nikah-1'},
- {name:'Ayşe & Mert',event:'Baby Shower',text:'Bebeğimizin ilk günü için hazırlanan minik keseler ve mumlar çok sevildi. Pastel renk uyumu harikaydı.',img:'baby-1'},
- {name:'Selin & Kaan',event:'Nişan',text:'Nişan mumlarımız ve kolonyalarımız çok şıktı. Misafirlerimiz nereden yaptırdığımızı tek tek sordu.',img:'nisan-4'},
- {name:'Deniz & Ece',event:'Kına Gecesi',text:'Telli kına keseleri gerçekten göz kamaştırıcıydı. Hızlı teslimat için ayrıca teşekkürler.',img:'kina-2'}
-];
-var DEF_REVHEAD={eb:'Sizden Gelenler',t:'Sizden Gelenler',s:'Ürünlerimizi özel günlerinde kullanan misafirlerimizden kareler ve yorumlar.',note:'Siz de bizimle fotoğraflarınızı paylaşın, sayfamızda yayınlayalım! 💛 WhatsApp’tan gönderebilirsiniz.'};
-var DEF_FAQ=[
- {q:'Minimum sipariş adedi nedir?',a:'Ürünlerimiz minimum 25 adet ve 25’er artışlarla sipariş edilebilir. Adet seçimini sepet üzerinden yapabilirsiniz.'},
- {q:'100 adet üzeri fiyat nasıl belirlenir?',a:'100 adedin üzerindeki siparişlerde size özel fiyat teklifi sunuyoruz. Sepetinizi oluşturup WhatsApp’tan iletişime geçmeniz yeterli.'},
- {q:'Kargo ücreti ne kadar?',a:'Kargo ücreti sipariş sırasında belirtilir. Belirli tutarın üzerindeki siparişlerde kargo ücretsizdir.'},
- {q:'Teslimat süresi ne kadardır?',a:'Tasarım onayının ardından ortalama 5-7 iş günü içinde hazırlayıp kargoya veriyoruz.'},
- {q:'Kişiye özel tasarım yapıyor musunuz?',a:'Evet, isim, tarih ve konseptinize özel tasarımlar hazırlıyoruz. Talebinizi WhatsApp üzerinden iletebilirsiniz.'}
-];
-var DEF_STORY={title:'Hikayemiz',lead:'Her hatıranın bir hikâyesi vardır.',text:'Davet Sandığı, özel günlerinizi zarif ve kalıcı hatıralara dönüştürmek için kuruldu. Her ürünü, sevdiklerinizle paylaşacağınız anların değerine yakışır bir özenle, el emeğiyle hazırlıyoruz. Kişiye özel tasarımlar, özenle seçilen malzemeler ve titiz bir işçilikle; sözünüzden nikâhınıza, kınanızdan bebeğinizin ilk gününe kadar yanınızdayız.'};
-var DEF_LEGAL={
- privacy:'GİZLİLİK POLİTİKASI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nDavet Sandığı olarak, sipariş talebinizi oluşturmak amacıyla paylaştığınız ad-soyad, telefon, etkinlik tarihi ve not bilgilerinizi yalnızca sizinle iletişim kurmak ve talebinizi değerlendirmek için kullanırız. Bilgileriniz üçüncü kişilerle pazarlama amacıyla paylaşılmaz.',
- kvkk:'KVKK AYDINLATMA METNİ\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\n6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında; sipariş talebinizin oluşturulması amacıyla ad-soyad, telefon ve etkinlik bilgileriniz veri sorumlusu sıfatıyla Davet Sandığı tarafından işlenmektedir. Verileriniz talebinizin sonuçlanması için gerekli süre boyunca saklanır. KVKK’nın 11. maddesindeki haklarınız için bizimle iletişime geçebilirsiniz.',
- cookie:'ÇEREZ POLİTİKASI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nSitemiz; sepet ve tercih bilgilerinizi cihazınızda (localStorage) saklamak için teknik olarak gerekli depolama kullanır. Pazarlama/izleme çerezi kullanılmamaktadır.',
- mesafeli:'SİPARİŞ & MESAFELİ SATIŞ KOŞULLARI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nSitemizde çevrimiçi tahsilat yapılmamaktadır. Oluşturduğunuz talep bir “sipariş talebi”dir; fiyat, adet, kargo ve teslimat detayları WhatsApp üzerinden karşılıklı teyit edilerek kesinleşir.'
-};
-var DEF_CAMPAIGN={enabled:false,title:'Hoş Geldiniz',text:'Özel günleriniz için el emeğiyle hazırlanan hediyeliklerimizi keşfedin. Sorularınız için WhatsApp’tan bize ulaşabilirsiniz.',btnText:'Ürünleri Keşfet',btnLink:'#urunler',img:''};
+var DEF_OCC=[];
+var DEF_CAT=[];
+var SEED=[];
+var DEF_TOPBAR=[];
+var DEF_REVIEWS=[];
+var DEF_REVHEAD={eb:'',t:'',s:'',note:''};
+var DEF_FAQ=[];
+var DEF_STORY={title:'',lead:'',text:''};
+var DEF_LEGAL={privacy:'',kvkk:'',cookie:'',mesafeli:''};
+var DEF_CAMPAIGN={enabled:false,title:'',text:'',btnText:'',btnLink:'',img:''};
 var DEF_HOME={
- heroEyebrow:'Kişiye özel davet & hatıra tasarımları',heroBtn1:'Ürünleri Keşfet',heroBtn2:'Koleksiyonları İncele',heroImg:'',
- proof:[{b:'500+',s:'Mutlu Çift'},{b:'%100',s:'El Emeği'},{b:'48 Saat',s:'Hızlı Hazırlık'}],
- collHead:{eb:'Koleksiyonlar',t:'Özel Günlerinize Özel Koleksiyonlar',s:'Her davetin kendine has bir hikâyesi var. Anınıza en yakışanı seçin.'},
- prodHead:{eb:'Ürünler',t:'Öne Çıkan Ürünler',s:'Kolonya şişelerinden mumlara, magnetlerden kına keselerine özenle hazırlanmış hediyelikler.'},
- howHead:{eb:'Süreç',t:'Nasıl Çalışır?'},
- steps:[{t:'Hayalinizi Anlatın',d:'İhtiyacınızı ve tercihlerinizi bizimle paylaşın.'},{t:'Tasarımı Onaylayın',d:'Size özel tasarımı hazırlayalım, onayınızı alalım.'},{t:'Özenle Hazırlayalım',d:'Ürünlerinizi el emeğiyle, büyük bir özenle hazırlayalım.'},{t:'Zamanında Teslim',d:'Belirttiğiniz tarihte, güvenle kapınıza teslim edelim.'}],
- whyHead:{eb:'Neden Biz',t:'Neden Davet Sandığı?'},
- why:[{t:'Kişiye Özel Tasarım',d:'İhtiyacınıza ve konseptinize özel kişiselleştirme.'},{t:'Özenli Hazırlık',d:'Her detayında emek ve özen barındırır.'},{t:'Özenle Seçilen Malzemeler',d:'Kaliteli, özenle seçilmiş malzemeler; şık ve zarif tasarımlar.'},{t:'Zamanında Teslimat',d:'Belirttiğiniz tarihte güvenli teslimat.'}],
- cta:{eb:'Birlikte Tasarlayalım',t:'Hayalinizdeki hediyeliği birlikte tasarlayalım.',p:'Size özel teklif almak ve detaylı bilgi için bizimle iletişime geçin. Fikirlerinizi birlikte hayata geçirelim.',btn:"WhatsApp'tan Teklif Al",img:''}
+ heroEyebrow:'',heroBtn1:'',heroBtn2:'',heroImg:'',proof:[],
+ collHead:{eb:'',t:'Yayındaki koleksiyonlar',s:''},prodHead:{eb:'',t:'Yayındaki ürünler',s:''},
+ howHead:{eb:'',t:'Süreç'},steps:[],whyHead:{eb:'',t:'Davet Sandığı'},why:[],
+ cta:{eb:'',t:'',p:'',btn:'',img:''}
 };
-var DEF_BANNER={eyebrow:'Kişiye özel davet & hatıra tasarımları',title:'Özel anlarınız,\n*unutulmaz hatıralara* dönüşsün.',lead:'Söz, nişan, kına, nikâh ve tüm özel günleriniz için el emeğiyle hazırlanan, kişiye özel hediyelikler.',b1t:'Ürünleri Keşfet',b1l:'#urunler',b2t:'Koleksiyonları İncele',b2l:'#koleksiyonlar',img:'hero'};
-function defSettings(){return{whatsapp:'905399413902',banners:[JSON.parse(JSON.stringify(DEF_BANNER))],instagram:'',phone:'+90 539 941 39 02',mail:'info@davetsandigi.com',addr:"Türkiye'nin her yerine teslimat",heroTitle:'',heroLead:'',minQty:25,stepQty:25,quoteThreshold:100,shipFee:150,shipFree:2500,orderNext:125,topbar:DEF_TOPBAR.slice(),reviews:JSON.parse(JSON.stringify(DEF_REVIEWS)),revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:JSON.parse(JSON.stringify(DEF_FAQ)),story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
+var DEF_BANNER={eyebrow:'',title:'',lead:'',b1t:'',b1l:'',b2t:'',b2l:'',img:''};
+function defSettings(){return{whatsapp:'',banners:[],instagram:'',phone:'',mail:'',addr:'',deliveryText:'',shippingNote:'',heroTitle:'',heroLead:'',minQty:1,stepQty:1,quoteThreshold:0,shipFee:0,shipFree:0,orderNext:1,topbar:[],reviews:[],revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:[],story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
 function save(k,v){var stored=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){stored=false;}if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}return stored;}
 function pad3(n){return('000'+n).slice(-3);}
@@ -136,9 +79,9 @@ function seedProducts(){
  });
  return out;
 }
-var occasions=load(LS.o,null)||DEF_OCC; if(!load(LS.o,null))save(LS.o,occasions);
-var categories=load(LS.c,null)||DEF_CAT; if(!load(LS.c,null))save(LS.c,categories);
-var products=load(LS.p,null)||seedProducts(); if(!load(LS.p,null))save(LS.p,products);
+var occasions=load(LS.o,[])||[];
+var categories=load(LS.c,[])||[];
+var products=load(LS.p,[])||[];
 var settings=(function(){var d=defSettings(),s=load(LS.s,null);if(!s){save(LS.s,d);return d;}for(var k in d){if(s[k]===undefined)s[k]=d[k];}return s;})();
 var cart=load(LS.cart,[]);
 var wish=load('ds_wish_v1',[]);

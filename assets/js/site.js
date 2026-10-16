@@ -2,19 +2,56 @@
 function nl2br(s){return esc(s).replace(/\n/g,'<br>');}
 function applySettings(){applyContact();renderBanners();renderSectionContent();renderReviews();renderFaq();}
 function renderPublicContentStates(){applySettings();}
-function setContact(sel,val){var e=$(sel);if(!e)return;e.textContent=val||'';var box=e.closest('li,.tb-right');if(box)box.style.display=val?'':'none';}
+function setContact(sel,val,scheme){
+ var e=$(sel);if(!e)return;
+ if(val&&scheme&&e.tagName!=='A'){
+  var link=document.createElement('a');link.id=e.id;e.removeAttribute('id');e.replaceWith(link);e=link;
+ }
+ e.textContent=val||'';
+ if(e.tagName==='A'){
+  if(val){e.href=scheme==='tel'?'tel:'+String(val).replace(/[^+0-9]/g,''):'mailto:'+val;}
+  else e.removeAttribute('href');
+ }
+ e.hidden=!val;
+ var box=e.closest('li,.tb-right');if(box)box.hidden=!val;
+}
+function setPublicLink(id,url,label){
+ var link=$('#'+id);if(!link)return;
+ link.hidden=!url;
+ if(url){link.href=url;link.target='_blank';link.rel='noopener noreferrer';}
+ else link.removeAttribute('href');
+ if(label){var text=link.querySelector('span');if(text)text.textContent=label;else link.textContent=label;}
+}
 function applyContact(){
- var ok=!!waNumber(),wl=waLink('Merhaba, Davet Sandığı hakkında teklif/bilgi almak istiyorum.');
- ['hdr-wa','cta-wa','ft-wa','story-wa'].forEach(function(id){var e=$('#'+id);if(!e)return;var custom=!!e.dataset.custom;e.style.display=(ok||custom)?'':'none';if(ok&&!custom)e.href=wl;else if(!custom)e.removeAttribute('href');});
- setContact('#tb-phone',settings.phone);setContact('#ft-phone',settings.phone);setContact('#ft-mail',settings.mail);setContact('#ft-addr',settings.addr);
- var ig=$('#ft-ig');if(ig){ig.style.display=settings.instagram?'':'none';if(settings.instagram){ig.href=settings.instagram;ig.target='_blank';ig.rel='noopener';}else ig.removeAttribute('href');}
+ var ok=!!waNumber(),wl=ok?waLink('Davet Sandığı için sipariş talebi oluşturmak istiyorum.'):'';
+ ['hdr-wa','cta-wa','ft-wa','channel-wa'].forEach(function(id){
+  var e=$('#'+id);if(!e)return;var custom=!!e.dataset.custom;
+  e.hidden=!ok&&!custom;
+  if(ok&&!custom)e.href=wl;else if(!custom)e.removeAttribute('href');
+ });
+ setPublicLink('hdr-ig',settings.instagram,'Instagram');
+ setPublicLink('ft-ig',settings.instagram);
+ setPublicLink('story-ig',settings.instagram,'Instagram’ı ziyaret edin');
+ setPublicLink('channel-ig',settings.instagram,'Instagram’ı ziyaret edin');
+ var headerRequest=$('#hdr-wa span');if(headerRequest)headerRequest.textContent='WhatsApp’ta Sipariş Talebi';
+ var ctaRequest=$('#cta-btnt');if(ctaRequest&&!$('#cta-wa').dataset.custom)ctaRequest.textContent='WhatsApp’ta Sipariş Talebi Oluştur';
+ setContact('#tb-phone',settings.phone,'tel');setContact('#ft-phone',settings.phone,'tel');setContact('#ft-mail',settings.mail,'mailto');
+ var address=$('#ft-addr');if(address&&address.closest('li'))address.closest('li').hidden=true;
+ renderOrderContext();
+ setSectionState('social-commerce',catalogState.settings==='loading'?'loading':catalogState.settings==='error'?'error':'ready');
+}
+function renderOrderContext(){
+ var note=$('#cart-rule-note');if(!note)return;
+ var parts=[settings.deliveryText,settings.shippingNote].filter(function(value){return!!String(value||'').trim();});
+ parts.push('Kesin fiyat ve sipariş talebi WhatsApp görüşmesinde onaylanır.');
+ note.textContent=parts.join(' ');
 }
 function contentState(group,hasItems){var st=catalogState[group];if(st==='loading'||st==='error')return st;return hasItems?'ready':'empty';}
-function applyMediaTo(img,m){if(!img||!m)return;img.src=m.src;img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.loading='lazy';img.decoding='async';}
+function applyMediaTo(img,m){if(!img||!m)return;img.src=m.src;img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;img.loading='lazy';img.decoding='async';}
+function clearPublicImage(img){if(!img)return;img.removeAttribute('src');img.alt='';img.hidden=true;}
 function setT(sel,val){var e=$(sel);if(e&&val!=null)e.textContent=val;}
 /* ---- BANNER SLIDER ---- */
 var bnIndex=0,bnTimer=null;
-var HERO_FALLBACK={src:'assets/images/fallback/hero.webp',alt:'Davet Sandığı hediyelik koleksiyonu',width:1600,height:1179};
 var FALLBACK_BANNER={eyebrow:'',title:'Davet Sandığı',lead:'',b1t:'Ürünleri Keşfet',b1l:'#urunler',b2t:'Koleksiyonları İncele',b2l:'#koleksiyonlar',media:null};
 function bannerList(){return publicBanners.length?publicBanners:[FALLBACK_BANNER];}
 function titleFmt(t){return esc(t||'').replace(/\n/g,'<br>').replace(/\*(.+?)\*/g,'<em>$1</em>');}
@@ -22,14 +59,15 @@ function showBanner(b){
  setT('#hero-eyebrow',b.eyebrow||'');
  $('#hero-title').innerHTML=titleFmt(b.title);
  setT('#hero-lead',b.lead||'');
- var img=$('#hero-img'),m=b.media||HERO_FALLBACK,first=bnIndex===0;
- if(img.getAttribute('src')!==m.src)img.src=m.src;
- img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;
+ var img=$('#hero-img'),m=b.media,first=bnIndex===0,mediaBox=img.closest('.hero-media');
+ if(m){if(img.getAttribute('src')!==m.src)img.src=m.src;img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;}
+ else{img.removeAttribute('src');img.alt='';img.hidden=true;}
+ if(mediaBox)mediaBox.hidden=!m;
  img.loading=first?'eager':'lazy';img.setAttribute('fetchpriority',first?'high':'auto');img.decoding='async';
  var cta=$('#hero-cta');cta.innerHTML='';
  if(b.b1t&&b.b1l)cta.innerHTML+='<a href="'+qesc(b.b1l)+'" class="btn btn-primary">'+esc(b.b1t)+' '+ICON.arr+'</a>';
  if(b.b2t&&b.b2l)cta.innerHTML+='<a href="'+qesc(b.b2l)+'" class="btn btn-ghost">'+esc(b.b2t)+'</a>';
- var proof=$('#hero-proof');if(proof)proof.innerHTML='';
+ var proof=$('#hero-proof');if(proof){proof.innerHTML='';proof.hidden=true;}
 }
 function renderBanners(){
  var st=catalogState.banners;setSectionState('hero-section',st==='ready'&&!publicBanners.length?'empty':st);
@@ -53,25 +91,30 @@ function renderItemSection(key,field,sectionId,boxSel,headSel,msgs,build){
  box.innerHTML=items.map(build).join('');observeReveal();
 }
 function renderProcess(){
- renderItemSection('process','steps','hakkimizda','#hakkimizda .steps','#howhead',{loading:'Süreç adımları yükleniyor…',empty:'Süreç adımları yakında eklenecek.',error:'Süreç adımları şu an yüklenemedi.'},function(i,n){return'<div class="step reveal"><div class="step-ic">'+STEP_ICONS[n%STEP_ICONS.length]+'</div><span class="num">'+('0'+(n+1)).slice(-2)+'</span><h3>'+esc(i.title)+'</h3><p>'+esc(i.description||'')+'</p></div>';});
+ renderItemSection('process','steps','hakkimizda','#hakkimizda .steps','#howhead',{loading:'Süreç bilgisi yükleniyor…',empty:'Henüz yayımlanmış süreç bilgisi bulunmuyor.',error:'Süreç bilgisi şu an yüklenemedi.'},function(i,n){return'<div class="step reveal"><div class="step-ic">'+STEP_ICONS[n%STEP_ICONS.length]+'</div><span class="num">'+('0'+(n+1)).slice(-2)+'</span><h3>'+esc(i.title)+'</h3><p>'+esc(i.description||'')+'</p></div>';});
 }
 function renderWhy(){
- renderItemSection('why_us','items','neden-biz','#neden-biz .why-grid','#whyhead',{loading:'Bilgiler yükleniyor…',empty:'Bu bölüm yakında eklenecek.',error:'Bu bölüm şu an yüklenemedi.'},function(i,n){return'<div class="why-card reveal"><div class="why-ic">'+WHY_ICONS[n%WHY_ICONS.length]+'</div><h3>'+esc(i.title)+'</h3><p>'+esc(i.description||'')+'</p></div>';});
+ renderItemSection('why_us','items','neden-biz','#neden-biz .why-grid','#whyhead',{loading:'Bilgiler yükleniyor…',empty:'Henüz yayımlanmış bilgi bulunmuyor.',error:'Bu bölüm şu an yüklenemedi.'},function(i,n){return'<div class="why-card reveal"><div class="why-ic">'+WHY_ICONS[n%WHY_ICONS.length]+'</div><h3>'+esc(i.title)+'</h3><p>'+esc(i.description||'')+'</p></div>';});
 }
 function renderCta(){
  var s=publicSections.cta,st=contentState('sections',!!(s&&s.title)),a=$('#cta-wa');
  setSectionState('iletisim',st);delete a.dataset.custom;
  if(st==='ready'){
   setT('#ctahead-eb',s.eyebrow||'');setT('#ctahead-t',s.title);setT('#ctahead-p',s.body||'');
-  if(s.button_text)setT('#cta-btnt',s.button_text);
-  var url=safeUrl(s.button_url);if(url){a.href=url;a.dataset.custom='1';}
-  var m=mediaFrom(s.media_assets,'',s.title);if(m)applyMediaTo($('#cta-img'),m);
+  var url=safeUrl(s.button_url);if(url&&!/wa\.me\//i.test(url)){a.href=url;a.dataset.custom='1';a.classList.remove('btn-wa');a.classList.add('btn-primary');if(s.button_text)setT('#cta-btnt',s.button_text);}
+  else{a.classList.remove('btn-primary');a.classList.add('btn-wa');setT('#cta-btnt','WhatsApp’ta Sipariş Talebi Oluştur');}
+  var m=mediaFrom(s.media_assets,'',s.title),mediaBox=$('#cta-img').parentNode;
+  if(m){applyMediaTo($('#cta-img'),m);mediaBox.hidden=false;}else{clearPublicImage($('#cta-img'));mediaBox.hidden=true;}
+ }else{
+  setT('#ctahead-eb',st==='loading'?'İletişim':'');
+  setT('#ctahead-t',st==='loading'?'İçerik yükleniyor…':st==='error'?'İçerik şu an yüklenemedi.':'Henüz yayımlanmış içerik bulunmuyor.');
+  setT('#ctahead-p','');clearPublicImage($('#cta-img'));$('#cta-img').parentNode.hidden=true;
  }
  applyContact();
 }
 function prepareCampaign(){
  var s=publicSections.campaign;
- if(catalogState.sections==='ready'&&s&&s.title&&s.body){settings.campaign={enabled:true,title:s.title,text:s.body,btnText:s.button_text||'',btnLink:safeUrl(s.button_url),media:mediaFrom(s.media_assets,'',s.title)};showCampaign();}
+ if(catalogState.sections==='ready'&&s&&s.title&&s.body){settings.campaign={enabled:true,title:s.title,text:s.body,btnText:s.button_text||'',btnLink:safeUrl(s.button_url)&&!/wa\.me\//i.test(s.button_url)?safeUrl(s.button_url):'',media:mediaFrom(s.media_assets,'',s.title)};showCampaign();}
  else settings.campaign={enabled:false};
 }
 function renderSectionContent(){renderTopbar();renderProcess();renderWhy();renderStory();renderCta();prepareCampaign();}
@@ -82,14 +125,14 @@ function renderTopbar(){
  items.forEach(function(t){var li=el('li');li.innerHTML=ICON.chk+' '+esc(t);ul.appendChild(li);});
 }
 function renderStory(){
- var s=publicSections.story,st=contentState('sections',!!(s&&(s.body||s.title))),txt=$('#story-text'),lead=$('#story-lead');
+ var s=publicSections.story,st=contentState('sections',!!(s&&(s.body||s.title))),txt=$('#story-text'),lead=$('#story-lead'),mediaBox=$('#story-img').parentNode;
  setSectionState('hikayemiz',st);
  if(lead){lead.textContent='';lead.style.display='none';}
- if(st!=='ready'){if(txt)txt.textContent={loading:'Yükleniyor…',empty:'Hikâyemiz yakında burada olacak.',error:'Bu bölüm şu an yüklenemedi.'}[st];return;}
+ if(st!=='ready'){clearPublicImage($('#story-img'));mediaBox.hidden=true;if(txt)txt.textContent={loading:'Yükleniyor…',empty:'Henüz yayımlanmış içerik bulunmuyor.',error:'Bu bölüm şu an yüklenemedi.'}[st];return;}
  if($('#story-eyebrow'))$('#story-eyebrow').textContent=s.eyebrow||'Hakkımızda';
  if($('#story-title'))$('#story-title').textContent=s.title||'Hikayemiz';
  if(txt)txt.innerHTML=nl2br(s.body||'');
- var m=mediaFrom(s.media_assets,'',s.title);if(m)applyMediaTo($('#story-img'),m);
+ var m=mediaFrom(s.media_assets,'',s.title);if(m){applyMediaTo($('#story-img'),m);mediaBox.hidden=false;}else{clearPublicImage($('#story-img'));mediaBox.hidden=true;}
 }
 function renderReviews(){
  var g=$('#review-grid');if(!g)return;
@@ -107,12 +150,31 @@ function renderReviews(){
 }
 function scrollRev(dir){var t=$('#review-grid');if(!t)return;var c=t.querySelector('.review-card');var w=c?c.getBoundingClientRect().width+24:320;t.scrollBy({left:dir*w,behavior:'smooth'});}
 function updateRevArrows(){var t=$('#review-grid');if(!t)return;var over=t.scrollWidth>t.clientWidth+4;if($('#rev-prev'))$('#rev-prev').hidden=!over;if($('#rev-next'))$('#rev-next').hidden=!over;}
+function faqText(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[’‘]/g,"'").replace(/[–—]/g,'-');}
+function resolvedPublicFaq(f){
+ var question=faqText(f.question),answer=faqText(f.answer),pair=question+'|'+answer;
+ var legacy={
+  "minimum siparis adedi nedir?|urunlerimiz minimum 25 adet ve 25'er artislarla siparis edilebilir. adet secimini sepet uzerinden yapabilirsiniz.":'minimum',
+  '100 adet uzeri fiyat nasil belirlenir?|100 adedin uzerindeki siparislerde size ozel fiyat teklifi sunuyoruz. sepetinizi olusturup whatsapp\'tan iletisime gecmeniz yeterli.':'quote',
+  'kargo ucreti ne kadar?|kargo ucreti siparis sirasinda belirtilir. belirli tutarin uzerindeki siparislerde kargo ucretsizdir.':'shipping',
+  'teslimat suresi ne kadardir?|tasarim onayinin ardindan ortalama 5-7 is gunu icinde hazirlayip kargoya veriyoruz.':'delivery',
+  'kisiye ozel tasarim yapiyor musunuz?|evet, isim, tarih ve konseptinize ozel tasarimlar hazirliyoruz. talebinizi whatsapp uzerinden iletebilirsiniz.':'unconfirmed'
+ };
+ var type=legacy[pair];if(!type)return{question:f.question,answer:f.answer};
+ if(type==='unconfirmed')return null;
+ if(type==='shipping')return settings.shippingNote?{question:f.question,answer:settings.shippingNote}:null;
+ if(type==='delivery')return settings.deliveryText?{question:f.question,answer:settings.deliveryText}:null;
+ if(type==='minimum')return{question:f.question,answer:'Minimum adet ve artış kuralı ürün detayında belirtilir.'};
+ return{question:f.question,answer:'Özel fiyat teklifi gereken ürün veya adetler ürün ve sepet görünümünde belirtilir.'};
+}
 function renderFaq(){
  var l=$('#faq-list');if(!l)return;
- var st=contentState('faqs',publicFaqs.length>0);setSectionState('sss',st);
- if(st!=='ready'){l.innerHTML=stateBox(st,{loading:'Sorular yükleniyor…',empty:'Şu anda yayında soru bulunmuyor.',error:'Sorular şu an yüklenemedi.'}[st]);return;}
+ var st=contentState('faqs',publicFaqs.length>0),resolved=st==='ready'?publicFaqs.map(resolvedPublicFaq).filter(Boolean):[];
+ if(st==='ready'&&!resolved.length)st='empty';
+ setSectionState('sss',st);
+ if(st!=='ready'){l.innerHTML=stateBox(st,{loading:'Sorular yükleniyor…',empty:'Şu anda yayımlanmış soru bulunmuyor.',error:'Sorular şu an yüklenemedi.'}[st]);return;}
  l.innerHTML='';
- publicFaqs.forEach(function(f){
+ resolved.forEach(function(f){
   var it=el('div','faq-item reveal');
   it.innerHTML='<button class="faq-q" type="button" aria-expanded="false"><span>'+esc(f.question)+'</span><b>+</b></button><div class="faq-a"><p>'+esc(f.answer)+'</p></div>';
   it.querySelector('.faq-q').addEventListener('click',function(){it.classList.toggle('open');var open=it.classList.contains('open');it.querySelector('.faq-q b').textContent=open?'–':'+';this.setAttribute('aria-expanded',open?'true':'false');});
@@ -137,7 +199,8 @@ function runSearch(){
 function openLegal(key){
  var titles={privacy:'Gizlilik Politikası',kvkk:'KVKK Aydınlatma Metni',cookie:'Çerez Politikası',mesafeli:'Sipariş & Mesafeli Satış Koşulları'};
  $('#legal-title').textContent=titles[key]||'Bilgilendirme';
- $('#legal-body').innerHTML=nl2br((settings.legal||{})[key]||'');
+ var text=(settings.legal||{})[key]||'';
+ $('#legal-body').textContent=text||'Bu metin henüz yayımlanmamıştır.';
  $('#legal-modal').classList.add('open');
 }
 /* ---- COOKIE CONSENT ---- */

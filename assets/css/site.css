@@ -444,6 +444,14 @@ em{color:var(--gold);font-style:italic;}
 .receipt-quote-note{color:var(--gold)}
 .receipt-legal-note{border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
 .wa-message-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;margin:16px 0 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--cream);color:var(--ink);font:12px/1.55 var(--sans);}
+.btn-instagram svg{width:16px;height:16px;flex-shrink:0}
+[hidden]{display:none!important}
+.channel-links{justify-content:center}
+.footer-scope{margin:8px 0;color:rgba(250,247,240,.68);font-size:12px}
+.footer .contact a{color:inherit;overflow-wrap:anywhere}
+.hero[data-state="empty"] .wrap{grid-template-columns:1fr}
+.hero-media[hidden],.story-media[hidden],.ctaband .media[hidden]{display:none!important}
+@media(max-width:760px){.header-actions .btn-instagram span{display:none}.header-actions .btn-instagram{padding:10px 12px}}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
 .sec-state{grid-column:1/-1;text-align:center;color:var(--moss);padding:40px 20px;border:1px dashed var(--line);border-radius:16px;background:var(--cream);font-size:15px}
 .sec-state.error{color:var(--espresso)}

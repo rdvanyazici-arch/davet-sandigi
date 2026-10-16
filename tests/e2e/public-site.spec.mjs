@@ -19,7 +19,7 @@ function makeDb(extraProducts = []) {
   });
   const live = rows => rows.map(row => ({ is_active: true, ...row }));
   return {
-    site_settings_public: [{ id: 1, whatsapp_number: '905301112233', instagram_url: 'https://www.instagram.com/test', phone: '+90 212 000 00 00', email: 'info@example.test', delivery_text: 'Türkiye geneli teslimat', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo görüşmede netleşir.' }],
+    site_settings_public: [{ id: 1, whatsapp_number: '905301112233', instagram_url: 'https://www.instagram.com/brand-channel-check', phone: '+90 212 000 00 00', email: 'info@example.test', delivery_text: 'Teslimat bilgisi panelde yönetilir.', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo bilgisi panelde yönetilir.' }],
     categories: [
       { id: 1, slug: 'kolonya', name: 'Kolonya', description: '', sort_order: 1, is_active: true, archived_at: null },
       { id: 2, slug: 'mum', name: 'Mum', description: '', sort_order: 2, is_active: true, archived_at: null },
@@ -49,8 +49,17 @@ function makeDb(extraProducts = []) {
       { section_key: 'story', eyebrow: 'Hakkımızda', title: 'Hikâyemiz', body: 'Test hikâye metni.', media_assets: media('story/s.webp', 'Atölye görseli', 1200, 800) },
       { section_key: 'cta', eyebrow: 'İletişim', title: 'Birlikte tasarlayalım', body: 'Bize yazın.', button_text: 'Yazın', media_assets: media('campaigns/c.webp', 'CTA görseli', 1200, 800) }
     ]),
-    faqs: [{ id: 1, question: 'Siteden tahsilat yapılıyor mu?', answer: 'Hayır.', sort_order: 1 }, { id: 2, question: 'Pasif soru', answer: 'x', sort_order: 2, is_active: false }].map(row => ({ is_active: true, ...row })),
-    testimonials: [{ id: 1, customer_display_name: 'A. Y.', event_name: 'Nişan', review_text: 'Çok memnun kaldık.', rating: 4, sort_order: 1, is_published: true, consent_confirmed: true, media_assets: media('testimonials/1/t.webp', 'Müşteri fotoğrafı', 600, 800) }]
+    faqs: [
+      { id: 1, question: 'Siteden tahsilat yapılıyor mu?', answer: 'Sitede çevrimiçi ödeme alınmaz. Sipariş talebi WhatsApp görüşmesinde karşılıklı onaylandıktan sonra kesinleşir.', sort_order: 1 },
+      { id: 2, question: 'Kargo ücreti ne kadar?', answer: 'Kargo ücreti sipariş sırasında belirtilir. Belirli tutarın üzerindeki siparişlerde kargo ücretsizdir.', sort_order: 2 },
+      { id: 3, question: 'Teslimat süresi ne kadardır?', answer: 'Tasarım onayının ardından ortalama 5–7 iş günü içinde hazırlayıp kargoya veriyoruz.', sort_order: 3 },
+      { id: 4, question: 'Minimum sipariş adedi nedir?', answer: 'Ürünlerimiz minimum 25 adet ve 25’er artışlarla sipariş edilebilir. Adet seçimini sepet üzerinden yapabilirsiniz.', sort_order: 4 },
+      { id: 5, question: 'Pasif soru', answer: 'x', sort_order: 5, is_active: false }
+    ].map(row => ({ is_active: true, ...row })),
+    testimonials: [
+      { id: 1, customer_display_name: 'A. Y.', event_name: 'Nişan', review_text: 'Çok memnun kaldık.', rating: 4, sort_order: 1, is_published: true, consent_confirmed: true, media_assets: media('testimonials/1/t.webp', 'Müşteri fotoğrafı', 600, 800) },
+      ...['Elif & Burak', 'Zeynep Y.', 'Merve & Can', 'Ayşe & Mert', 'Selin & Kaan', 'Deniz & Ece'].map((customer_display_name, index) => ({ id: index + 2, customer_display_name, event_name: 'Örnek', review_text: 'Örnek yorum.', rating: 5, sort_order: index + 2, is_published: true, consent_confirmed: true, media_assets: null }))
+    ]
   };
 }
 
@@ -101,7 +110,7 @@ async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, 
 const state = (page, id) => page.locator(`#${id}`);
 async function waitReady(page) {
   await expect(state(page, 'urunler')).toHaveAttribute('data-state', 'ready');
-  await expect(state(page, 'sss')).toHaveAttribute('data-state', 'ready');
+  await expect(state(page, 'sss')).toHaveAttribute('data-state', /^(ready|empty)$/);
 }
 
 test('aktif ürün görünür; pasif/arşivli ürün liste, arama, doğrudan bağlantı ve sepette yok', async ({ page }) => {
@@ -137,7 +146,7 @@ test('aktif ürün görünür; pasif/arşivli ürün liste, arama, doğrudan ba�
   await expect(page.locator('#drawer-body')).toContainText('Bu ürün artık yayında değil.');
   await expect(page.locator('#drawer-body')).toContainText('Toplama dahil edilmedi.');
   await expect(page.locator('#drawer-body')).not.toContainText('Pasif Ürün');
-  await expect(page.locator('#cart-ship')).toHaveText('Kargo görüşmede netleşir.');
+  await expect(page.locator('#cart-ship')).toHaveText('Kargo bilgisi panelde yönetilir.');
   await expect(page.locator('#cart-ship')).not.toContainText('Ücretsiz');
   expect(log.pageErrors).toEqual([]);
 
@@ -243,10 +252,10 @@ test('boş durum: yayında içerik yok', async ({ page }) => {
   await expect(page.locator('#prod-grid')).toContainText('Şu anda yayında ürün bulunmuyor.');
   await expect(page.locator('#coll-grid')).toContainText('Şu anda yayında koleksiyon bulunmuyor.');
   await expect(state(page, 'koleksiyonlar')).toHaveAttribute('data-state', 'empty');
-  await expect(page.locator('#faq-list')).toContainText('Şu anda yayında soru bulunmuyor.');
+  await expect(page.locator('#faq-list')).toContainText('Şu anda yayımlanmış soru bulunmuyor.');
   await expect(page.locator('#review-grid')).toContainText('Henüz yayınlanmış yorum bulunmuyor.');
-  await expect(page.locator('#story-text')).toHaveText('Hikâyemiz yakında burada olacak.');
-  await expect(page.locator('#hakkimizda .steps')).toContainText('Süreç adımları yakında eklenecek.');
+  await expect(page.locator('#story-text')).toHaveText('Henüz yayımlanmış içerik bulunmuyor.');
+  await expect(page.locator('#hakkimizda .steps')).toContainText('Henüz yayımlanmış süreç bilgisi bulunmuyor.');
   await expect(state(page, 'neden-biz')).toHaveAttribute('data-state', 'empty');
   await expect(state(page, 'hero-section')).toHaveAttribute('data-state', 'empty');
   await expect(page.locator('#hero-title')).toHaveText('Davet Sandığı');
@@ -343,6 +352,114 @@ test('ağ: yalnızca doğru Supabase projesi, yalnızca açık sütunlu GET sorg
     expect(source, file).not.toMatch(/service_role|sb_secret_|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\./);
     expect(source, file).not.toMatch(/select\(\s*['"]\*['"]/);
   }
+});
+
+test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta tıklanabilir', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect.poll(() => page.evaluate(() => catalogState.settings)).toBe('ready');
+  expect(await page.evaluate(() => [settings.minQty, settings.stepQty, settings.quoteThreshold])).toEqual([25, 25, 100]);
+  await page.click('#cookie-reject');
+
+  await expect(page.locator('#hdr-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
+  await expect(page.locator('#ft-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
+  await expect(page.locator('#channel-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
+  await expect(page.locator('#social-commerce')).toContainText('Instagram ana satış ve marka iletişim kanalıdır.');
+  await expect(page.locator('#social-commerce')).toContainText('Sipariş talebi WhatsApp üzerinden iletilir.');
+  await expect(page.locator('#hdr-wa')).toContainText('WhatsApp’ta Sipariş Talebi');
+  await expect(page.locator('#channel-wa')).toContainText('WhatsApp’ta Sipariş Talebi Oluştur');
+  await expect(page.locator('#topbar-list')).toContainText('Kişiye özel üretim');
+  await expect(page.locator('#hdr-wa')).toHaveAttribute('href', /^https:\/\/wa\.me\/905301112233\?/);
+  await expect(page.locator('#tb-phone a, #tb-phone')).toHaveAttribute('href', 'tel:+902120000000');
+  await expect(page.locator('#ft-phone')).toHaveAttribute('href', 'tel:+902120000000');
+  await expect(page.locator('#ft-mail')).toHaveAttribute('href', 'mailto:info@example.test');
+
+  await page.locator('[data-add="1"]').first().click();
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer-body .stepper')).toContainText('25');
+  await expect(page.locator('#cart-rule-note')).toContainText('Teslimat bilgisi panelde yönetilir.');
+  await expect(page.locator('#cart-rule-note')).toContainText('Kargo bilgisi panelde yönetilir.');
+  await expect(page.locator('#drawer-body')).toContainText('Kolonya Ürünü');
+  await page.evaluate(() => { addToCart('1'); addToCart('1'); addToCart('1'); });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6'))[0].quantity)).toBe(100);
+  await expect(page.locator('#cart-total')).toHaveText('Özel fiyat teklifi');
+  await expect(page.locator('#faq-list')).toContainText('Kargo bilgisi panelde yönetilir.');
+  await expect(page.locator('#faq-list')).toContainText('Teslimat bilgisi panelde yönetilir.');
+  await expect(page.locator('#faq-list')).toContainText('Minimum adet ve artış kuralı ürün detayında belirtilir.');
+  await expect(page.locator('#faq-list')).toContainText('Sitede çevrimiçi ödeme alınmaz.');
+  await expect(page.locator('#faq-list')).not.toContainText('150 TL');
+  await expect(page.locator('#faq-list')).not.toContainText('5–7 iş günü');
+  await expect(page.locator('#faq-list')).not.toContainText('25’er artış');
+  await expect(page.locator('#review-grid')).toContainText('A. Y.');
+  await expect(page.locator('#review-grid')).not.toContainText('Elif & Burak');
+  await expect(page.locator('#review-grid')).not.toContainText('Zeynep Y.');
+  await expect(page.locator('.footer-about')).toHaveText('Baby Shower şu anda sunulmuyor. Güncel ürünleri katalogda inceleyebilirsiniz.');
+  await page.click('#drawer-close');
+  await page.click('[data-legal="privacy"]');
+  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz yayımlanmamıştır.');
+});
+
+test('Faz 10: legacy contact samples suppressed; approved management copy including claims is visible', async ({ page }) => {
+  const db = makeDb();
+  db.banners = [{ id: 9, is_active: true, title: 'Kişiye özel tasarım', description: 'El emeği ve özenle seçilen kaliteli malzemeler.', sort_order: 1, starts_at: null, ends_at: null, media_assets: media('banners/9/new.webp', 'Yeni banner') }];
+  db.content_sections = [
+    { section_key: 'topbar', is_active: true, content_json: { items: ['El emeği', 'Kişiye özel üretim', 'Kaliteli malzeme'] } },
+    { section_key: 'process', is_active: true, title: 'Süreç', content_json: { steps: [{ title: 'Zamanında Teslim', description: 'Belirtilen tarihte teslim.' }] } },
+    { section_key: 'why_us', is_active: true, title: 'Neden biz?', content_json: { items: [{ title: 'Kaliteli malzeme', description: 'Özenle seçildi.' }, { title: 'Kişiye özel tasarım', description: 'Size özel üretim.' }] } },
+    { section_key: 'story', is_active: true, title: 'Hikâyemiz', body: 'Davet Sandığı kişiye özel tasarımlar sunar.' },
+    { section_key: 'cta', is_active: true, title: 'Birlikte tasarlayalım', body: 'Kişiye özel tasarım için bize yazın.' },
+    { section_key: 'campaign', is_active: true, title: 'Yeni koleksiyon', body: 'El emeği ürünleri keşfedin.' }
+  ];
+  db.site_settings_public[0] = {
+    id: 1, whatsapp_number: '905399413902', instagram_url: 'https://www.instagram.com/davetsandigi?utm_source=legacy',
+    phone: '+90 539 941 39 02', email: 'info@davetsandigi.com', delivery_text: "Türkiye'nin her yerine teslimat",
+    currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: ''
+  };
+  db.faqs = [{ id: 1, question: 'Teslimat süresi ne kadardır?', answer: 'Tasarım onayının ardından ortalama 5–7 iş günü içinde hazırlayıp kargoya veriyoruz.', sort_order: 1, is_active: true }];
+  await setup(page, { db });
+  await page.goto('/index.html');
+  await waitReady(page);
+
+  for (const id of ['hdr-ig', 'ft-ig', 'channel-ig', 'hdr-wa', 'ft-wa', 'channel-wa']) await expect(page.locator(`#${id}`), id).toBeHidden();
+  await expect(page.locator('#tb-phone')).toBeHidden();
+  await expect(page.locator('#ft-phone')).toBeHidden();
+  await expect(page.locator('#ft-mail')).toBeHidden();
+  await expect(page.locator('#hero-title')).toHaveText('Kişiye özel tasarım');
+  await expect(page.locator('#hero-img')).toBeVisible();
+  await expect(page.locator('#topbar-list')).toContainText('El emeği');
+  await expect(page.locator('#topbar-list')).toContainText('Kişiye özel üretim');
+  await expect(page.locator('#topbar-list')).toContainText('Kaliteli malzeme');
+  await expect(page.locator('#hakkimizda .steps')).toContainText('Zamanında Teslim');
+  await expect(page.locator('#neden-biz .why-grid')).toContainText('Kaliteli malzeme');
+  await expect(page.locator('#neden-biz .why-grid')).toContainText('Kişiye özel tasarım');
+  await expect(page.locator('#story-text')).toContainText('kişiye özel tasarımlar');
+  await expect(page.locator('#ctahead-t')).toHaveText('Birlikte tasarlayalım');
+  await expect(page.locator('#campaign-modal')).toHaveClass(/open/);
+  await expect(page.locator('#cart-rule-note')).not.toContainText('Türkiye');
+  await expect(page.locator('#faq-list')).toContainText('Şu anda yayımlanmış soru bulunmuyor.');
+  await expect(page.locator('#review-grid')).toContainText('A. Y.');
+  await expect(page.locator('#review-grid')).not.toContainText('Elif & Burak');
+  await expect(page.locator('#review-grid')).not.toContainText('Ayşe & Mert');
+  await expect(page.locator('body')).not.toContainText('Türkiye’nin her yerine');
+  await expect(page.locator('body')).not.toContainText('info@davetsandigi.com');
+  await expect(page.locator('body')).not.toContainText('905399413902');
+  await page.click('#camp-close');
+  await page.click('[data-legal="privacy"]');
+  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz yayımlanmamıştır.');
+});
+
+test('Faz 10: mobilde Instagram/WhatsApp ve tutarlı kapsam metinleri taşmaz', async ({ page }) => {
+  await setup(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+  await expect(page.locator('#channel-ig')).toBeVisible();
+  await expect(page.locator('#channel-wa')).toBeVisible();
+  await expect(page.locator('.footer-about')).toContainText('Baby Shower şu anda sunulmuyor.');
+  const sizes = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: document.documentElement.clientWidth }));
+  expect(sizes.body).toBeLessThanOrEqual(sizes.viewport + 1);
 });
 
 test('Faz 9: sepet ekle/çıkar, minimum adet, artış ve saklanan veri biçimi', async ({ page }) => {

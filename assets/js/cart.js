@@ -12,14 +12,14 @@ persistCart();
 function cartId(i){return String(i.product_id);}
 function cartQuantity(i){return Number(i.quantity)||0;}
 function prodById(id){return products.filter(function(x){return String(x.id)===String(id);})[0];}
-function productMin(p){return Math.max(1,Number(p&&p.minQuantity)||Number(settings.minQty)||1);}
-function productStep(p){return Math.max(1,Number(p&&p.quantityStep)||Number(settings.stepQty)||1);}
+function productMin(p){var n=Number(p&&p.minQuantity);if(!Number.isInteger(n)||n<1)n=Number(settings.minQty);return Number.isInteger(n)&&n>0?n:1;}
+function productStep(p){var n=Number(p&&p.quantityStep);if(!Number.isInteger(n)||n<1)n=Number(settings.stepQty);return Number.isInteger(n)&&n>0?n:1;}
 function normalizeQuantity(p,qty){var min=productMin(p),step=productStep(p),n=Math.max(min,Number(qty)||min);return min+Math.ceil((n-min)/step)*step;}
 function isQuote(qty,p){return!!(p&&p.priceMode==='quote')||((Number(settings.quoteThreshold)||0)>0&&Number(qty)>=(Number(settings.quoteThreshold)||0));}
 function activeCart(){return cart.map(function(i){return{item:i,product:prodById(cartId(i))};}).filter(function(x){return!!x.product;});}
-function cartQty(){return activeCart().reduce(function(s,x){return s+cartQuantity(x.item);},0);}
+function cartQty(){return catalogReady()?activeCart().reduce(function(s,x){return s+cartQuantity(x.item);},0):cart.reduce(function(s,i){return s+cartQuantity(i);},0);}
 function catalogReady(){return catalogState.catalog==='ready';}
-function cartPriceError(){return activeCart().some(function(x){return x.product.priceMode==='error';});}
+function cartPriceError(){return(!catalogReady()&&cart.length>0)||activeCart().some(function(x){return x.product.priceMode==='error';});}
 function lineTotal(p,qty){return p.priceMode==='price'&&!isQuote(qty,p)?p.price*qty:0;}
 function lineText(p,qty){
  if(isQuote(qty,p)||p.priceMode==='hidden')return'Özel fiyat teklifi';
@@ -70,7 +70,8 @@ function renderCart(){
   var id=cartId(i),p=prodById(id),qty=cartQuantity(i),row=el('div','cart-item');
   if(!p){
    row.classList.add('cart-item-unavailable');
-   row.innerHTML='<div class="ci-main"><h5>'+(catalogReady()?'Bu ürün artık yayında değil.':'Ürün bilgisi yükleniyor…')+'</h5><p class="ci-warning">'+(catalogReady()?'Toplama dahil edilmedi.':'Katalog yüklenince doğrulanacak.')+'</p><div class="stepper"><span>'+qty+' adet</span></div></div><button class="ci-remove" data-rm="'+qesc(id)+'">Kaldır</button>';
+    var unresolved=!catalogReady(),priceNotice=catalogState.catalog==='error'?PUBLIC_PRICE_ERROR:'Katalog yüklenince doğrulanacak.';
+    row.innerHTML='<div class="ci-main"><h5>'+(unresolved?'Ürün bilgisi bekleniyor.':'Bu ürün artık yayında değil.')+'</h5><p class="ci-warning">'+(unresolved?priceNotice:'Toplama dahil edilmedi.')+'</p><div class="stepper"><span>'+qty+' adet</span></div></div><button class="ci-remove" data-rm="'+qesc(id)+'">Kaldır</button>';
    b.appendChild(row);return;
   }
   var quote=isQuote(qty,p);
