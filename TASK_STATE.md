@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 7b ve 7c migration'ları kullanıcı onayıyla uzak `zdksvgtkeeweufuajugd` projesine uygulandı ve doğrulandı. 7c kod değişiklikleri commit edilmedi; 7b commit'i yerelde mevcut, push edilmedi.
+- Güncel durum: Faz 7b ve 7c migration'ları uzak `zdksvgtkeeweufuajugd` projesine uygulandı ve doğrulandı. Faz 7b/7c kodu commit edilerek `refactor/faz-2-yapi` branch'ine gönderildi.
 - Aktif faz: Faz 7 — 7a, 7b ve 7c tamamlandı; Yasal Metinler sekmesi Faz 15 kapsamındadır ve eski yerel yapıda bırakıldı.
-- Beklenen: 7b/7c kodunun kullanıcı tarafından incelenip commit edilmesi; sonraki faza kullanıcı komutuyla geçilmesi.
+- Beklenen: Sonraki faza yalnızca kullanıcı komutuyla geçilmesi.
 
 ### Faz 0–15 durumları
 
@@ -15,7 +15,7 @@
 - Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
 - Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
 - Faz 6 — Yönetici kimlik doğrulaması: **tamamlandı**
-- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta uygulandı) — kod commit'i bekliyor**
+- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta, kod GitHub branch'inde)**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
 - Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
 - Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
@@ -244,5 +244,4 @@
 
 ## Sonraki adım
 
-- Faz 7b/7c kodu kullanıcı tarafından incelenip commit edilecek; 7b commit'i push edilmedi.
-- Faz 7'nin sonraki parçasına kullanıcı komutu olmadan geçilmeyecek.
+- Faz 8'e kullanıcı komutu olmadan geçilmeyecek.
