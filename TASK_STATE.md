@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 7b ve 7c migration'ları uzak `zdksvgtkeeweufuajugd` projesine uygulandı ve doğrulandı. Faz 7b/7c kodu commit edilerek `refactor/faz-2-yapi` branch'ine gönderildi.
-- Aktif faz: Faz 7 — 7a, 7b ve 7c tamamlandı; Yasal Metinler sekmesi Faz 15 kapsamındadır ve eski yerel yapıda bırakıldı.
-- Beklenen: Sonraki faza yalnızca kullanıcı komutuyla geçilmesi.
+- Güncel durum: Faz 8 kodu, yerel testleri ve Vercel Preview doğrulaması tamamlandı (commit/push edilmedi). Preview deployment `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9`; Production değiştirilmedi. Faz 7b/7c kodu `refactor/faz-2-yapi` branch'inde, migration'ları uzak `zdksvgtkeeweufuajugd` projesinde.
+- Aktif faz: Faz 8 — tamamlandı; Faz 9 için kullanıcı onayı bekleniyor.
+- Beklenen: Faz 9'a geçmek için kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
@@ -16,7 +16,7 @@
 - Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
 - Faz 6 — Yönetici kimlik doğrulaması: **tamamlandı**
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta, kod GitHub branch'inde)**
-- Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
+- Faz 8 — Public showroom'un Supabase'e bağlanması: **tamamlandı — Faz 9 için kullanıcı onayı bekleniyor**
 - Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
 - Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
 - Faz 11 — SEO, hız ve erişilebilirlik: **bekliyor**
@@ -37,6 +37,8 @@
 - 2026-10-14 — Faz 7a tamamlandı: Supabase tabanlı ürün listesi/arama/filtre/sayfalama, ürün ekleme-düzenleme-çoğaltma, ayrı taslak/yayın akışı, yayından kaldırma, arşivleme, fiyat/adet/sıra ayarları, galeri sıralaması ve mobil/masaüstü önizleme hazırlandı.
 - 2026-10-15 — Faz 7b yerelde tamamlandı: kategori/koleksiyon ekleme-düzenleme, kapak önizlemesi, bağlı ürün sayısı, pasife alma/arşivleme ve tek satırlık site ayarları önizleme/doğrulama akışı hazırlandı.
 - 2026-10-15 — Faz 7c yerelde tamamlandı: banner/hero (starts_at/ends_at zamanlama), üst bant, süreç adımları, neden biz, hikâyemiz, CTA, SSS, müşteri yorumları (izin teyidi + 1–5 puan) ve kampanya pop-up'ı Supabase'e bağlandı; her alanda masaüstü/mobil önizleme ve önizleme onaylı taslak/yayın akışı eklendi; yönetim ana ekranı (8.2) hazırlandı.
+- 2026-10-16 — Faz 8 yerelde tamamlandı: public sayfa ürün, kategori, koleksiyon, banner, content_sections, SSS, yayındaki yorum ve `site_settings_public` verisini yalnızca Supabase REST (publishable key, açık sütun listeleri, `select=*` yok) üzerinden okuyor; yerel örnek veri ve Firebase runtime başlangıcı public akıştan çıkarıldı (legacy modül Faz 12'ye kadar duruyor). Kategori/koleksiyon filtreleri, Storage görsellerinde gerçek alt/width/height, yalnızca hero eager + `fetchpriority=high`, bölüm bazlı loading/empty/error durumları, `#urun/<slug>` ve `?urun=<slug>` doğrudan bağlantı, katalog yüklenince pasif ürünlerin sepet/favoriden temizlenmesi, `Fiyat bilgisi şu an yüklenemedi` fiyat fallback'i ve uydurma kargo ücreti/eşiğinin kaldırılması (kargo etiketi `shipping_note`'tan) eklendi.
+- 2026-10-16 — Faz 8 Vercel Preview tamamlandı: klasör yalnızca `rdvanyazici/davet-sandigi` projesine bağlandı; `target=preview`, `status=Ready` ve `productionUrl=null` doğrulandı. Preview URL masaüstü 1280 px ve mobil 390 px görünümde açıldı; yatay taşma, konsol uyarısı/hatası, eski fiyat, `service_role` veya `sb_secret` bulunmadı. Supabase URL'si `zdksvgtkeeweufuajugd.supabase.co`, anahtar türü yalnızca publishable key olarak doğrulandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -83,12 +85,14 @@
 - Eski localStorage render fonksiyonları `admin-content.js` içinde ölü kod olarak duruyor; `admin-pages.js` bunların üzerine yazar. Temizlik Faz 12'de yapılacak.
 
 ## Bilinen riskler
+- Public sayfada sepet çekmecesi notu ("Minimum 25 adet, 25'er artışlarla…") ve "100 adedin üzerinde" metni `index.html` içinde sabit; ayarlardan gelmiyor (Faz 9/10).
+- `legacy-firebase.js` içindeki Firebase web API anahtarı dosyada duruyor; public akışta kullanılmıyor (Faz 12'de kaldırılacak).
+- `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
 - `tests/e2e/product-admin.spec.mjs` içindeki "ürün listesini sayfalar…" testi, 7b commit'inin (`76adf86`) temiz bir git worktree'sinde ayrı bir portta yeniden çalıştırıldığında da başarısız (`#product-next` bulunamıyor); 7c'den bağımsız olduğu doğrulandı, kod değiştirilmedi.
 - Uzak güvenlik advisor'ü iki bulgu veriyor: `site_settings_public` görünümü için `security_definer_view` (Faz 4'te bilinçli tasarlanmış, yalnızca güvenli sütunları açan `security_barrier` görünümü) ve `auth_leaked_password_protection` (Auth ayarı). İkisi de 7b/7c'den kaynaklanmıyor; bu adımda değiştirilmedi.
 - Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
-- Public site henüz yeni içerik tablolarını okumuyor (Faz 8); yönetim panelindeki içerikler ziyaretçiye henüz yansımaz.
 
-- Canlı kaynak halen Firebase kullanıyor; Supabase geçişi başlamadı.
+- Production'daki canlı sürüm henüz Faz 8 commit/deploy'u almadı ve eski Firebase tabanlı kaynağı kullanmaya devam ediyor; yerel Faz 8 kodu ise public içeriği Supabase'ten okuyor (Preview/Production yayını Faz 14'te).
 - `index.html` 6.321.661 bayttan 23.769 bayta düşürüldü; görseller artık ayrı dosyalardan yükleniyor.
 - Canlı yasal metinler taslak durumunda.
 - Mevcut müşteri yorumları ve sayısal pazarlama iddiaları örnektir; yeni sisteme taşınmamalıdır.
@@ -121,6 +125,11 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-16 — Faz 8 `tests/e2e/public-site.spec.mjs`: aktif/pasif/arşivli ürün (liste, arama, doğrudan bağlantı, sepet), katalog hatasında sepetin korunması ve fiyat hata metni, fiyat modları, kategori/koleksiyon filtreleri, loading/empty/error durumları, görsel alt/width/height/loading, ağ hostu ve anahtar güvenliği: **9/9 başarılı** (konsol ve sayfa hatası yok)
+- 2026-10-16 — Tam Playwright paketi: **19/20**; tek başarısız test eski `product-admin.spec.mjs` "ürün listesini sayfalar…" testi (7b tabanında da başarısız, Faz 8'den bağımsız)
+- 2026-10-16 — `node --check` (`catalog.js`, `site.js`, `cart.js`, `whatsapp.js`): **başarılı**
+- 2026-10-16 — Vercel Preview `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9`: **başarılı** (`target=preview`, `Ready`, Production etkilenmedi). 1280 px masaüstü ve 390 px mobil görünümde sayfa açıldı; mobil `scrollWidth=390`, tüm veri bölümleri güvenli boş durumda, eski fiyat görünmüyor, hero eager/diğer görseller lazy, konsol uyarısı/hatası yok. Yapılandırmada yalnız `https://zdksvgtkeeweufuajugd.supabase.co` ve publishable key mevcut; `service_role`/`sb_secret` yok.
 
 - 2026-10-15 — Uzak hedef doğrulaması: `projects list` bağlı projeyi `zdksvgtkeeweufuajugd` (Davet Sandığı) gösterdi; `migration list --linked` ve `db push --linked --dry-run` yalnızca `20261015170801` ve `20261015173221` bekliyordu: **beklenen**
 - 2026-10-15 — `supabase db push --linked --skip-vault --yes`: iki migration uygulandı; sonraki `migration list --linked` yerel/uzak 10 sürümün tamamının eşleştiğini gösterdi: **başarılı**
@@ -244,4 +253,5 @@
 
 ## Sonraki adım
 
-- Faz 8'e kullanıcı komutu olmadan geçilmeyecek.
+- Faz 8 değişiklikleri (`.gitignore`, `assets/css/site.css`, `assets/js/catalog.js`, `assets/js/site.js`, `assets/js/cart.js`, `assets/js/whatsapp.js`, `index.html`, `tests/e2e/public-site.spec.mjs`, `TASK_STATE.md`) kullanıcı tarafından incelenip commit edilecek.
+- Faz 9 için kullanıcı onayı bekleniyor; onay olmadan Faz 9'a geçilmeyecek.

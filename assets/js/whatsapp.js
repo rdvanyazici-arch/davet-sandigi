@@ -2,8 +2,8 @@
 function orderNoStr(){return'DS-'+new Date().getFullYear()+'-'+pad5(settings.orderNext||1);}
 function buildOrderText(no,name,phone,note){
  var lines=[no+' numaralı siparişim hakkında bilgi almak istiyorum.','','*DAVET SANDIĞI · SİPARİŞ TALEBİ*','Talep No: '+no,''];
- cart.forEach(function(i){var p=prodById(i.id);if(!p)return;lines.push('• '+p.name+' ('+p.code+') x'+i.qty+' = '+(isQuote(i.qty)?'Özel fiyat teklifi':fmt(p.price*i.qty)));});
- lines.push('','Ara Toplam: '+fmt(subtotal()),'Kargo: '+(shipCost()===0?(subtotal()>0?'Ücretsiz':'—'):fmt(shipCost())),'*TOPLAM: '+fmt(grandTotal())+'*');
+ cart.forEach(function(i){var p=prodById(i.id);if(!p)return;lines.push('• '+p.name+' ('+p.code+') x'+i.qty+' = '+lineText(p,i.qty));});
+ lines.push('','Ara Toplam: '+fmt(subtotal()),'Kargo: '+shipLabel(),hasUnpriced()?'*TOPLAM: Teklifli ürünler görüşmede netleşir*':'*TOPLAM: '+fmt(grandTotal())+'*');
  if(hasQuote())lines.push('(100 adet üzeri ürünler için özel fiyat teklifi verilecektir.)');
  lines.push('');
  if(name)lines.push('Ad Soyad: '+name);
@@ -14,6 +14,9 @@ function buildOrderText(no,name,phone,note){
 }
 function checkout(){
  var cf=$('#checkout-fields');
+ if(!catalogReady()||cartPriceError()){alert(PUBLIC_PRICE_ERROR+'. Lütfen sayfayı yenileyip tekrar deneyin.');return;}
+ if(!cart.length){alert('Sepetiniz boş.');return;}
+ if(!waNumber()){alert('WhatsApp iletişim bilgisi şu an yüklenemedi. Lütfen sayfayı yenileyin.');return;}
  if(!cf.classList.contains('show')){cf.classList.add('show');$('#c-name').focus();return;}
  if(!$('#c-kvkk').checked){alert('Devam etmek için KVKK Aydınlatma Metni onayını işaretleyin.');return;}
  var name=$('#c-name').value.trim(),phone=$('#c-phone').value.trim(),note=$('#c-note').value.trim();
@@ -25,11 +28,10 @@ function checkout(){
 }
 function renderReceipt(no,name,phone,note,text){
  var r=$('#receipt');
- var rows=cart.map(function(i){var p=prodById(i.id);if(!p)return'';return'<div class="receipt-line"><span>'+p.name+' <small class="receipt-qty">x'+i.qty+'</small></span><span>'+(isQuote(i.qty)?'Özel teklif':fmt(p.price*i.qty))+'</span></div>';}).join('');
- var sc=shipCost();
+ var rows=cart.map(function(i){var p=prodById(i.id);if(!p)return'';return'<div class="receipt-line"><span>'+esc(p.name)+' <small class="receipt-qty">x'+i.qty+'</small></span><span>'+esc(lineText(p,i.qty))+'</span></div>';}).join('');
  var totals='<div class="receipt-line"><span>Ara Toplam</span><span>'+fmt(subtotal())+'</span></div>'+
-  '<div class="receipt-line"><span>Kargo</span><span>'+(sc===0?(subtotal()>0?'Ücretsiz':'—'):fmt(sc))+'</span></div>'+
-  '<div class="receipt-total"><span>Toplam</span><span>'+fmt(grandTotal())+'</span></div>'+
+  '<div class="receipt-line"><span>Kargo</span><span>'+esc(shipLabel())+'</span></div>'+
+  '<div class="receipt-total"><span>Toplam</span><span>'+(hasUnpriced()?'Teklifli ürünler görüşmede netleşir':fmt(grandTotal()))+'</span></div>'+
   (hasQuote()?'<p class="receipt-meta receipt-quote-note">100 adet üzeri ürünler için özel fiyat teklifi verilecektir.</p>':'');
  var meta='';
  if(name)meta+='Ad Soyad: '+name+'<br>';
