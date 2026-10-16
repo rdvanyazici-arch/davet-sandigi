@@ -192,7 +192,7 @@ function renderHomeAdmin(){
   applySettings();alert('Ana sayfa kaydedildi.');
  };
 }
-function switchView(v){$all('.admin-tabs button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')==v);});$all('.admin-view').forEach(function(x){x.classList.remove('show');});$('#view-'+v).classList.add('show');if(v==='media'&&typeof renderMediaLibrary==='function')renderMediaLibrary();}
+function switchView(v){$all('.admin-tabs button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')==v);});$all('.admin-view').forEach(function(x){x.classList.remove('show');});$('#view-'+v).classList.add('show');if(v==='media'&&typeof renderMediaLibrary==='function')renderMediaLibrary();if(v==='dashboard'&&typeof pagesRenderDashboard==='function')pagesRenderDashboard();}
 $all('.admin-tabs button').forEach(function(b){b.addEventListener('click',function(){var v=b.getAttribute('data-view');if(v=='add'){editingId=null;renderProductForm();}switchView(v);});});
 $('#admin-search').addEventListener('input',renderAdminRows);
 $('#admin-filter').addEventListener('change',renderAdminRows);

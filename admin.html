@@ -55,9 +55,10 @@
     <aside class="admin-side" id="admin-side">
       <div class="a-head"><span class="brand-mark admin-brand-mark"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20h28v18H10z"/><path d="M8 14h32v6H8z"/><path d="M24 38V14"/><path d="M24 14s-3-6-7-5a3 3 0 000 6h7M24 14s3-6 7-5a3 3 0 010 6h-7"/><path d="M6 31c-2-2-3-6-2.5-9M42 31c2-2 3-6 2.5-9" opacity=".55"/></svg></span><span class="brand-txt"><strong>Yönetim</strong><span class="count" id="admin-count"></span></span></div>
       <div class="admin-tabs">
+        <button data-view="dashboard" class="active">Genel Bakış</button>
         <button data-view="banner">Banner</button>
         <button data-view="home">Ana Sayfa</button>
-        <button data-view="products" class="active">Ürünler</button>
+        <button data-view="products">Ürünler</button>
         <button data-view="add">＋ Yeni Ürün</button>
         <button data-view="media">Görsel Kütüphanesi</button>
         <button data-view="collections">Koleksiyonlar</button>
@@ -77,9 +78,10 @@
       </div>
     </aside>
     <div class="admin-main">
+      <div class="admin-view show" id="view-dashboard"><h1>Genel Bakış</h1><div id="dashboard-admin"></div></div>
       <div class="admin-view" id="view-banner"><h1>Banner (Üst Slider)</h1><div class="admin-settings" id="banner-admin"></div></div>
       <div class="admin-view" id="view-home"><h1>Ana Sayfa İçeriği</h1><div class="admin-settings" id="home-admin"></div></div>
-      <div class="admin-view show" id="view-products">
+      <div class="admin-view" id="view-products">
         <h1>Ürünler</h1>
         <div class="admin-toolbar"><input id="admin-search" placeholder="Ürün ara..."><select id="admin-filter"></select></div>
         <div id="admin-rows"></div>
@@ -145,5 +147,6 @@
 <script src="assets/js/admin-products.js?v=20261014-1"></script>
 <script src="assets/js/admin-content.js"></script>
 <script src="assets/js/admin-taxonomy-settings.js?v=20261015-1"></script>
+<script src="assets/js/admin-pages.js?v=20261015-1"></script>
 </body>
 </html>

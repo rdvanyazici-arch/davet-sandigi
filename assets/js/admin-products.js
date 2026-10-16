@@ -22,6 +22,7 @@ function productSignature(payload){return JSON.stringify(payload);}
 function renderAdmin(){
  renderCollAdmin();renderCatAdmin();renderSettingsForm();renderReviewsAdmin();renderFaqAdmin();renderContentAdmin();renderLegalAdmin();renderCampaignAdmin();renderHomeAdmin();renderBannerAdmin();
  productEnsureListControls();productInitialize();
+ if(typeof pagesRenderDashboard==='function')pagesRenderDashboard();
 }
 
 function productEnsureListControls(){

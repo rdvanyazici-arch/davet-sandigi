@@ -172,6 +172,7 @@ test('ürün listesini sayfalar ve durum/koleksiyon filtrelerini uygular', async
     window.__PW_DB.product_collections.push({ product_id: 1, collection_id: 1 });
     await productInitialize(true);
   });
+  await page.click('[data-view="products"]');
   await expect(page.locator('.product-admin-row')).toHaveCount(8);
   await page.click('#product-next');
   await expect(page.locator('.product-admin-row')).toHaveCount(1);

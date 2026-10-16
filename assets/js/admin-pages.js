@@ -1,0 +1,366 @@
+/* Phase 7c: Supabase page content modules and the admin overview. Replaces the legacy localStorage renderers. */
+var pagesState={client:null,promise:null,assets:[],banners:[],sections:{},faqs:[],testimonials:[]};
+var PAGES_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
+
+function pagesEsc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
+function pagesError(error){return(error&&error.message)?error.message:String(error||'Bilinmeyen hata');}
+function pagesClient(){
+ return new Promise(function(resolve,reject){
+  if(pagesState.client){resolve(pagesState.client);return;}
+  if(adminAuthClient){pagesState.client=adminAuthClient;resolve(adminAuthClient);return;}
+  startSupabaseClient(function(client,error){if(error||!client)reject(new Error(error||'Supabase bağlantısı kurulamadı.'));else{pagesState.client=client;resolve(client);}});
+ });
+}
+function pagesAsset(id){return pagesState.assets.filter(function(asset){return Number(asset.id)===Number(id);})[0]||null;}
+function pagesImage(id){
+ var asset=pagesAsset(id);
+ if(!asset||!pagesState.client)return{url:'',alt:''};
+ return{url:pagesState.client.storage.from('site-media').getPublicUrl(asset.storage_path).data.publicUrl,alt:asset.alt_text||''};
+}
+function pagesAssetOptions(selected){
+ return'<option value="">Görsel seçilmedi</option>'+pagesState.assets.map(function(asset){
+  return'<option value="'+asset.id+'"'+(Number(selected)===Number(asset.id)?' selected':'')+'>'+pagesEsc(asset.original_name)+' — '+pagesEsc(asset.alt_text||'Alt metin yok')+'</option>';
+ }).join('');
+}
+function pagesLoad(force){
+ if(pagesState.promise&&!force)return pagesState.promise;
+ var run=(async function(){
+  var client=await pagesClient();
+  var results=await Promise.all([
+   client.from('media_assets').select('id,storage_path,original_name,alt_text,usage_type').eq('status','active').is('archived_at',null).order('created_at',{ascending:false}),
+   client.from('banners').select('*').order('sort_order'),
+   client.from('content_sections').select('*'),
+   client.from('faqs').select('*').order('sort_order'),
+   client.from('testimonials').select('*').order('sort_order')
+  ]);
+  results.forEach(function(result){if(result.error)throw result.error;});
+  pagesState.assets=results[0].data||[];pagesState.banners=results[1].data||[];pagesState.faqs=results[3].data||[];pagesState.testimonials=results[4].data||[];
+  pagesState.sections={};(results[2].data||[]).forEach(function(row){pagesState.sections[row.section_key]=row;});
+  return pagesState;
+ })();
+ pagesState.promise=run;
+ return run.then(function(value){if(pagesState.promise===run)pagesState.promise=null;return value;},function(error){if(pagesState.promise===run)pagesState.promise=null;throw error;});
+}
+function pagesField(root,name){var node=root.querySelector('[data-f="'+name+'"]');return node?node.value.trim():'';}
+function pagesNull(value){return value===''?null:value;}
+function pagesNumber(value,fallback){var number=Number(value);return value===''||isNaN(number)?fallback:number;}
+function pagesToIso(value){if(!value)return null;var date=new Date(value);return isNaN(date.getTime())?'invalid':date.toISOString();}
+function pagesToLocal(value){
+ if(!value)return'';var date=new Date(value);if(isNaN(date.getTime()))return'';
+ var pad=function(n){return String(n).padStart(2,'0');};
+ return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());
+}
+function pagesDate(value){try{return new Intl.DateTimeFormat('tr-TR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value));}catch(e){return value||'—';}}
+function pagesUrlError(label,url){return url&&!PAGES_URL_PATTERN.test(url)?label+' https://, #, /, tel: veya mailto: ile başlamalıdır.':'';}
+function pagesButtonError(label,text,url){
+ if(!!text!==!!url)return label+' yazısı ve bağlantısı birlikte girilmelidir.';
+ return pagesUrlError(label+' bağlantısı',url);
+}
+function pagesMediaError(mediaId){
+ if(!mediaId)return'';var asset=pagesAsset(mediaId);
+ if(!asset)return'Seçilen görsel kütüphanede aktif değil.';
+ return asset.alt_text&&asset.alt_text.trim()?'':'Seçilen görselin alt metni eksik; önce Görsel Kütüphanesi’nden tamamlayın.';
+}
+
+/* ---- preview ---- */
+function pagesPreviewMarkup(kind,p){
+ var image=pagesImage(p.media_id),media=image.url?'<img src="'+pagesEsc(image.url)+'" alt="'+pagesEsc(image.alt)+'">':'<div class="pg-noimg">Görsel seçilmedi</div>';
+ var button=function(text){return text?'<span class="pg-btn">'+pagesEsc(text)+'</span>':'';};
+ var list=function(items){return'<div class="pg-cards">'+items.map(function(item,index){return'<article><b>'+(index+1)+'</b><h4>'+pagesEsc(item.title)+'</h4><p>'+pagesEsc(item.description)+'</p></article>';}).join('')+'</div>';};
+ if(kind==='banner')return'<section class="pg-hero">'+media+'<div class="pg-body"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3><p>'+pagesEsc(p.description||'')+'</p><div class="pg-btns">'+button(p.primary_button_text)+button(p.secondary_button_text)+'</div></div></section><p class="pg-meta">Yayın aralığı: '+(p.starts_at?pagesDate(p.starts_at):'hemen')+' → '+(p.ends_at?pagesDate(p.ends_at):'süresiz')+'</p>';
+ if(kind==='topbar')return'<div class="pg-topbar">'+(p.content_json.items.length?p.content_json.items.map(function(item){return'<span>'+pagesEsc(item)+'</span>';}).join(''):'<span>Madde yok</span>')+'</div>';
+ if(kind==='process'||kind==='why_us'){var items=p.content_json.steps||p.content_json.items||[];return'<section class="pg-section"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3>'+(items.length?list(items):'<p class="pg-meta">Madde eklenmedi.</p>')+'</section>';}
+ if(kind==='story')return'<section class="pg-story">'+media+'<div class="pg-body"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3><p>'+pagesEsc(p.body||'')+'</p></div></section>';
+ if(kind==='cta')return'<section class="pg-cta">'+media+'<div class="pg-body"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3><p>'+pagesEsc(p.body||'')+'</p>'+button(p.button_text)+'</div></section>';
+ if(kind==='campaign')return'<section class="pg-popup">'+media+'<div class="pg-body"><small>Davet Sandığı</small><h3>'+pagesEsc(p.title)+'</h3><p>'+pagesEsc(p.body||'')+'</p>'+button(p.button_text)+'</div></section>';
+ if(kind==='faq')return'<section class="pg-section"><details open><summary>'+pagesEsc(p.question)+'</summary><p>'+pagesEsc(p.answer)+'</p></details></section>';
+ if(kind==='testimonial')return'<section class="pg-review">'+(image.url?media:'')+'<div class="pg-body"><span class="pg-stars" aria-label="'+p.rating+' yıldız">'+'★'.repeat(p.rating)+'☆'.repeat(5-p.rating)+'</span><p>“'+pagesEsc(p.review_text||'Yorum metni eklenmedi.')+'”</p><strong>'+pagesEsc(p.customer_display_name||'İsim belirtilmedi')+'</strong><small>'+pagesEsc(p.event_name||'')+'</small></div></section>';
+ return'';
+}
+function pagesPreview(kind,payload,onApprove){
+ var modal=el('div','taxonomy-preview-modal'),opener=document.activeElement;
+ modal.innerHTML='<div class="taxonomy-preview-dialog" role="dialog" aria-modal="true" aria-label="İçerik önizlemesi"><button class="pm-close" type="button" aria-label="Önizlemeyi kapat">✕</button><h2>Mobil ve Masaüstü Önizleme</h2><div class="product-preview-modes"><button class="a-btn primary" data-pg-mode="desktop" type="button">Masaüstü</button><button class="a-btn" data-pg-mode="mobile" type="button">Mobil</button></div><div class="pg-canvas desktop">'+pagesPreviewMarkup(kind,payload)+'</div><button class="admin-save" data-pg-approve type="button">Önizlemeyi Onayla</button></div>';
+ document.body.appendChild(modal);
+ var canvas=modal.querySelector('.pg-canvas');
+ $all('[data-pg-mode]',modal).forEach(function(button){button.onclick=function(){$all('[data-pg-mode]',modal).forEach(function(item){item.classList.toggle('primary',item===button);});canvas.className='pg-canvas '+button.dataset.pgMode;};});
+ function close(){document.removeEventListener('keydown',onKey);modal.remove();if(opener&&opener.focus)opener.focus();}
+ function onKey(event){if(event.key==='Escape')close();}
+ document.addEventListener('keydown',onKey);
+ modal.querySelector('.pm-close').onclick=close;modal.onclick=function(event){if(event.target===modal)close();};
+ modal.querySelector('[data-pg-approve]').onclick=function(){onApprove();close();};modal.querySelector('.pm-close').focus();
+}
+
+/* ---- shared preview/approve/save wiring ---- */
+function pagesActionsHtml(live){
+ return'<div class="admin-note" data-pg-status role="status" aria-live="polite">Kaydetmeden önce önizlemeyi onaylayın.</div><div class="taxonomy-form-actions"><button class="a-btn" data-pg-preview type="button">Önizle</button>'+(live?'':'<button class="a-btn primary" data-pg-draft type="button" disabled>Taslak Kaydet</button>')+'<button class="admin-save" data-pg-publish type="button" disabled>'+(live?'Güncelle':'Yayınla')+'</button>'+(live?'<button class="a-btn media-danger" data-pg-off type="button">Yayından Kaldır</button>':'')+'<button class="a-btn" data-pg-cancel type="button">İptal</button></div>';
+}
+function pagesWire(root,config){
+ var approved='',status=root.querySelector('[data-pg-status]'),draft=root.querySelector('[data-pg-draft]'),publish=root.querySelector('[data-pg-publish]');
+ function say(message,isError){status.textContent=message||'';status.classList.toggle('media-error',!!isError);}
+ function setEnabled(enabled){if(draft)draft.disabled=!enabled;publish.disabled=!enabled;}
+ function reset(){approved='';setEnabled(false);say('Değişiklikten sonra önizlemeyi yeniden onaylayın.',false);}
+ root.addEventListener('input',reset);root.addEventListener('change',reset);root.addEventListener('pages-change',reset);
+ root.querySelector('[data-pg-preview]').onclick=function(){
+  var payload=config.collect(root),error=config.validate(payload,false);if(error){say(error,true);return;}
+  pagesPreview(config.kind,payload,function(){approved=JSON.stringify(payload);setEnabled(true);say('Önizleme onaylandı.',false);});
+ };
+ async function commit(isPublish){
+  var payload=config.collect(root),error=config.validate(payload,isPublish);if(error){say(error,true);return;}
+  if(approved!==JSON.stringify(payload)){say('Kaydetmeden önce güncel önizlemeyi onaylayın.',true);return;}
+  setEnabled(false);say(isPublish?'Yayınlanıyor…':'Taslak kaydediliyor…',false);
+  try{await config.save(payload,isPublish);}catch(saveError){say((isPublish?'Yayınlama':'Taslak kaydı')+' başarısız: '+pagesError(saveError)+'. Mevcut canlı içerik değiştirilmedi.',true);setEnabled(true);}
+ }
+ if(draft)draft.onclick=function(){commit(false);};publish.onclick=function(){commit(true);};
+ root.querySelector('[data-pg-cancel]').onclick=config.cancel;
+ var off=root.querySelector('[data-pg-off]');if(off)off.onclick=config.unpublish;
+}
+
+/* ---- list modules: banners, FAQ, testimonials ---- */
+function bannerState(row){
+ var now=Date.now();
+ if(!row.is_active)return{text:'Taslak',live:false};
+ if(row.starts_at&&new Date(row.starts_at).getTime()>now)return{text:'Zamanlanmış',live:false};
+ if(row.ends_at&&new Date(row.ends_at).getTime()<=now)return{text:'Süresi doldu',live:false};
+ return{text:'Yayında',live:true};
+}
+var PAGES_MODULES={
+ banner:{
+  box:'#banner-admin',table:'banners',liveField:'is_active',kind:'banner',title:'Banner',newLabel:'＋ Yeni Banner',
+  note:'Ana sayfa hero alanı. Yayın aralığı boşsa banner hemen ve süresiz yayınlanır. Birden çok aktif banner varsa sıra numarasına göre döner.',
+  rows:function(){return pagesState.banners;},
+  label:function(row){return row.title||'Başlıksız banner';},
+  meta:function(row){return'Sıra '+row.sort_order+' · '+(row.starts_at?pagesDate(row.starts_at):'hemen')+' → '+(row.ends_at?pagesDate(row.ends_at):'süresiz');},
+  status:function(row){return bannerState(row);},
+  blank:{eyebrow:'',title:'',description:'',primary_button_text:'',primary_button_url:'',secondary_button_text:'',secondary_button_url:'',media_id:null,sort_order:0,starts_at:null,ends_at:null},
+  form:function(row){return'<div class="admin-grid-2"><label>Üst etiket<input data-f="eyebrow" maxlength="80" value="'+pagesEsc(row.eyebrow)+'"></label><label>Sıra<input data-f="sort_order" type="number" step="1" value="'+Number(row.sort_order||0)+'"></label></div><label>Başlık<input data-f="title" required maxlength="140" value="'+pagesEsc(row.title)+'"></label><label>Alt metin<textarea data-f="description" rows="3" maxlength="400">'+pagesEsc(row.description)+'</textarea></label><div class="admin-grid-2"><label>1. buton yazısı<input data-f="primary_button_text" maxlength="40" value="'+pagesEsc(row.primary_button_text)+'"></label><label>1. buton bağlantısı<input data-f="primary_button_url" placeholder="#urunler veya https://…" value="'+pagesEsc(row.primary_button_url)+'"></label><label>2. buton yazısı<input data-f="secondary_button_text" maxlength="40" value="'+pagesEsc(row.secondary_button_text)+'"></label><label>2. buton bağlantısı<input data-f="secondary_button_url" value="'+pagesEsc(row.secondary_button_url)+'"></label></div><label>Görsel (yayın için zorunlu)<select data-f="media_id">'+pagesAssetOptions(row.media_id)+'</select></label><div class="admin-grid-2"><label>Yayın başlangıcı (isteğe bağlı)<input data-f="starts_at" type="datetime-local" value="'+pagesToLocal(row.starts_at)+'"></label><label>Yayın bitişi (isteğe bağlı)<input data-f="ends_at" type="datetime-local" value="'+pagesToLocal(row.ends_at)+'"></label></div>';},
+  collect:function(root){return{eyebrow:pagesNull(pagesField(root,'eyebrow')),title:pagesField(root,'title'),description:pagesNull(pagesField(root,'description')),primary_button_text:pagesNull(pagesField(root,'primary_button_text')),primary_button_url:pagesNull(pagesField(root,'primary_button_url')),secondary_button_text:pagesNull(pagesField(root,'secondary_button_text')),secondary_button_url:pagesNull(pagesField(root,'secondary_button_url')),media_id:pagesField(root,'media_id')?Number(pagesField(root,'media_id')):null,sort_order:pagesNumber(pagesField(root,'sort_order'),0),starts_at:pagesToIso(pagesField(root,'starts_at')),ends_at:pagesToIso(pagesField(root,'ends_at'))};},
+  validate:function(p,publish){
+   if(!p.title)return'Banner başlığı zorunludur.';
+   if(p.starts_at==='invalid'||p.ends_at==='invalid')return'Geçerli bir tarih girin.';
+   if(p.starts_at&&p.ends_at&&new Date(p.starts_at)>=new Date(p.ends_at))return'Bitiş tarihi başlangıçtan sonra olmalıdır.';
+   var error=pagesButtonError('1. buton',p.primary_button_text,p.primary_button_url)||pagesButtonError('2. buton',p.secondary_button_text,p.secondary_button_url);if(error)return error;
+   if(publish&&!p.media_id)return'Yayınlamak için hero görseli zorunludur.';
+   return pagesMediaError(p.media_id);
+  }
+ },
+ faq:{
+  box:'#faq-admin',table:'faqs',liveField:'is_active',kind:'faq',title:'Soru',newLabel:'＋ Yeni Soru',
+  note:'Sıkça sorulan sorular. Yayından kaldırılan soru ziyaretçilere görünmez.',
+  rows:function(){return pagesState.faqs;},
+  label:function(row){return row.question;},
+  meta:function(row){return'Sıra '+row.sort_order;},
+  status:function(row){return{text:row.is_active?'Yayında':'Taslak',live:row.is_active};},
+  blank:{question:'',answer:'',sort_order:0},
+  form:function(row){return'<label>Soru<input data-f="question" required maxlength="300" value="'+pagesEsc(row.question)+'"></label><label>Cevap<textarea data-f="answer" rows="4" maxlength="2000">'+pagesEsc(row.answer)+'</textarea></label><label>Sıra<input data-f="sort_order" type="number" step="1" value="'+Number(row.sort_order||0)+'"></label>';},
+  collect:function(root){return{question:pagesField(root,'question'),answer:pagesField(root,'answer'),sort_order:pagesNumber(pagesField(root,'sort_order'),0)};},
+  validate:function(p){return!p.question?'Soru zorunludur.':!p.answer?'Cevap zorunludur.':'';}
+ },
+ testimonial:{
+  box:'#reviews-admin',table:'testimonials',liveField:'is_published',kind:'testimonial',title:'Yorum',newLabel:'＋ Yeni Yorum',
+  note:'Yalnızca gerçek ve paylaşım izni alınmış yorumlar yayınlanabilir. İzin teyit edilmeden “Yayınla” çalışmaz.',
+  rows:function(){return pagesState.testimonials;},
+  label:function(row){return(row.customer_display_name||'İsim belirtilmedi')+(row.event_name?' · '+row.event_name:'');},
+  meta:function(row){return row.rating+'/5 · '+(row.consent_confirmed?'İzin teyit edildi':'İzin bekleniyor')+' · Sıra '+row.sort_order;},
+  status:function(row){return{text:row.is_published?'Yayında':'Taslak',live:row.is_published};},
+  blank:{customer_display_name:'',event_name:'',review_text:'',rating:5,media_id:null,consent_confirmed:false,sort_order:0},
+  form:function(row){return'<div class="admin-grid-2"><label>Görünen isim<input data-f="customer_display_name" maxlength="80" value="'+pagesEsc(row.customer_display_name)+'"></label><label>Etkinlik<input data-f="event_name" maxlength="80" value="'+pagesEsc(row.event_name)+'"></label></div><label>Yorum<textarea data-f="review_text" rows="4" maxlength="1000">'+pagesEsc(row.review_text)+'</textarea></label><div class="admin-grid-3"><label>Puan<select data-f="rating">'+[5,4,3,2,1].map(function(n){return'<option value="'+n+'"'+(Number(row.rating)===n?' selected':'')+'>'+n+'</option>';}).join('')+'</select></label><label>Sıra<input data-f="sort_order" type="number" step="1" value="'+Number(row.sort_order||0)+'"></label><label>Fotoğraf (isteğe bağlı)<select data-f="media_id">'+pagesAssetOptions(row.media_id)+'</select></label></div><label class="taxonomy-check"><input data-f="consent" type="checkbox"'+(row.consent_confirmed?' checked':'')+'> Müşteriden yorumu ve görseli paylaşma izni alındı</label>';},
+  collect:function(root){var consent=root.querySelector('[data-f="consent"]');return{customer_display_name:pagesNull(pagesField(root,'customer_display_name')),event_name:pagesNull(pagesField(root,'event_name')),review_text:pagesNull(pagesField(root,'review_text')),rating:Number(pagesField(root,'rating')),media_id:pagesField(root,'media_id')?Number(pagesField(root,'media_id')):null,consent_confirmed:!!(consent&&consent.checked),sort_order:pagesNumber(pagesField(root,'sort_order'),0)};},
+  validate:function(p,publish){
+   if(!(p.rating>=1&&p.rating<=5))return'Puan 1 ile 5 arasında olmalıdır.';
+   if(publish&&!p.consent_confirmed)return'Paylaşım izni teyit edilmeden yorum yayınlanamaz.';
+   if(publish&&!p.review_text)return'Yayınlamak için yorum metni zorunludur.';
+   return pagesMediaError(p.media_id);
+  }
+ }
+};
+
+function pagesRenderList(name){
+ var cfg=PAGES_MODULES[name],box=$(cfg.box);if(!box)return;
+ box.innerHTML='<div class="taxonomy-loading">'+cfg.title+' kayıtları yükleniyor…</div>';
+ pagesLoad().then(function(){pagesDrawList(name);}).catch(function(error){
+  box.innerHTML='<div class="taxonomy-empty media-error">Kayıtlar yüklenemedi: '+pagesEsc(pagesError(error))+'</div><button class="a-btn" data-pg-retry type="button">Tekrar Dene</button>';
+  box.querySelector('[data-pg-retry]').onclick=function(){pagesRenderList(name);};
+ });
+}
+function pagesDrawList(name){
+ var cfg=PAGES_MODULES[name],box=$(cfg.box),rows=cfg.rows();
+ box.innerHTML='<p class="admin-note">'+pagesEsc(cfg.note)+'</p><div class="admin-toolbar"><button class="a-btn primary" data-pg-new type="button">'+cfg.newLabel+'</button><button class="a-btn" data-pg-refresh type="button">Yenile</button></div><div data-pg-form></div><div data-pg-list></div>';
+ var list=box.querySelector('[data-pg-list]'),formBox=box.querySelector('[data-pg-form]');
+ list.innerHTML=rows.length?rows.map(function(row){var state=cfg.status(row);return'<article class="arow taxonomy-row"><div class="ai"><b>'+pagesEsc(cfg.label(row))+'</b><small>'+pagesEsc(cfg.meta(row))+'</small><span class="badge '+(state.live?'feat':'hid')+'">'+state.text+'</span></div><div class="taxonomy-actions"><button class="a-btn" data-pg-edit="'+row.id+'" type="button">Düzenle</button>'+(row[cfg.liveField]?'<button class="a-btn media-danger" data-pg-off="'+row.id+'" type="button">Yayından Kaldır</button>':'')+'</div></article>';}).join(''):'<div class="taxonomy-empty">Henüz kayıt yok. Yeni kayıt ekleyerek başlayın.</div>';
+ box.querySelector('[data-pg-new]').onclick=function(){pagesOpenForm(name,null,formBox);};
+ box.querySelector('[data-pg-refresh]').onclick=function(){pagesLoad(true).then(function(){pagesDrawList(name);}).catch(function(error){pagesRenderList(name);});};
+ $all('[data-pg-edit]',list).forEach(function(button){button.onclick=function(){pagesOpenForm(name,Number(button.dataset.pgEdit),formBox);formBox.scrollIntoView({block:'nearest'});};});
+ $all('[data-pg-off]',list).forEach(function(button){button.onclick=function(){pagesSetLive(name,Number(button.dataset.pgOff),false);};});
+}
+async function pagesSetLive(name,id,value){
+ var cfg=PAGES_MODULES[name];
+ if(!value&&!confirm('Kayıt yayından kaldırılsın mı? Ziyaretçiler artık görmeyecek; kayıt silinmez.'))return;
+ try{
+  var client=await pagesClient(),patch={};patch[cfg.liveField]=value;
+  var result=await client.from(cfg.table).update(patch).eq('id',id).select('id').single();if(result.error)throw result.error;
+  toast(value?'Kayıt yayınlandı.':'Kayıt yayından kaldırıldı.');await pagesLoad(true);pagesDrawList(name);
+ }catch(error){alert('İşlem tamamlanamadı: '+pagesError(error));}
+}
+function pagesOpenForm(name,id,formBox){
+ var cfg=PAGES_MODULES[name],row=id?cfg.rows().filter(function(item){return Number(item.id)===Number(id);})[0]:null,live=!!(row&&row[cfg.liveField]);
+ formBox.innerHTML='<form class="taxonomy-form" novalidate><h3>'+(row?cfg.title+' Düzenle':'Yeni '+cfg.title)+'</h3>'+cfg.form(row||cfg.blank)+pagesActionsHtml(live)+'</form>';
+ var form=formBox.querySelector('form');form.onsubmit=function(event){event.preventDefault();};
+ pagesWire(form,{
+  kind:cfg.kind,collect:cfg.collect,validate:cfg.validate,
+  cancel:function(){formBox.innerHTML='';},
+  unpublish:function(){pagesSetLive(name,row.id,false);},
+  save:async function(payload,publish){
+   var client=await pagesClient(),data=Object.assign({},payload);data[cfg.liveField]=publish;
+   var query=row?client.from(cfg.table).update(data).eq('id',row.id):client.from(cfg.table).insert(data);
+   var result=await query.select('id').single();if(result.error)throw result.error;
+   toast(publish?'Kayıt yayınlandı.':'Taslak kaydedildi.');await pagesLoad(true);pagesDrawList(name);
+  }
+ });
+}
+
+/* ---- single-record sections ---- */
+var PAGES_SECTIONS={
+ topbar:{label:'Üst Bant',help:'Sayfanın üstünde dönen kısa duyurular. Her satır ayrı bir maddedir; en fazla 6 madde.',lines:true},
+ story:{label:'Hikâyemiz',eyebrow:true,title:true,body:true,media:true},
+ process:{label:'Nasıl Çalışır? (Süreç Adımları)',eyebrow:true,title:true,list:'steps',max:6,itemLabel:'Adım'},
+ why_us:{label:'Neden Davet Sandığı?',eyebrow:true,title:true,list:'items',max:6,itemLabel:'Madde'},
+ cta:{label:'Alt Çağrı (CTA) Bandı',eyebrow:true,title:true,body:true,button:true,media:true},
+ campaign:{label:'Kampanya Pop-up',help:'Siteye ilk girişte açılır; ziyaretçiye oturum başına bir kez gösterilir. Yayında değilse hiç görünmez.',title:true,body:true,button:true,media:true}
+};
+function pagesListRowHtml(item,label,index){
+ return'<div class="admin-step-card pg-list-row"><b class="admin-step-label">'+label+' '+index+'</b><input data-li="title" maxlength="80" aria-label="'+label+' başlığı" value="'+pagesEsc(item.title)+'"><textarea class="admin-input-top" data-li="description" rows="2" maxlength="300" aria-label="'+label+' açıklaması">'+pagesEsc(item.description)+'</textarea><button class="a-btn media-danger" data-li-remove type="button">Kaldır</button></div>';
+}
+function pagesSectionForm(key,row){
+ var cfg=PAGES_SECTIONS[key],json=(row&&row.content_json)||{},html=cfg.help?'<p class="admin-note">'+pagesEsc(cfg.help)+'</p>':'';
+ if(cfg.eyebrow)html+='<label>Üst etiket<input data-f="eyebrow" maxlength="80" value="'+pagesEsc(row&&row.eyebrow)+'"></label>';
+ if(cfg.title)html+='<label>Başlık<input data-f="title" maxlength="140" value="'+pagesEsc(row&&row.title)+'"></label>';
+ if(cfg.body)html+='<label>Metin<textarea data-f="body" rows="5" maxlength="2000">'+pagesEsc(row&&row.body)+'</textarea></label>';
+ if(cfg.lines)html+='<label>Üst bant maddeleri (her satır bir madde)<textarea data-f="lines" rows="5">'+pagesEsc((json.items||[]).join('\n'))+'</textarea></label>';
+ if(cfg.list){var items=json[cfg.list]||[];html+='<div data-list data-label="'+cfg.itemLabel+'">'+items.map(function(item,i){return pagesListRowHtml(item,cfg.itemLabel,i+1);}).join('')+'</div><button class="a-btn" data-li-add type="button">＋ '+cfg.itemLabel+' Ekle</button>';}
+ if(cfg.button)html+='<div class="admin-grid-2"><label>Buton yazısı<input data-f="button_text" maxlength="40" value="'+pagesEsc(row&&row.button_text)+'"></label><label>Buton bağlantısı<input data-f="button_url" placeholder="https://wa.me/… veya #urunler" value="'+pagesEsc(row&&row.button_url)+'"></label></div>';
+ if(cfg.media)html+='<label>Görsel<select data-f="media_id">'+pagesAssetOptions(row&&row.media_id)+'</select></label>';
+ return html;
+}
+function pagesSectionCollect(key,card){
+ var cfg=PAGES_SECTIONS[key],json={};
+ if(cfg.lines)json={items:pagesField(card,'lines').split('\n').map(function(line){return line.trim();}).filter(Boolean)};
+ if(cfg.list){json[cfg.list]=$all('.pg-list-row',card).map(function(rowNode){return{title:rowNode.querySelector('[data-li="title"]').value.trim(),description:rowNode.querySelector('[data-li="description"]').value.trim()};});}
+ var media=pagesField(card,'media_id');
+ return{eyebrow:pagesNull(pagesField(card,'eyebrow')),title:pagesNull(pagesField(card,'title')),body:pagesNull(pagesField(card,'body')),button_text:pagesNull(pagesField(card,'button_text')),button_url:pagesNull(pagesField(card,'button_url')),media_id:media?Number(media):null,content_json:json};
+}
+function pagesSectionValidate(key,p,publish){
+ var cfg=PAGES_SECTIONS[key],items=p.content_json.items||p.content_json.steps||[];
+ if(cfg.lines){if(items.length>6)return'Üst bantta en fazla 6 madde olabilir.';if(items.some(function(item){return item.length>120;}))return'Her madde en fazla 120 karakter olabilir.';if(publish&&!items.length)return'Yayınlamak için en az bir madde girin.';}
+ if(cfg.list){if(items.length>cfg.max)return'En fazla '+cfg.max+' '+cfg.itemLabel.toLowerCase()+' eklenebilir.';if(items.some(function(item){return!item.title||!item.description;}))return'Her '+cfg.itemLabel.toLowerCase()+' için başlık ve açıklama girin.';if(publish&&!items.length)return'Yayınlamak için en az bir '+cfg.itemLabel.toLowerCase()+' ekleyin.';}
+ if(publish&&cfg.title&&!p.title)return'Yayınlamak için başlık zorunludur.';
+ if(publish&&key==='campaign'&&!p.body)return'Kampanya pop-up’ı için metin zorunludur.';
+ if(cfg.button){var error=pagesButtonError('Buton',p.button_text,p.button_url);if(error)return error;}
+ return cfg.media?pagesMediaError(p.media_id):'';
+}
+function pagesRenderSections(boxSelector,keys,intro){
+ var box=$(boxSelector);if(!box)return;box.innerHTML='<div class="taxonomy-loading">İçerik bölümleri yükleniyor…</div>';
+ pagesLoad().then(function(){pagesDrawSections(box,keys,intro);}).catch(function(error){
+  box.innerHTML='<div class="taxonomy-empty media-error">İçerik bölümleri yüklenemedi: '+pagesEsc(pagesError(error))+'</div><button class="a-btn" data-pg-retry type="button">Tekrar Dene</button>';
+  box.querySelector('[data-pg-retry]').onclick=function(){pagesRenderSections(boxSelector,keys,intro);};
+ });
+}
+function pagesDrawSections(box,keys,intro){
+ box.innerHTML=(intro?'<p class="admin-note">'+pagesEsc(intro)+'</p>':'');
+ keys.forEach(function(key){
+  var cfg=PAGES_SECTIONS[key],row=pagesState.sections[key]||null,live=!!(row&&row.is_active),card=el('form','taxonomy-form');card.setAttribute('novalidate','');card.dataset.section=key;
+  card.innerHTML='<h3>'+cfg.label+' <span class="badge '+(live?'feat':'hid')+'">'+(live?'Yayında':row?'Taslak':'Henüz yok')+'</span></h3>'+pagesSectionForm(key,row)+pagesActionsHtml(live);
+  card.onsubmit=function(event){event.preventDefault();};box.appendChild(card);
+  var listBox=card.querySelector('[data-list]'),add=card.querySelector('[data-li-add]');
+  function relabel(){$all('.pg-list-row',card).forEach(function(rowNode,i){rowNode.querySelector('.admin-step-label').textContent=cfg.itemLabel+' '+(i+1);});}
+  if(listBox){
+   add.onclick=function(){if($all('.pg-list-row',card).length>=cfg.max)return;listBox.insertAdjacentHTML('beforeend',pagesListRowHtml({title:'',description:''},cfg.itemLabel,0));relabel();card.dispatchEvent(new Event('pages-change'));};
+   listBox.addEventListener('click',function(event){var remove=event.target.closest('[data-li-remove]');if(remove){remove.closest('.pg-list-row').remove();relabel();card.dispatchEvent(new Event('pages-change'));}});
+  }
+  pagesWire(card,{
+   kind:key,
+   collect:function(){var payload=pagesSectionCollect(key,card);payload.section_key=key;return payload;},
+   validate:function(payload,publish){return pagesSectionValidate(key,payload,publish);},
+   cancel:function(){pagesDrawSections(box,keys,intro);},
+   unpublish:function(){pagesSectionSetLive(row,false,function(){pagesDrawSections(box,keys,intro);});},
+   save:async function(payload,publish){
+    var client=await pagesClient(),data=Object.assign({},payload,{is_active:publish});
+    var query=row?client.from('content_sections').update(data).eq('id',row.id):client.from('content_sections').insert(data);
+    var result=await query.select('*').single();if(result.error)throw result.error;
+    pagesState.sections[key]=result.data;toast(publish?'Bölüm yayınlandı.':'Taslak kaydedildi.');pagesDrawSections(box,keys,intro);
+   }
+  });
+ });
+}
+async function pagesSectionSetLive(row,value,done){
+ if(!confirm('Bölüm yayından kaldırılsın mı? İçerik silinmez, taslak olarak kalır.'))return;
+ try{var client=await pagesClient(),result=await client.from('content_sections').update({is_active:value}).eq('id',row.id).select('*').single();if(result.error)throw result.error;pagesState.sections[row.section_key]=result.data;toast('Bölüm yayından kaldırıldı.');done();}
+ catch(error){alert('İşlem tamamlanamadı: '+pagesError(error));}
+}
+
+function renderBannerAdmin(){pagesRenderList('banner');}
+function renderFaqAdmin(){pagesRenderList('faq');}
+function renderReviewsAdmin(){pagesRenderList('testimonial');}
+function renderHomeAdmin(){pagesRenderSections('#home-admin',['process','why_us','cta'],'Ana sayfadaki süreç adımları, “Neden biz” maddeleri ve alt çağrı bandı. Her bölüm ayrı kaydedilir ve önizleme onayı gerektirir.');}
+function renderContentAdmin(){pagesRenderSections('#content-admin',['topbar','story'],'Üst bant duyuruları ve Hikâyemiz bölümü.');}
+function renderCampaignAdmin(){pagesRenderSections('#campaign-admin',['campaign'],'');}
+
+/* ---- admin overview (roadmap 8.2) ---- */
+async function pagesDashboardData(){
+ var client=await pagesClient();
+ var results=await Promise.all([
+  client.from('products').select('id,name,is_active,archived_at,updated_at,product_images(is_primary)'),
+  client.from('categories').select('id,name,is_active,archived_at,updated_at'),
+  client.from('collections').select('id,name,is_active,archived_at,updated_at'),
+  client.from('media_assets').select('id,original_name,alt_text').eq('status','active').is('archived_at',null),
+  client.from('product_drafts').select('id,product_id,updated_at'),
+  client.from('banners').select('id,title,is_active,updated_at'),
+  client.from('content_sections').select('id,section_key,title,is_active,updated_at'),
+  client.from('faqs').select('id,question,is_active,updated_at'),
+  client.from('testimonials').select('id,customer_display_name,is_published,created_at')
+ ]);
+ results.forEach(function(result){if(result.error)throw result.error;});
+ var usages=typeof mediaLoadUsages==='function'?await mediaLoadUsages(client):{};
+ return{products:results[0].data||[],categories:results[1].data||[],collections:results[2].data||[],assets:results[3].data||[],drafts:results[4].data||[],banners:results[5].data||[],sections:results[6].data||[],faqs:results[7].data||[],testimonials:results[8].data||[],usages:usages};
+}
+function pagesDashboardList(rows,emptyText){return rows.length?'<ul>'+rows.slice(0,6).map(function(row){return'<li>'+row+'</li>';}).join('')+(rows.length>6?'<li class="pg-more">… ve '+(rows.length-6)+' kayıt daha</li>':'')+'</ul>':'<p class="admin-note">'+emptyText+'</p>';}
+function pagesDashboardHtml(d){
+ var live=d.products.filter(function(p){return p.is_active&&!p.archived_at;}),off=d.products.length-live.length;
+ var noImage=d.products.filter(function(p){return!p.archived_at&&!(p.product_images||[]).some(function(i){return i.is_primary;});});
+ var noAlt=d.assets.filter(function(a){return!a.alt_text||!String(a.alt_text).trim();});
+ var unused=d.assets.filter(function(a){return!(d.usages[a.id]||[]).length;});
+ var unpublished=d.banners.filter(function(r){return!r.is_active;}).length+d.sections.filter(function(r){return!r.is_active;}).length+d.faqs.filter(function(r){return!r.is_active;}).length+d.testimonials.filter(function(r){return!r.is_published;}).length;
+ var recent=[];
+ d.products.forEach(function(r){recent.push({type:'Ürün',label:r.name||'İsimsiz ürün',at:r.updated_at});});
+ d.categories.forEach(function(r){recent.push({type:'Kategori',label:r.name,at:r.updated_at});});
+ d.collections.forEach(function(r){recent.push({type:'Koleksiyon',label:r.name,at:r.updated_at});});
+ d.banners.forEach(function(r){recent.push({type:'Banner',label:r.title||'Başlıksız banner',at:r.updated_at});});
+ d.sections.forEach(function(r){recent.push({type:'Bölüm',label:r.title||r.section_key,at:r.updated_at});});
+ d.faqs.forEach(function(r){recent.push({type:'SSS',label:r.question,at:r.updated_at});});
+ d.testimonials.forEach(function(r){recent.push({type:'Yorum',label:r.customer_display_name||'İsim belirtilmedi',at:r.created_at});});
+ recent=recent.filter(function(r){return r.at;}).sort(function(a,b){return new Date(b.at)-new Date(a.at);}).slice(0,8);
+ var stat=function(value,label){return'<div class="pg-stat"><strong>'+value+'</strong><span>'+label+'</span></div>';};
+ var panel=function(title,body,action){return'<section class="pg-panel"><h3>'+title+'</h3>'+body+(action||'')+'</section>';};
+ return'<div class="pg-stats">'+stat(live.length,'Aktif ürün')+stat(off,'Pasif / arşiv ürün')+stat(d.categories.filter(function(r){return!r.archived_at;}).length,'Kategori')+stat(d.collections.filter(function(r){return!r.archived_at;}).length,'Koleksiyon')+'</div>'+
+  '<div class="pg-panels">'+
+  panel('Ana görseli eksik ürünler ('+noImage.length+')',pagesDashboardList(noImage.map(function(p){return'<button class="a-btn" data-dash-product="'+p.id+'" type="button">'+pagesEsc(p.name||'İsimsiz ürün')+'</button>';}),'Tüm ürünlerin ana görseli var.'))+
+  panel('Alt metni eksik görseller ('+noAlt.length+')',pagesDashboardList(noAlt.map(function(a){return pagesEsc(a.original_name);}),'Tüm görsellerin alt metni var.'),noAlt.length?'<button class="a-btn" data-dash-media="all" type="button">Görsel Kütüphanesi</button>':'')+
+  panel('Kullanılmayan görseller ('+unused.length+')',pagesDashboardList(unused.map(function(a){return pagesEsc(a.original_name);}),'Kullanılmayan görsel yok.'),unused.length?'<button class="a-btn" data-dash-media="unused" type="button">Kullanılmayanları Göster</button>':'')+
+  panel('Taslak içerikler',pagesDashboardList([d.drafts.length?d.drafts.length+' ürün taslağı':'',unpublished?unpublished+' yayında olmayan sayfa içeriği (banner, bölüm, SSS, yorum)':''].filter(Boolean),'Bekleyen taslak yok.'))+
+  panel('Son güncellemeler',pagesDashboardList(recent.map(function(r){return'<b>'+r.type+'</b> · '+pagesEsc(r.label)+' <small>'+pagesDate(r.at)+'</small>';}),'Henüz güncelleme yok.'))+
+  '</div>';
+}
+function pagesRenderDashboard(){
+ var box=$('#dashboard-admin');if(!box)return;
+ box.innerHTML='<div class="taxonomy-loading">Genel bakış yükleniyor…</div>';
+ pagesDashboardData().then(function(data){
+  box.innerHTML='<div class="admin-toolbar"><button class="a-btn" data-dash-refresh type="button">Yenile</button></div>'+pagesDashboardHtml(data);
+  box.querySelector('[data-dash-refresh]').onclick=pagesRenderDashboard;
+  $all('[data-dash-product]',box).forEach(function(button){button.onclick=function(){editProduct(Number(button.dataset.dashProduct));};});
+  $all('[data-dash-media]',box).forEach(function(button){button.onclick=function(){switchView('media');Promise.resolve(renderMediaLibrary()).then(function(){var filter=$('#media-filter');filter.value=button.dataset.dashMedia;filter.dispatchEvent(new Event('change'));});};});
+ }).catch(function(error){
+  box.innerHTML='<div class="taxonomy-empty media-error">Genel bakış yüklenemedi: '+pagesEsc(pagesError(error))+'</div><button class="a-btn" data-pg-retry type="button">Tekrar Dene</button>';
+  box.querySelector('[data-pg-retry]').onclick=pagesRenderDashboard;
+ });
+}
+
+window.__pagesTest={urlPattern:PAGES_URL_PATTERN,bannerState:bannerState};

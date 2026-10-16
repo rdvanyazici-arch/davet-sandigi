@@ -10,7 +10,9 @@
     "test:products": "playwright test tests/e2e/product-admin.spec.mjs",
     "test:taxonomy-settings": "playwright test tests/e2e/taxonomy-settings.spec.mjs",
     "test:products:rls": "npx supabase test db supabase/tests/database/product_module_test.sql",
-    "test:taxonomy-settings:rls": "npx supabase test db supabase/tests/database/taxonomy_settings_test.sql"
+    "test:taxonomy-settings:rls": "npx supabase test db supabase/tests/database/taxonomy_settings_test.sql",
+    "test:pages": "playwright test tests/e2e/page-content.spec.mjs",
+    "test:pages:rls": "npx supabase test db supabase/tests/database/page_content_test.sql"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1"

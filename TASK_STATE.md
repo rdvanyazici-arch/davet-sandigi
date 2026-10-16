@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 7b kategori, koleksiyon ve site ayarları modülleri yerelde tamamlandı; önizleme, arşivleme, kullanım sayıları ve RLS korumaları hazırlandı.
-- Aktif faz: Faz 7 — 7a ve 7b tamamlandı; diğer Faz 7 modülleri başlamadı.
-- Beklenen: Faz 7b değişikliklerinin kullanıcı tarafından incelenmesi ve uzak migration için açık onay verilmesi.
+- Güncel durum: Faz 7b ve 7c migration'ları kullanıcı onayıyla uzak `zdksvgtkeeweufuajugd` projesine uygulandı ve doğrulandı. 7c kod değişiklikleri commit edilmedi; 7b commit'i yerelde mevcut, push edilmedi.
+- Aktif faz: Faz 7 — 7a, 7b ve 7c tamamlandı; Yasal Metinler sekmesi Faz 15 kapsamındadır ve eski yerel yapıda bırakıldı.
+- Beklenen: 7b/7c kodunun kullanıcı tarafından incelenip commit edilmesi; sonraki faza kullanıcı komutuyla geçilmesi.
 
 ### Faz 0–15 durumları
 
@@ -15,7 +15,7 @@
 - Faz 4 — Database şeması, grant ve RLS: **tamamlandı**
 - Faz 5 — Storage ve görsel kütüphanesi: **tamamlandı**
 - Faz 6 — Yönetici kimlik doğrulaması: **tamamlandı**
-- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **devam ediyor — 7a ürün modülü tamamlandı**
+- Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta uygulandı) — kod commit'i bekliyor**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **bekliyor**
 - Faz 9 — Sepet ve WhatsApp akışı: **bekliyor**
 - Faz 10 — İçerik ve marka tutarlılığı: **bekliyor**
@@ -36,6 +36,7 @@
 - 2026-10-14 — Faz 6 tamamlandı: Public sign-up kapatıldı, parola politikası sertleştirildi, owner profili ve TOTP/AAL2 zorunluluğu yapılandırıldı; gerçek owner girişiyle yönetim panelinin açıldığı doğrulandı.
 - 2026-10-14 — Faz 7a tamamlandı: Supabase tabanlı ürün listesi/arama/filtre/sayfalama, ürün ekleme-düzenleme-çoğaltma, ayrı taslak/yayın akışı, yayından kaldırma, arşivleme, fiyat/adet/sıra ayarları, galeri sıralaması ve mobil/masaüstü önizleme hazırlandı.
 - 2026-10-15 — Faz 7b yerelde tamamlandı: kategori/koleksiyon ekleme-düzenleme, kapak önizlemesi, bağlı ürün sayısı, pasife alma/arşivleme ve tek satırlık site ayarları önizleme/doğrulama akışı hazırlandı.
+- 2026-10-15 — Faz 7c yerelde tamamlandı: banner/hero (starts_at/ends_at zamanlama), üst bant, süreç adımları, neden biz, hikâyemiz, CTA, SSS, müşteri yorumları (izin teyidi + 1–5 puan) ve kampanya pop-up'ı Supabase'e bağlandı; her alanda masaüstü/mobil önizleme ve önizleme onaylı taslak/yayın akışı eklendi; yönetim ana ekranı (8.2) hazırlandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -73,10 +74,19 @@
 - Panel oluşturma hatasının, eski yerel `img:` referansları okunurken `CLOUD_IMG` değişkeninin yalnızca legacy Firebase modülünde tanımlı olmasından kaynaklandığı belirlendi; yerel görsel önbelleği ortak yapılandırma modülüne taşındı.
 - Faz 7a için `product_drafts`, atomik yayın fonksiyonları ve sahiplik indeksi uzak `zdksvgtkeeweufuajugd` projesine kullanıcı onayıyla uygulandı.
 - Ürün görselleri önce merkezi kütüphaneye bağlantısız yüklenebilir, ardından ürün taslağında ana görsel/galeri olarak seçilebilir.
-- Faz 7b migration'ı yalnızca yerel Supabase'e uygulandı; uzak `zdksvgtkeeweufuajugd` projesine gönderilmedi.
+- Faz 7b migration'ı kullanıcı onayıyla uzak `zdksvgtkeeweufuajugd` projesine uygulandı (2026-10-15).
 - Kategori ve koleksiyonlarda istemciye kalıcı silme yetkisi verilmedi; bağlı kayıtlar korunarak pasife alma ve arşivleme kullanılır.
 
+- Faz 7c migration'ı (`20261015173221_phase_7c_page_content.sql`) kullanıcı onayıyla `supabase db push --linked --skip-vault --yes` ile uzak projeye uygulandı; `db reset`, seed, deploy, commit ve push yapılmadı. Uzak banners/content_sections/testimonials/faqs tablolarında kayıt olmadığı için yeni constraint'ler veri çakışması üretmedi.
+- Banner, content_sections, testimonials ve faqs tablolarında istemciden kalıcı silme (DELETE grant/policy) kaldırıldı; kayıtlar yayından kaldırılarak taslağa alınır.
+- Sayfa bölümleri `content_sections` anahtarlarıyla tutulur: `topbar`, `story`, `process`, `why_us`, `cta`, `campaign`. Hero istatistikleri (doğrulanamayan sayılar) ve bölüm başlığı/alt yazı alanları kaldırıldı.
+- Eski localStorage render fonksiyonları `admin-content.js` içinde ölü kod olarak duruyor; `admin-pages.js` bunların üzerine yazar. Temizlik Faz 12'de yapılacak.
+
 ## Bilinen riskler
+- `tests/e2e/product-admin.spec.mjs` içindeki "ürün listesini sayfalar…" testi, 7b commit'inin (`76adf86`) temiz bir git worktree'sinde ayrı bir portta yeniden çalıştırıldığında da başarısız (`#product-next` bulunamıyor); 7c'den bağımsız olduğu doğrulandı, kod değiştirilmedi.
+- Uzak güvenlik advisor'ü iki bulgu veriyor: `site_settings_public` görünümü için `security_definer_view` (Faz 4'te bilinçli tasarlanmış, yalnızca güvenli sütunları açan `security_barrier` görünümü) ve `auth_leaked_password_protection` (Auth ayarı). İkisi de 7b/7c'den kaynaklanmıyor; bu adımda değiştirilmedi.
+- Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
+- Public site henüz yeni içerik tablolarını okumuyor (Faz 8); yönetim panelindeki içerikler ziyaretçiye henüz yansımaz.
 
 - Canlı kaynak halen Firebase kullanıyor; Supabase geçişi başlamadı.
 - `index.html` 6.321.661 bayttan 23.769 bayta düşürüldü; görseller artık ayrı dosyalardan yükleniyor.
@@ -111,6 +121,18 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-15 — Uzak hedef doğrulaması: `projects list` bağlı projeyi `zdksvgtkeeweufuajugd` (Davet Sandığı) gösterdi; `migration list --linked` ve `db push --linked --dry-run` yalnızca `20261015170801` ve `20261015173221` bekliyordu: **beklenen**
+- 2026-10-15 — `supabase db push --linked --skip-vault --yes`: iki migration uygulandı; sonraki `migration list --linked` yerel/uzak 10 sürümün tamamının eşleştiğini gösterdi: **başarılı**
+- 2026-10-15 — `supabase db lint --linked --fail-on warning`: **No schema errors found**
+- 2026-10-15 — Uzak katalog sorgusu: public şemada RLS'siz tablo yok; 14 yeni/ilgili constraint mevcut; `anon` yalnızca SELECT (tablolar ve `site_settings_public`), hiçbir tabloya yazma yetkisi yok; `authenticated` banners/content_sections/testimonials/faqs/categories/collections üzerinde DELETE yetkisine sahip değil; tüm UPDATE politikalarında USING ve WITH CHECK var; `anon` için çalıştırılabilir fonksiyon yok: **başarılı**
+- 2026-10-15 — Uzak publishable key probu: `anon` GET banners/content_sections/testimonials/faqs/categories/collections/products 200 ve 0 satır; `site_settings_public` 200; `site_settings`, `admin_profiles`, `product_drafts` 401; POST/PATCH/DELETE yazma denemeleri 401/400: **başarılı** (veri yazılmadı)
+
+- 2026-10-15 — Faz 7c `page_content_test.sql`: anonim/yönetici/pasif yönetici, zamanlama, izin teyidi, puan, URL, JSON şekli ve silme engeli: **20/20 başarılı**
+- 2026-10-15 — Yerel DB testleri: `rls_test.sql` 28/28, `taxonomy_settings_test.sql` 20/20, `product_module_test.sql` 15/15, `storage_rls_test.sql` 10/10: **başarılı**
+- 2026-10-15 — `supabase db lint --local --fail-on warning`: **No schema errors found**
+- 2026-10-15 — Playwright (Chromium): `page-content.spec.mjs` 5/5 (ana ekran, banner zamanlama, yorum izni, süreç/SSS/kampanya, 390 px taşma kontrolü) ve `taxonomy-settings.spec.mjs` 3/3 başarılı; `product-admin.spec.mjs` 2/3 (sayfalama testi baseline'da da başarısız)
+- 2026-10-15 — Masaüstü (1280 px) ve mobil (390 px) ekran görüntüleri incelendi; `npm run build`, `node --check`, `npm run test:admin-auth` (7/7) ve `git diff --check`: **başarılı**
 
 - 2026-10-15 — `taxonomy_settings_test.sql`: anonim erişim, aktif/pasif/arşiv görünürlüğü, yönetici/pasif yönetici/yetkisiz kullanıcı, kalıcı silme engeli, WhatsApp doğrulaması ve kullanım sayıları: **20/20 başarılı**
 - 2026-10-15 — Genel `rls_test.sql`: **28/28 başarılı**
@@ -222,6 +244,5 @@
 
 ## Sonraki adım
 
-- Faz 7b değişiklikleri kullanıcı tarafından incelenip commit edilecek.
-- Uzak Supabase'e Faz 7b migration'ının gönderilmesi için kullanıcı onayı beklenecek.
+- Faz 7b/7c kodu kullanıcı tarafından incelenip commit edilecek; 7b commit'i push edilmedi.
 - Faz 7'nin sonraki parçasına kullanıcı komutu olmadan geçilmeyecek.
