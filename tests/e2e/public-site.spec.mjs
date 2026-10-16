@@ -14,7 +14,7 @@ function makeDb(extraProducts = []) {
   const image = (path, alt, primary, order) => ({ alt_text: alt, sort_order: order, is_primary: primary, media_assets: media(path, alt) });
   const product = (id, fields) => ({
     id, category_id: 1, slug: `urun-${id}`, sku: `SKU-${id}`, name: `Ürün ${id}`, short_description: 'Kısa', description: 'Açıklama',
-    price: 10, is_price_visible: true, is_quote_only: false, is_featured: false, sort_order: id, is_active: true, archived_at: null,
+    price: 10, min_quantity: 25, quantity_step: 25, is_price_visible: true, is_quote_only: false, is_featured: false, sort_order: id, is_active: true, archived_at: null,
     product_images: [image(`products/${id}/a.webp`, `Ürün ${id} ana görsel`, true, 0)], product_collections: [], ...fields
   });
   const live = rows => rows.map(row => ({ is_active: true, ...row }));
@@ -49,7 +49,7 @@ function makeDb(extraProducts = []) {
       { section_key: 'story', eyebrow: 'Hakkımızda', title: 'Hikâyemiz', body: 'Test hikâye metni.', media_assets: media('story/s.webp', 'Atölye görseli', 1200, 800) },
       { section_key: 'cta', eyebrow: 'İletişim', title: 'Birlikte tasarlayalım', body: 'Bize yazın.', button_text: 'Yazın', media_assets: media('campaigns/c.webp', 'CTA görseli', 1200, 800) }
     ]),
-    faqs: [{ id: 1, question: 'Ödeme alınıyor mu?', answer: 'Hayır.', sort_order: 1 }, { id: 2, question: 'Pasif soru', answer: 'x', sort_order: 2, is_active: false }].map(row => ({ is_active: true, ...row })),
+    faqs: [{ id: 1, question: 'Siteden tahsilat yapılıyor mu?', answer: 'Hayır.', sort_order: 1 }, { id: 2, question: 'Pasif soru', answer: 'x', sort_order: 2, is_active: false }].map(row => ({ is_active: true, ...row })),
     testimonials: [{ id: 1, customer_display_name: 'A. Y.', event_name: 'Nişan', review_text: 'Çok memnun kaldık.', rating: 4, sort_order: 1, is_published: true, consent_confirmed: true, media_assets: media('testimonials/1/t.webp', 'Müşteri fotoğrafı', 600, 800) }]
   };
 }
@@ -125,10 +125,17 @@ test('aktif ürün görünür; pasif/arşivli ürün liste, arama, doğrudan ba�
   await page.click('#search-close');
 
   const stored = await page.evaluate(() => ({ cart: JSON.parse(localStorage.getItem('ds_cart_v6')), wish: JSON.parse(localStorage.getItem('ds_wish_v1')) }));
-  expect(stored.cart.map(item => item.id)).toEqual(['1']);
+  expect(stored.cart).toEqual([
+    { product_id: '1', quantity: 25, note: '' },
+    { product_id: '3', quantity: 25, note: '' },
+    { product_id: '4', quantity: 25, note: '' },
+    { product_id: 'p7', quantity: 25, note: '' }
+  ]);
   expect(stored.wish).toEqual(['2']);
   await page.click('#open-cart');
   await expect(page.locator('#drawer-body')).toContainText('Kolonya Ürünü');
+  await expect(page.locator('#drawer-body')).toContainText('Bu ürün artık yayında değil.');
+  await expect(page.locator('#drawer-body')).toContainText('Toplama dahil edilmedi.');
   await expect(page.locator('#drawer-body')).not.toContainText('Pasif Ürün');
   await expect(page.locator('#cart-ship')).toHaveText('Kargo görüşmede netleşir.');
   await expect(page.locator('#cart-ship')).not.toContainText('Ücretsiz');
@@ -152,7 +159,7 @@ test('katalog hata durumunda sepet silinmez ve fiyat hata metni görünür; tekr
   await expect(state(page, 'urunler')).toHaveAttribute('data-state', 'error');
   await expect(page.locator('#prod-grid')).toContainText('Ürünler şu an yüklenemedi.');
   await expect(state(page, 'koleksiyonlar')).toHaveAttribute('data-state', 'error');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).toEqual([{ id: '1', qty: 25 }]);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).toEqual([{ product_id: '1', quantity: 25, note: '' }]);
 
   await page.click('#open-cart');
   await expect(page.locator('#drawer-body')).toContainText(PRICE_ERROR);
@@ -165,7 +172,7 @@ test('katalog hata durumunda sepet silinmez ve fiyat hata metni görünür; tekr
   await page.locator('#prod-grid [data-retry]').click();
   await expect(state(page, 'urunler')).toHaveAttribute('data-state', 'ready');
   await expect(page.locator('#prod-grid')).toContainText('Kolonya Ürünü');
-  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).map(item => item.id)).toEqual(['1']);
+  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).map(item => item.product_id)).toEqual(['1']);
   expect(log.pageErrors).toEqual([]);
 });
 
@@ -336,4 +343,102 @@ test('ağ: yalnızca doğru Supabase projesi, yalnızca açık sütunlu GET sorg
     expect(source, file).not.toMatch(/service_role|sb_secret_|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\./);
     expect(source, file).not.toMatch(/select\(\s*['"]\*['"]/);
   }
+});
+
+test('Faz 9: sepet ekle/çıkar, minimum adet, artış ve saklanan veri biçimi', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+
+  await page.locator('[data-add="1"]').first().click();
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer-body')).toContainText('25');
+  await page.locator('[data-inc="1"]').click();
+  await expect(page.locator('#drawer-body')).toContainText('50');
+  await page.locator('[data-cart-note="1"]').fill('Altın kurdele');
+  await page.locator('[data-cart-note="1"]').blur();
+
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).toEqual([
+    { product_id: '1', quantity: 50, note: 'Altın kurdele' }
+  ]);
+  await expect(page.locator('#cart-status')).toContainText('notu güncellendi');
+  await page.locator('[data-rm="1"]').click();
+  await expect(page.locator('#drawer-body')).toContainText('Sepetiniz henüz boş');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).toEqual([]);
+});
+
+test('Faz 9: teklif ürünü ve WhatsApp mesaj önizlemesi', async ({ page }) => {
+  const quoteProduct = {
+    id: 7, category_id: 1, slug: 'ozel-teklif', sku: 'TEKLIF-7', name: 'Teklif Ürünü', price: 99,
+    min_quantity: 10, quantity_step: 5, is_price_visible: true, is_quote_only: true, is_featured: true,
+    sort_order: 7, is_active: true, archived_at: null,
+    product_images: [{ alt_text: 'Teklif ürünü', sort_order: 0, is_primary: true, media_assets: media('products/7/a.webp', 'Teklif ürünü') }],
+    product_collections: []
+  };
+  const log = await setup(page, { db: makeDb([quoteProduct]) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+  await page.locator('[data-add="7"]').first().click();
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer-body')).toContainText('10');
+  await expect(page.locator('#cart-total')).toHaveText('Özel fiyat teklifi');
+
+  await page.click('#checkout-btn');
+  await page.fill('#c-event-date', '2026-12-20');
+  await page.fill('#c-note', 'Kırmızı tema');
+  await page.check('#c-kvkk');
+  await page.click('#checkout-btn');
+  await expect(page.locator('#order-modal')).toHaveClass(/open/);
+  await expect(page.locator('#rc-wa')).toHaveText(/WhatsApp'ta Sipariş Talebi Oluştur/);
+  await expect(page.locator('.receipt-disc')).toContainText('WhatsApp açılır');
+
+  const message = await page.locator('#wa-message-preview').textContent();
+  expect(message).toMatch(/^Davet Sandığı sipariş talebi\nTalep referansı: DS-\d{14}-[A-Z0-9]{1,5}\n/);
+  expect(message).toContain('• Teklif Ürünü (TEKLIF-7)');
+  expect(message).toContain('Adet: 10');
+  expect(message).toContain('Birim fiyat: Özel fiyat teklifi');
+  expect(message).toContain('Etkinlik tarihi: 2026-12-20');
+  expect(message).toContain('Genel not: Kırmızı tema');
+  expect(message).toContain('Kargo ve kesin fiyat WhatsApp görüşmesinde onaylanacaktır.');
+
+  await page.evaluate(() => { window.__openedWhatsapp = ''; window.open = url => { window.__openedWhatsapp = String(url); }; });
+  await page.click('#rc-wa');
+  const opened = await page.evaluate(() => window.__openedWhatsapp);
+  expect(opened).toMatch(/^https:\/\/wa\.me\/905301112233\?text=/);
+  expect(decodeURIComponent(opened.split('?text=')[1])).toBe(message);
+  expect(log.rest.every(entry => entry.method === 'GET')).toBe(true);
+  expect(JSON.stringify(log.rest)).not.toContain('Kırmızı tema');
+  const pageWidth = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  expect(pageWidth.scrollWidth).toBeLessThanOrEqual(pageWidth.clientWidth);
+});
+
+test('Faz 9: pasif ürün toplamdan çıkarılır ve güncel fiyat bildirilir', async ({ page }) => {
+  await setup(page, { cart: [{ product_id: '1', quantity: 25, note: '' }, { product_id: '3', quantity: 25, note: '' }] });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer-body')).toContainText('Bu ürün artık yayında değil.');
+  await expect(page.locator('#cart-subtotal')).toHaveText('₺1372,50');
+
+  await page.evaluate(() => { products.find(product => String(product.id) === '1').price = 60; syncCart(); });
+  await expect(page.locator('#toast')).toContainText('Fiyat güncellendi');
+  await expect(page.locator('#cart-subtotal')).toHaveText('₺1500,00');
+});
+
+test('Faz 9: localStorage yazılamazsa sepet bellekte çalışır', async ({ page }) => {
+  await setup(page);
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = function () { throw new DOMException('Blocked', 'SecurityError'); };
+  });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.locator('[data-add="1"]').first().click();
+  await expect(page.locator('#cart-status')).toContainText('bellekte tutulacak');
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer-body')).toContainText('Kolonya Ürünü');
 });

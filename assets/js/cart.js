@@ -1,71 +1,88 @@
 /* ============ CART ============ */
-function prodById(id){return products.filter(function(x){return x.id==id;})[0];}
-function minQ(){return settings.minQty||1;}
-function stepQ(){return settings.stepQty||1;}
-function isQuote(qty){return(settings.quoteThreshold>0)&&(qty>settings.quoteThreshold);}
-function cartQty(){return cart.reduce(function(s,i){return s+i.qty;},0);}
-function catalogReady(){return catalogState.catalog==='ready';}
-function cartPriceError(){
- if(!cart.length)return false;
- if(!catalogReady())return true;
- return cart.some(function(i){var p=prodById(i.id);return p&&p.priceMode==='error';});
+function normalizeCartItem(raw){
+ var id=String(raw&&((raw.product_id!==undefined&&raw.product_id!==null)?raw.product_id:raw.id)||'');
+ var quantity=Math.max(1,parseInt(raw&&((raw.quantity!==undefined)?raw.quantity:raw.qty),10)||1);
+ return id?{product_id:id,quantity:quantity,note:String(raw&&raw.note||'').slice(0,500)}:null;
 }
-function lineTotal(p,qty){return(p.priceMode==='price'&&!isQuote(qty))?p.price*qty:0;}
+cart=(Array.isArray(cart)?cart:[]).map(normalizeCartItem).filter(Boolean);
+var cartPriceSnapshot={},cartStorageAvailable=true;
+function persistCart(){cartStorageAvailable=save(LS.cart,cart.map(function(i){return{product_id:i.product_id,quantity:i.quantity,note:i.note||''};}));return cartStorageAvailable;}
+persistCart();
+
+function cartId(i){return String(i.product_id);}
+function cartQuantity(i){return Number(i.quantity)||0;}
+function prodById(id){return products.filter(function(x){return String(x.id)===String(id);})[0];}
+function productMin(p){return Math.max(1,Number(p&&p.minQuantity)||Number(settings.minQty)||1);}
+function productStep(p){return Math.max(1,Number(p&&p.quantityStep)||Number(settings.stepQty)||1);}
+function normalizeQuantity(p,qty){var min=productMin(p),step=productStep(p),n=Math.max(min,Number(qty)||min);return min+Math.ceil((n-min)/step)*step;}
+function isQuote(qty,p){return!!(p&&p.priceMode==='quote')||((Number(settings.quoteThreshold)||0)>0&&Number(qty)>=(Number(settings.quoteThreshold)||0));}
+function activeCart(){return cart.map(function(i){return{item:i,product:prodById(cartId(i))};}).filter(function(x){return!!x.product;});}
+function cartQty(){return activeCart().reduce(function(s,x){return s+cartQuantity(x.item);},0);}
+function catalogReady(){return catalogState.catalog==='ready';}
+function cartPriceError(){return activeCart().some(function(x){return x.product.priceMode==='error';});}
+function lineTotal(p,qty){return p.priceMode==='price'&&!isQuote(qty,p)?p.price*qty:0;}
 function lineText(p,qty){
- if(isQuote(qty)||p.priceMode==='quote')return'Özel fiyat teklifi';
- if(p.priceMode==='hidden')return'Fiyat WhatsApp görüşmesinde netleşir';
+ if(isQuote(qty,p)||p.priceMode==='hidden')return'Özel fiyat teklifi';
  if(p.priceMode==='price')return fmt(p.price*qty);
  return PUBLIC_PRICE_ERROR;
 }
-function subtotal(){return cart.reduce(function(s,i){var p=prodById(i.id);return s+(p?lineTotal(p,i.qty):0);},0);}
-function hasQuote(){return cart.some(function(i){var p=prodById(i.id);return isQuote(i.qty)||(p&&p.priceMode==='quote');});}
-function hasUnpriced(){return cart.some(function(i){var p=prodById(i.id);return!p||p.priceMode!=='price'||isQuote(i.qty);});}
-function shipCost(){return 0;}
-function shipLabel(){
- if(cartPriceError()||subtotal()<=0&&!cart.length)return'—';
- return settings.shippingNote||'WhatsApp görüşmesinde netleşir';
+function subtotal(){return activeCart().reduce(function(s,x){return s+lineTotal(x.product,cartQuantity(x.item));},0);}
+function hasQuote(){return activeCart().some(function(x){return isQuote(cartQuantity(x.item),x.product)||x.product.priceMode==='hidden';});}
+function hasUnpriced(){return activeCart().some(function(x){return x.product.priceMode!=='price'||isQuote(cartQuantity(x.item),x.product);});}
+function shipLabel(){return activeCart().length?(settings.shippingNote||'WhatsApp görüşmesinde netleşir'):'—';}
+function announceCart(message){var n=$('#cart-status');if(!n)return;n.textContent='';setTimeout(function(){n.textContent=message;},20);}
+function persistAndAnnounce(message){persistCart();syncCart();if(message){toast(message);announceCart(message);}if(!cartStorageAvailable)announceCart('Tarayıcı depolamasına erişilemedi. Sepetiniz bu sekme açık kaldığı sürece bellekte tutulacak.');}
+function detectPriceChanges(){
+ if(!catalogReady())return;
+ var changed=[];
+ activeCart().forEach(function(x){var id=cartId(x.item),p=x.product,current=p.priceMode==='price'?Number(p.price):p.priceMode;if(Object.prototype.hasOwnProperty.call(cartPriceSnapshot,id)&&cartPriceSnapshot[id]!==current)changed.push(p.name);cartPriceSnapshot[id]=current;});
+ if(changed.length){var msg='Fiyat güncellendi; sepetinizde güncel fiyat kullanılıyor: '+changed.join(', ');toast(msg);announceCart(msg);}
 }
-function grandTotal(){return subtotal()+shipCost();}
 function addToCart(id,qty){
- if(!catalogReady()||!prodById(id)){toast(catalogReady()?'Bu ürün şu an yayında değil.':'Ürün bilgileri yüklenmeden sepete eklenemez.');return;}
- var it=cart.filter(function(x){return x.id==id;})[0];
- if(qty){if(it)it.qty+=qty;else cart.push({id:id,qty:qty});}
- else{if(it)it.qty+=stepQ();else cart.push({id:id,qty:minQ()});}
- save(LS.cart,cart);syncCart();toast('Sepete eklendi ✓');}
-function toast(m){var t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},1900);}
-function setQty(id,dir){var it=cart.filter(function(x){return x.id==id;})[0];if(!it)return;it.qty+=dir*stepQ();if(it.qty<minQ())cart=cart.filter(function(x){return x.id!=id;});save(LS.cart,cart);syncCart();renderCart();}
-function removeCart(id){cart=cart.filter(function(x){return x.id!=id;});save(LS.cart,cart);syncCart();renderCart();}
+ var p=prodById(id);if(!catalogReady()||!p){toast(catalogReady()?'Bu ürün şu an yayında değil.':'Ürün bilgileri yüklenmeden sepete eklenemez.');return;}
+ var it=cart.filter(function(x){return cartId(x)===String(id);})[0],amount=qty===undefined?productMin(p):normalizeQuantity(p,qty);
+ if(it)it.quantity=normalizeQuantity(p,cartQuantity(it)+amount);else cart.push({product_id:String(id),quantity:amount,note:''});
+ persistAndAnnounce(p.name+' sepete eklendi.');
+}
+function toast(m){var t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2500);}
+function setQty(id,dir){
+ var it=cart.filter(function(x){return cartId(x)===String(id);})[0],p=prodById(id);if(!it||!p)return;
+ var next=cartQuantity(it)+dir*productStep(p);if(next<productMin(p))cart=cart.filter(function(x){return cartId(x)!==String(id);});else it.quantity=normalizeQuantity(p,next);
+ persistAndAnnounce(p.name+' adedi güncellendi.');renderCart();
+}
+function setCartNote(id,note){var it=cart.filter(function(x){return cartId(x)===String(id);})[0];if(!it)return;it.note=String(note||'').slice(0,500);persistCart();announceCart('Kişiselleştirme notu güncellendi.');}
+function removeCart(id){var p=prodById(id);cart=cart.filter(function(x){return cartId(x)!==String(id);});persistAndAnnounce((p?p.name:'Ürün')+' sepetten çıkarıldı.');renderCart();}
 function syncCart(){
+ detectPriceChanges();
  var q=cartQty(),cc=$('#cart-count');cc.textContent=q;cc.hidden=q===0;
- var err=cartPriceError();
+ var err=cartPriceError(),totalText=err?PUBLIC_PRICE_ERROR:(hasQuote()||hasUnpriced()?'Özel fiyat teklifi':fmt(subtotal()));
  if($('#cart-subtotal'))$('#cart-subtotal').textContent=err?PUBLIC_PRICE_ERROR:fmt(subtotal());
  if($('#cart-ship'))$('#cart-ship').textContent=shipLabel();
- if($('#cart-total'))$('#cart-total').textContent=err?PUBLIC_PRICE_ERROR:(hasUnpriced()?fmt(grandTotal())+' + teklifli ürünler':fmt(grandTotal()));
+ if($('#cart-total'))$('#cart-total').textContent=totalText;
  var qn=$('#cart-quote-note');if(qn)qn.hidden=!hasQuote();
  $('#drawer-foot').hidden=cart.length===0;
- var fab=$('#cart-fab');if(fab){fab.hidden=cart.length===0;$('#fab-count').textContent=q;}
+ var fab=$('#cart-fab');if(fab){fab.hidden=q===0;$('#fab-count').textContent=q;}
 }
 function renderCart(){
  var b=$('#drawer-body');b.innerHTML='';
  if(!cart.length){b.appendChild(el('div','cart-empty','Sepetiniz henüz boş.<br>Beğendiğiniz ürünleri ekleyin.'));syncCart();return;}
  cart.forEach(function(i){
-  var p=prodById(i.id),row;
+  var id=cartId(i),p=prodById(id),qty=cartQuantity(i),row=el('div','cart-item');
   if(!p){
-   if(catalogState.catalog==='ready')return;
-   row=el('div','cart-item');
-   row.innerHTML='<div class="ci-main"><h5>Ürün bilgisi '+(catalogState.catalog==='loading'?'yükleniyor…':'yüklenemedi')+'</h5><div class="ci-price">'+(catalogState.catalog==='loading'?'':PUBLIC_PRICE_ERROR)+'</div><div class="stepper"><span>'+i.qty+' adet</span></div></div><button class="ci-remove" data-rm="'+qesc(i.id)+'">Kaldır</button>';
+   row.classList.add('cart-item-unavailable');
+   row.innerHTML='<div class="ci-main"><h5>'+(catalogReady()?'Bu ürün artık yayında değil.':'Ürün bilgisi yükleniyor…')+'</h5><p class="ci-warning">'+(catalogReady()?'Toplama dahil edilmedi.':'Katalog yüklenince doğrulanacak.')+'</p><div class="stepper"><span>'+qty+' adet</span></div></div><button class="ci-remove" data-rm="'+qesc(id)+'">Kaldır</button>';
    b.appendChild(row);return;
   }
-  var q=isQuote(i.qty);
-  row=el('div','cart-item');
+  var quote=isQuote(qty,p);
   row.innerHTML=mediaImg(p.img,{alt:p.name})+'<div class="ci-main"><span class="ci-code">'+esc(p.code)+'</span><h5>'+esc(p.name)+'</h5>'+
-   '<div class="ci-price">'+(q?'<span class="ci-quote">Özel fiyat teklifi</span>':p.priceMode==='price'?fmt(p.price)+' <small class="muted-unit">/ adet</small>':esc(priceText(p)))+'</div>'+
-   '<div class="stepper"><button data-dec="'+qesc(p.id)+'">−</button><span>'+i.qty+'</span><button data-inc="'+qesc(p.id)+'">+</button></div>'+
-   (q||p.priceMode!=='price'?'':'<div class="ci-line">'+fmt(p.price*i.qty)+'</div>')+'</div>'+
-   '<button class="ci-remove" data-rm="'+qesc(p.id)+'">Kaldır</button>';
+   '<div class="ci-price">'+(quote||p.priceMode==='hidden'?'<span class="ci-quote">Özel fiyat teklifi</span>':p.priceMode==='price'?fmt(p.price)+' <small class="muted-unit">/ adet</small>':esc(priceText(p)))+'</div>'+
+   '<div class="stepper"><button data-dec="'+qesc(id)+'" aria-label="'+qesc(p.name)+' adedini azalt">−</button><span>'+qty+'</span><button data-inc="'+qesc(id)+'" aria-label="'+qesc(p.name)+' adedini artır">+</button></div>'+
+   (quote||p.priceMode!=='price'?'':'<div class="ci-line">'+fmt(p.price*qty)+'</div>')+
+   '<label class="ci-note">Kişiselleştirme notu<input data-cart-note="'+qesc(id)+'" maxlength="500" value="'+qesc(i.note||'')+'" placeholder="İsim, renk veya kısa not"></label></div>'+
+   '<button class="ci-remove" data-rm="'+qesc(id)+'">Kaldır</button>';
   b.appendChild(row);
  });
  syncCart();
 }
-function openCart(){renderCart();$('#overlay').classList.add('open');$('#drawer').classList.add('open');document.body.style.overflow='hidden';}
+function openCart(){renderCart();$('#overlay').classList.add('open');$('#drawer').classList.add('open');document.body.style.overflow='hidden';announceCart('Sepet açıldı.');}
 function closeCart(){$('#overlay').classList.remove('open');$('#drawer').classList.remove('open');document.body.style.overflow='';$('#checkout-fields').classList.remove('show');}

@@ -175,7 +175,7 @@ test('süreç adımları, SSS ve kampanya pop-up kaydedilir', async ({ page }) =
 
   await page.click('[data-view="faq"]');
   await page.click('#faq-admin [data-pg-new]');
-  await page.fill('#faq-admin [data-f="question"]', 'Ödeme alınıyor mu?');
+  await page.fill('#faq-admin [data-f="question"]', 'Siteden tahsilat yapılıyor mu?');
   await page.fill('#faq-admin [data-f="answer"]', 'Hayır, sipariş talebi WhatsApp üzerinden onaylanır.');
   await page.click('#faq-admin [data-pg-preview]');
   await approvePreview(page);

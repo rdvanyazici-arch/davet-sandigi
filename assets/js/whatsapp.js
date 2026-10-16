@@ -1,46 +1,42 @@
-/* ============ CHECKOUT ============ */
-function orderNoStr(){return'DS-'+new Date().getFullYear()+'-'+pad5(settings.orderNext||1);}
-function buildOrderText(no,name,phone,note){
- var lines=[no+' numaralı siparişim hakkında bilgi almak istiyorum.','','*DAVET SANDIĞI · SİPARİŞ TALEBİ*','Talep No: '+no,''];
- cart.forEach(function(i){var p=prodById(i.id);if(!p)return;lines.push('• '+p.name+' ('+p.code+') x'+i.qty+' = '+lineText(p,i.qty));});
- lines.push('','Ara Toplam: '+fmt(subtotal()),'Kargo: '+shipLabel(),hasUnpriced()?'*TOPLAM: Teklifli ürünler görüşmede netleşir*':'*TOPLAM: '+fmt(grandTotal())+'*');
- if(hasQuote())lines.push('(100 adet üzeri ürünler için özel fiyat teklifi verilecektir.)');
- lines.push('');
- if(name)lines.push('Ad Soyad: '+name);
- if(phone)lines.push('Telefon: '+phone);
- if(note)lines.push('Not: '+note);
- lines.push('','Bu bir sipariş talebidir; ödeme belgesi değildir.');
+/* ============ WHATSAPP REQUEST ============ */
+function pad2(n){return('0'+n).slice(-2);}
+function requestReference(){
+ var d=new Date(),stamp=d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+pad2(d.getHours())+pad2(d.getMinutes())+pad2(d.getSeconds()),rand='';
+ if(window.crypto&&crypto.getRandomValues){var bytes=new Uint8Array(3);crypto.getRandomValues(bytes);rand=Array.from(bytes).map(function(n){return n.toString(36);}).join('').slice(0,5).toUpperCase();}
+ else rand=Math.random().toString(36).slice(2,7).toUpperCase();
+ return'DS-'+stamp+'-'+rand;
+}
+function validRequestLines(){return activeCart();}
+function buildOrderText(reference,eventDate,generalNote){
+ var lines=['Davet Sandığı sipariş talebi','Talep referansı: '+reference,''];
+ validRequestLines().forEach(function(x){
+  var p=x.product,i=x.item,qty=cartQuantity(i),quote=isQuote(qty,p)||p.priceMode!=='price';
+  lines.push('• '+p.name+' ('+p.code+')','  Adet: '+qty,'  Birim fiyat: '+(quote?'Özel fiyat teklifi':fmt(p.price)),'  Toplam: '+(quote?'Özel fiyat teklifi':fmt(p.price*qty)));
+  if(i.note)lines.push('  Kişiselleştirme notu: '+i.note);
+  if(quote)lines.push('  Teklif notu: Kesin fiyat WhatsApp görüşmesinde belirlenecektir.');
+  lines.push('');
+ });
+ if(eventDate)lines.push('Etkinlik tarihi: '+eventDate);
+ if(generalNote)lines.push('Genel not: '+generalNote);
+ if(eventDate||generalNote)lines.push('');
+ lines.push('Kargo ve kesin fiyat WhatsApp görüşmesinde onaylanacaktır.','Bu mesaj bir sipariş talebidir.');
  return lines.join('\n');
 }
 function checkout(){
  var cf=$('#checkout-fields');
  if(!catalogReady()||cartPriceError()){alert(PUBLIC_PRICE_ERROR+'. Lütfen sayfayı yenileyip tekrar deneyin.');return;}
- if(!cart.length){alert('Sepetiniz boş.');return;}
- if(!waNumber()){alert('WhatsApp iletişim bilgisi şu an yüklenemedi. Lütfen sayfayı yenileyin.');return;}
- if(!cf.classList.contains('show')){cf.classList.add('show');$('#c-name').focus();return;}
+ if(!validRequestLines().length){alert('Talep oluşturmak için yayındaki bir ürünü sepetinize ekleyin.');return;}
+ if(!waNumber()){alert('WhatsApp numarası geçerli değil. Yönetim panelinden ülke koduyla ve yalnızca rakam kullanarak güncelleyin.');return;}
+ if(!cf.classList.contains('show')){cf.classList.add('show');$('#c-event-date').focus();announceCart('Sipariş talebi bilgileri açıldı.');return;}
  if(!$('#c-kvkk').checked){alert('Devam etmek için KVKK Aydınlatma Metni onayını işaretleyin.');return;}
- var name=$('#c-name').value.trim(),phone=$('#c-phone').value.trim(),note=$('#c-note').value.trim();
- var no=orderNoStr();
- settings.orderNext=(settings.orderNext||1)+1;save(LS.s,settings);
- var text=buildOrderText(no,name,phone,note);
- renderReceipt(no,name,phone,note,text);
- $('#order-modal').classList.add('open');
+ var eventDate=$('#c-event-date').value,generalNote=$('#c-note').value.trim(),reference=requestReference(),text=buildOrderText(reference,eventDate,generalNote);
+ renderReceipt(reference,eventDate,generalNote,text);$('#order-modal').classList.add('open');
 }
-function renderReceipt(no,name,phone,note,text){
+function renderReceipt(reference,eventDate,generalNote,text){
  var r=$('#receipt');
- var rows=cart.map(function(i){var p=prodById(i.id);if(!p)return'';return'<div class="receipt-line"><span>'+esc(p.name)+' <small class="receipt-qty">x'+i.qty+'</small></span><span>'+esc(lineText(p,i.qty))+'</span></div>';}).join('');
- var totals='<div class="receipt-line"><span>Ara Toplam</span><span>'+fmt(subtotal())+'</span></div>'+
-  '<div class="receipt-line"><span>Kargo</span><span>'+esc(shipLabel())+'</span></div>'+
-  '<div class="receipt-total"><span>Toplam</span><span>'+(hasUnpriced()?'Teklifli ürünler görüşmede netleşir':fmt(grandTotal()))+'</span></div>'+
-  (hasQuote()?'<p class="receipt-meta receipt-quote-note">100 adet üzeri ürünler için özel fiyat teklifi verilecektir.</p>':'');
- var meta='';
- if(name)meta+='Ad Soyad: '+name+'<br>';
- if(phone)meta+='Telefon: '+phone+'<br>';
- if(note)meta+='Not: '+note+'<br>';
- meta+='Tarih: '+new Date().toLocaleDateString('tr-TR');
- r.innerHTML='<div class="receipt-head"><b>Davet Sandığı</b><span>Sipariş Talebi Özeti</span><div class="receipt-no">Sipariş Talep No: '+no+'</div></div>'+
-  '<p class="receipt-disc">Bu belge sipariş talebi özetidir. Ödeme belgesi değildir.</p>'+
-  rows+totals+'<p class="receipt-meta">'+meta+'</p>'+
-  '<p class="receipt-meta receipt-legal-note">KVKK Aydınlatma Metni onayı alınmıştır. Talebiniz WhatsApp üzerinden teyit edilerek kesinleşir.</p>';
- $('#rc-wa').onclick=function(){window.open(waLink(text),'_blank');};
+ var rows=validRequestLines().map(function(x){var p=x.product,i=x.item,qty=cartQuantity(i);return'<div class="receipt-line"><span>'+esc(p.name)+' <small class="receipt-qty">x'+qty+'</small></span><span>'+esc(lineText(p,qty))+'</span></div>';}).join('');
+ var total='<div class="receipt-line"><span>Ara toplam</span><span>'+fmt(subtotal())+'</span></div><div class="receipt-line"><span>Kargo</span><span>'+esc(shipLabel())+'</span></div><div class="receipt-total"><span>Talep toplamı</span><span>'+(hasQuote()||hasUnpriced()?'Özel fiyat teklifi':fmt(subtotal()))+'</span></div>';
+ var meta=(eventDate?'Etkinlik tarihi: '+esc(eventDate)+'<br>':'')+(generalNote?'Genel not: '+esc(generalNote)+'<br>':'')+'Oluşturulma: '+new Date().toLocaleString('tr-TR');
+ r.innerHTML='<div class="receipt-head"><b>Davet Sandığı</b><span>Sipariş talebi önizlemesi</span><div class="receipt-no">Talep referansı: '+esc(reference)+'</div></div><p class="receipt-disc">Aşağıdaki metni kontrol edin. Devam ettiğinizde WhatsApp açılır ve bu bilgiler WhatsApp’a aktarılır.</p>'+rows+total+'<p class="receipt-meta">'+meta+'</p><pre class="wa-message-preview" id="wa-message-preview">'+esc(text)+'</pre><p class="receipt-meta receipt-legal-note">Müşteri bilgileri Supabase’e kaydedilmez. Talep, WhatsApp görüşmesindeki karşılıklı onaydan sonra kesinleşir.</p>';
+ $('#rc-wa').onclick=function(){window.open(waLink(text),'_blank','noopener,noreferrer');};
 }

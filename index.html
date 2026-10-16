@@ -226,6 +226,7 @@
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="drawer" aria-label="Sepet">
   <div class="drawer-head"><h3>Sepetiniz</h3><button class="drawer-close" id="drawer-close">✕</button></div>
+  <div class="sr-only" id="cart-status" role="status" aria-live="polite" aria-atomic="true"></div>
   <div class="drawer-body" id="drawer-body"></div>
   <div class="drawer-foot" id="drawer-foot" hidden>
     <div class="cart-sum">
@@ -233,16 +234,15 @@
       <div class="sum-row"><span>Kargo</span><span id="cart-ship">—</span></div>
       <div class="sum-row total"><span>Toplam</span><b id="cart-total">₺0,00</b></div>
     </div>
-    <p class="drawer-note quote" id="cart-quote-note" hidden>Sepetinizde 100 adedin üzerinde ürün var — bu ürünler için size özel fiyat teklifi verilecektir.</p>
-    <p class="drawer-note">Ödeme alınmaz; talebiniz WhatsApp üzerinden onaylanır. Minimum 25 adet, 25’er artışlarla sipariş verilir.</p>
+    <p class="drawer-note quote" id="cart-quote-note" hidden>Sepetinizde özel fiyat teklifi gerektiren ürün veya adet bulunuyor.</p>
+    <p class="drawer-note" id="cart-rule-note">Minimum adet ve artış kuralı ürüne göre uygulanır. Kargo ve kesin fiyat WhatsApp görüşmesinde onaylanır.</p>
     <div class="checkout-fields" id="checkout-fields">
-      <label>Ad Soyad<input id="c-name" placeholder="Adınız Soyadınız"></label>
-      <label>Telefon<input id="c-phone" placeholder="05xx xxx xx xx"></label>
-      <label>Etkinlik / Not<textarea id="c-note" placeholder="Etkinlik tarihi, renk/isim tercihi..."></textarea></label>
+      <label>Etkinlik tarihi (isteğe bağlı)<input id="c-event-date" type="date"></label>
+      <label>Genel kişiselleştirme notu (isteğe bağlı)<textarea id="c-note" maxlength="500" placeholder="Renk, isim veya diğer tercihleriniz"></textarea></label>
       <label class="kvkk-check"><input type="checkbox" id="c-kvkk"><span>Kişisel verilerimin sipariş talebimin oluşturulması amacıyla işlenmesine ilişkin <a id="kvkk-link">KVKK Aydınlatma Metni</a>’ni okudum.</span></label>
     </div>
-    <button class="btn btn-primary" id="checkout-btn">Siparişi Tamamla <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-    <button class="btn btn-ghost" id="continue-btn">Alışverişe Devam Et</button>
+    <button class="btn btn-primary" id="checkout-btn">Sipariş Talebini Önizle <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <button class="btn btn-ghost" id="continue-btn">Ürünlere Dön</button>
   </div>
 </aside>
 
@@ -251,8 +251,8 @@
   <div class="modal-card">
     <div class="receipt" id="receipt"></div>
     <div class="modal-actions">
-      <button class="btn btn-wa" id="rc-wa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 01-1.9-1.2 7.2 7.2 0 01-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.8 2.8 0 00-.9 2.1 4.9 4.9 0 001 2.6 11 11 0 004.2 3.7c.6.3 1 .4 1.4.5a3.3 3.3 0 001.5.1 2.5 2.5 0 001.6-1.1 2 2 0 00.1-1.1c0-.1-.2-.2-.4-.3z"/></svg> WhatsApp'a Gönder</button>
-      <button class="btn btn-ghost" id="rc-print">Sipariş Özeti PDF</button>
+      <button class="btn btn-wa" id="rc-wa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 01-1.9-1.2 7.2 7.2 0 01-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.8 2.8 0 00-.9 2.1 4.9 4.9 0 001 2.6 11 11 0 004.2 3.7c.6.3 1 .4 1.4.5a3.3 3.3 0 001.5.1 2.5 2.5 0 001.6-1.1 2 2 0 00.1-1.1c0-.1-.2-.2-.4-.3z"/></svg> WhatsApp'ta Sipariş Talebi Oluştur</button>
+      <button class="btn btn-ghost" id="rc-print">Talep Özetini Yazdır</button>
       <button class="btn btn-ghost" id="rc-close">Kapat</button>
     </div>
   </div>
@@ -285,13 +285,13 @@
         <div class="pm-price" id="pm-price"></div>
         <div class="stepper pm-step"><button id="pm-dec">−</button><span id="pm-qty">25</span><button id="pm-inc">+</button></div>
       </div>
-      <p class="pm-quote" id="pm-quote" hidden>100 adedin üzerinde seçtiniz — bu ürün için size <b>özel fiyat teklifi</b> verilecektir.</p>
+      <p class="pm-quote" id="pm-quote" hidden>Seçtiğiniz adet veya ürün için <b>özel fiyat teklifi</b> hazırlanacaktır.</p>
       <button class="btn btn-primary pm-add" id="pm-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.4a1.6 1.6 0 001.6 1.3h8.4a1.6 1.6 0 001.6-1.3L22 7H6"/></svg> Sepete Ekle</button>
       <p class="pm-note" id="pm-note"></p>
     </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <button class="cart-fab" id="cart-fab" hidden aria-label="Sepetim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.4a1.6 1.6 0 001.6 1.3h8.4a1.6 1.6 0 001.6-1.3L22 7H6"/></svg> Sepetim <span class="cart-fab-count" id="fab-count">0</span></button>
 
 <!-- ===== COOKIE CONSENT ===== -->

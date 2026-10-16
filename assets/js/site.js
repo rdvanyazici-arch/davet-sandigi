@@ -168,6 +168,7 @@ document.addEventListener('click',function(e){
  else if(t.hasAttribute('data-dec'))setQty(t.getAttribute('data-dec'),-1);
  else if(t.hasAttribute('data-rm'))removeCart(t.getAttribute('data-rm'));
 });
+document.addEventListener('input',function(e){if(e.target.matches('[data-cart-note]'))setCartNote(e.target.getAttribute('data-cart-note'),e.target.value);});
 $('#open-cart').addEventListener('click',openCart);
 $('#cart-fab').addEventListener('click',openCart);
 $('#drawer-close').addEventListener('click',closeCart);

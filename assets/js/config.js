@@ -107,7 +107,7 @@ var DEF_LEGAL={
  privacy:'GİZLİLİK POLİTİKASI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nDavet Sandığı olarak, sipariş talebinizi oluşturmak amacıyla paylaştığınız ad-soyad, telefon, etkinlik tarihi ve not bilgilerinizi yalnızca sizinle iletişim kurmak ve talebinizi değerlendirmek için kullanırız. Bilgileriniz üçüncü kişilerle pazarlama amacıyla paylaşılmaz.',
  kvkk:'KVKK AYDINLATMA METNİ\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\n6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında; sipariş talebinizin oluşturulması amacıyla ad-soyad, telefon ve etkinlik bilgileriniz veri sorumlusu sıfatıyla Davet Sandığı tarafından işlenmektedir. Verileriniz talebinizin sonuçlanması için gerekli süre boyunca saklanır. KVKK’nın 11. maddesindeki haklarınız için bizimle iletişime geçebilirsiniz.',
  cookie:'ÇEREZ POLİTİKASI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nSitemiz; sepet ve tercih bilgilerinizi cihazınızda (localStorage) saklamak için teknik olarak gerekli depolama kullanır. Pazarlama/izleme çerezi kullanılmamaktadır.',
- mesafeli:'SİPARİŞ & MESAFELİ SATIŞ KOŞULLARI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nSitemizde çevrimiçi ödeme alınmamaktadır. Oluşturduğunuz talep bir “sipariş talebi”dir; fiyat, adet, kargo ve teslimat detayları WhatsApp üzerinden karşılıklı teyit edilerek kesinleşir.'
+ mesafeli:'SİPARİŞ & MESAFELİ SATIŞ KOŞULLARI\n\nBu metin örnek/taslak niteliğindedir; yayına almadan önce bir hukuk danışmanıyla netleştirmeniz önerilir.\n\nSitemizde çevrimiçi tahsilat yapılmamaktadır. Oluşturduğunuz talep bir “sipariş talebi”dir; fiyat, adet, kargo ve teslimat detayları WhatsApp üzerinden karşılıklı teyit edilerek kesinleşir.'
 };
 var DEF_CAMPAIGN={enabled:false,title:'Hoş Geldiniz',text:'Özel günleriniz için el emeğiyle hazırlanan hediyeliklerimizi keşfedin. Sorularınız için WhatsApp’tan bize ulaşabilirsiniz.',btnText:'Ürünleri Keşfet',btnLink:'#urunler',img:''};
 var DEF_HOME={
@@ -124,7 +124,7 @@ var DEF_HOME={
 var DEF_BANNER={eyebrow:'Kişiye özel davet & hatıra tasarımları',title:'Özel anlarınız,\n*unutulmaz hatıralara* dönüşsün.',lead:'Söz, nişan, kına, nikâh ve tüm özel günleriniz için el emeğiyle hazırlanan, kişiye özel hediyelikler.',b1t:'Ürünleri Keşfet',b1l:'#urunler',b2t:'Koleksiyonları İncele',b2l:'#koleksiyonlar',img:'hero'};
 function defSettings(){return{whatsapp:'905399413902',banners:[JSON.parse(JSON.stringify(DEF_BANNER))],instagram:'',phone:'+90 539 941 39 02',mail:'info@davetsandigi.com',addr:"Türkiye'nin her yerine teslimat",heroTitle:'',heroLead:'',minQty:25,stepQty:25,quoteThreshold:100,shipFee:150,shipFree:2500,orderNext:125,topbar:DEF_TOPBAR.slice(),reviews:JSON.parse(JSON.stringify(DEF_REVIEWS)),revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:JSON.parse(JSON.stringify(DEF_FAQ)),story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
-function save(k,v){localStorage.setItem(k,JSON.stringify(v));if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}}
+function save(k,v){var stored=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){stored=false;}if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}return stored;}
 function pad3(n){return('000'+n).slice(-3);}
 function pad5(n){return('00000'+n).slice(-5);}
 function seedProducts(){
@@ -162,5 +162,5 @@ function glyphSvg(g){
  };
  return m[g]||m.leaf;
 }
-function waNumber(){return(settings.whatsapp||'').replace(/[^0-9]/g,'');}
+function waNumber(){var n=String(settings.whatsapp||'').trim();return/^[1-9][0-9]{9,14}$/.test(n)?n:'';}
 function waLink(text){var n=waNumber();return'https://wa.me/'+(n?n:'')+'?text='+encodeURIComponent(text||'Merhaba, Davet Sandığı ürünleri hakkında bilgi almak istiyorum.');}
