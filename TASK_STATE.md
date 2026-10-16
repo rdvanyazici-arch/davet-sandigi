@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 10 içerik/marka tutarlılığı yerelde tamamlandı; Production, uzak Supabase, commit ve push yapılmadı.
-- Aktif faz: Faz 10 — yerel kod ve doğrulamalar tamamlandı.
-- Beklenen: Faz 10 değişikliklerinin kullanıcı tarafından incelenmesi; Faz 11'e geçmek için kullanıcı onayı.
+- Güncel durum: Faz 11 SEO, hız ve erişilebilirlik yerelde tamamlandı; Production, uzak Supabase, commit ve push yapılmadı.
+- Aktif faz: Faz 11 — yerel kod ve doğrulamalar tamamlandı.
+- Beklenen: Faz 11 değişikliklerinin kullanıcı tarafından incelenmesi; Faz 12'ye geçmeden önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
@@ -19,7 +19,7 @@
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **tamamlandı**
 - Faz 9 — Sepet ve WhatsApp akışı: **tamamlandı**
 - Faz 10 — İçerik ve marka tutarlılığı: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
-- Faz 11 — SEO, hız ve erişilebilirlik: **bekliyor**
+- Faz 11 — SEO, hız ve erişilebilirlik: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **bekliyor**
 - Faz 13 — Test, güvenlik ve kabul: **bekliyor**
 - Faz 14 — GitHub ve Vercel yayını: **bekliyor**
@@ -41,6 +41,7 @@
 - 2026-10-16 — Faz 8 Vercel Preview tamamlandı: klasör yalnızca `rdvanyazici/davet-sandigi` projesine bağlandı; `target=preview`, `status=Ready` ve `productionUrl=null` doğrulandı. Preview URL masaüstü 1280 px ve mobil 390 px görünümde açıldı; yatay taşma, konsol uyarısı/hatası, eski fiyat, `service_role` veya `sb_secret` bulunmadı. Supabase URL'si `zdksvgtkeeweufuajugd.supabase.co`, anahtar türü yalnızca publishable key olarak doğrulandı.
 - 2026-10-16 — Faz 9 yerelde tamamlandı: sepet yalnızca `product_id`, `quantity`, `note` saklıyor; ürün adı/fiyatı güncel katalogdan çözülüyor; pasif ürün uyarılı biçimde toplam dışı kalıyor; minimum/artış ve teklif kuralları uygulanıyor. WhatsApp mesajı benzersiz referans, ürün/SKU/adet/fiyat, isteğe bağlı tarih/not ve açık bilgilendirme ile önizleniyor; müşteri bilgileri Supabase'e yazılmıyor. Gerçek telefon kontrol adımları `docs/whatsapp-device-test.md` içine eklendi.
 - 2026-10-16 — Faz 10 yerelde tamamlandı: envanterdeki onaysız iletişim değerleri ile altı eski örnek yorum kaydı bastırılıyor; yalnızca envanterdeki beş kesin legacy SSS kaydı tanımlı çiftlerle ele alınıyor. Genel içerik/iddia filtresi yok: yönetim panelinden yayımlanan “el emeği”, “kişiye özel tasarım”, “kaliteli malzeme” gibi metinler aynen gösteriliyor. `min_quantity`, `quantity_step`, `default_min_quantity`, `default_quantity_step` ve `quote_threshold` pozitif tamsayı kısıtlarıyla kaynak değerlerini koruyor (25/25/100 değerleri değiştirilmez). Kargo/teslimat tekrarları yalnız `site_settings_public.shipping_note` / `delivery_text` değerlerinden besleniyor. Instagram ana marka/satış kanalı; WhatsApp sipariş talebi kanalı; telefon/e-posta `tel:`/`mailto:`. Baby Shower mevcut kapsam dışında olduğu için açıkça belirtiliyor. Sahte yorum fallback'i/statik süreç ve Neden Biz içerikleri kaldırıldı; onaylı yasal metin yoksa legal taslak gösterilmiyor.
+- 2026-10-17 — Kullanıcı incelemesinde bulunan kapalı sepet çekmecesi erişilebilirlik hatası düzeltildi: `#drawer` başlangıçta `aria-hidden="true"` ve `inert`; `openCart()` bunları kaldırıyor, `closeCart()` odak iadesinden sonra geri ekliyor. Yeni Playwright regresyon testi kapalı durumdaki klavye erişimini, açılış/kapanışı ve açan düğmeye odak dönüşünü doğruluyor. Public-site Playwright paketi güncel kodda **22/22 başarılı**.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -88,7 +89,7 @@
 
 ## Bilinen riskler
 - Fiyat değişikliği bildirimi açık oturumdaki katalog yenilemelerinde çalışır; gizlilik kuralı gereği önceki fiyat localStorage'a yazılmadığından tarayıcı tamamen kapatılıp açıldıktan sonra eski fiyatla karşılaştırma yapılamaz.
-- `legacy-firebase.js` içindeki Firebase web API anahtarı dosyada duruyor; public akışta kullanılmıyor (Faz 12'de kaldırılacak).
+- `assets/js/legacy-firebase.js` içindeki Firebase web API anahtarı dosyada duruyor; Phase 11'de public `index.html` yüklemesinden çıkarıldı ancak dosya, Faz 12'de kod/geri dönüş incelemesi tamamlanana kadar korundu.
 - `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
 - Faz 10 grep'inde public runtime için demo/lorem/örnek/sample kalmadı. Envanterdeki onaysız telefon/e-posta/Instagram, müşteri adları ve iddia ifadeleri `catalog.js`/`site.js` içindeki suppression guard listelerinde literal olarak duruyor; sayfaya render edilmezler. `assets/js/admin-content.js` içindeki geçmiş localStorage editör kodu ve `legacy-firebase.js` Faz 10 kapsamı dışında bırakıldı.
 - `tests/e2e/product-admin.spec.mjs` içindeki "ürün listesini sayfalar…" testi, 7b commit'inin (`76adf86`) temiz bir git worktree'sinde ayrı bir portta yeniden çalıştırıldığında da başarısız (`#product-next` bulunamıyor); 7c'den bağımsız olduğu doğrulandı, kod değiştirilmedi.
@@ -129,6 +130,11 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-17 — Faz 11 Lighthouse (yerel, headless; mobil 412×823 / masaüstü 1350×940): önce/sonra mobil Performance 85→97, Accessibility 94→100, Best Practices 96→100, SEO 91→100; masaüstü Performance 96→96, Accessibility 94→100, Best Practices 96→100, SEO 91→100. Son ölçümde kontrast, heading-order, meta-description, canonical ve image-alt denetimleri geçti. Ayrıntı ve laboratuvar metrikleri `docs/performance.md` içinde.
+- 2026-10-17 — Faz 11 `npm run build`: başarılı; read-only Supabase slug sorguları 0 aktif ürün ve 0 aktif kategori döndürdü, bu nedenle sitemap yalnız canonical ana sayfayı içeriyor. Hata durumunda warning + ana sayfa-only fallback davranışı SEO birim testleriyle doğrulandı. Production deploy veya Supabase yazma işlemi yapılmadı.
+- 2026-10-17 — `node --test tests/seo.test.mjs tests/admin-auth.test.mjs`: **11/11 başarılı**; `tests/e2e/public-site.spec.mjs`: ilk doğrulamada **21/21**, kapalı sepet düzeltmesinden sonra **22/22 başarılı** (SEO, sitemap kaynakları, canonical/Product JSON-LD, CSP, responsive görseller, mobil taşma ve klavye/modal odağı dahil).
+- 2026-10-17 — Tam Playwright paketi: **31/32**; tek başarısız test `product-admin.spec.mjs` ürün sayfalama (`#product-next`) timeout'u. Bu hata temiz 7b tabanında ve Faz 11 öncesi de biliniyordu; bu fazda değiştirilmedi.
+- 2026-10-17 — Değişen JavaScript dosyalarında `node --check`, `package.json`/`vercel.json` JSON parse ve `git diff --check`: **başarılı**. Kullanılmayan CSS Lighthouse tasarruf tahmini son ölçümde mobil/masaüstü 22/23 KiB olarak kaldı; etkileşimli/koşullu bileşenleri bozma riski nedeniyle genel CSS silme yapılmadı ve bu bulgu `docs/performance.md` içinde açıklandı.
 - 2026-10-16 — Faz 10 kritik düzeltmesi: 25/100 özel değer eşlemeleri kaldırıldı; yayımlanmış yönetici kopyasına uygulanan genel claim filtresi kaldırıldı; örnek SSS bastırması yalnızca inventory'deki beş kesin eski soru/cevap çiftine daraltıldı.
 - 2026-10-16 — Faz 10 hedef Playwright testleri: gerçek 25 minimum / 25 artış / 100 teklif eşiği korunması, onaylı claim metinlerinin render edilmesi, legacy iletişim/yorum örneklerinin bastırılması, Instagram/WhatsApp kanalları ve telefon/e-posta bağlantıları: **5/5 başarılı**.
 - 2026-10-16 — `tests/e2e/public-site.spec.mjs`: **16/16 başarılı** (Faz 8, Faz 9 ve Faz 10); 390 px mobil taşma testi dahil.

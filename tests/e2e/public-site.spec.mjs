@@ -73,19 +73,25 @@ function applyFilters(rows, params) {
   return result;
 }
 
-async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, wish = null } = {}) {
+async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, wish = null, csp = '' } = {}) {
   const log = { requests: [], rest: [], consoleErrors: [], pageErrors: [], db, fail, delay };
   page.on('request', request => log.requests.push(request.url()));
   page.on('console', message => { if (message.type() === 'error') log.consoleErrors.push(message.text()); });
   page.on('pageerror', error => log.pageErrors.push(String(error)));
   await page.route('**/*', route => {
     const url = new URL(route.request().url());
+    if (csp && url.host === LOCAL_HOST && url.pathname === '/index.html') {
+      return route.fetch().then(response => {
+        const headers = Object.assign({}, response.headers(), { 'content-security-policy': csp });
+        return route.fulfill({ response, headers });
+      });
+    }
     if (url.host === LOCAL_HOST) return route.continue();
     return route.abort();
   });
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }));
   await page.route('**/assets/js/supabase-config.generated.js', route => route.fulfill({ contentType: 'text/javascript', body: `window.__DAVET_SANDIGI_ENV__=Object.freeze({SUPABASE_URL:'${ORIGIN}',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_testkey'});` }));
-  await page.route(`${ORIGIN}/storage/v1/object/public/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
+  await page.route(`${ORIGIN}/storage/v1/{object,render}/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
   await page.route(`${ORIGIN}/rest/v1/**`, async route => {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS, body: '' });
@@ -295,11 +301,13 @@ test('görsellerde alt/width/height; yalnızca hero eager ve fetchpriority high;
 
   const images = await page.evaluate(() => Array.from(document.images).map(img => ({
     id: img.id, cls: img.closest('[class]')?.className || '', src: img.getAttribute('src') || '', alt: img.getAttribute('alt'),
-    width: img.getAttribute('width'), height: img.getAttribute('height'), loading: img.getAttribute('loading'), priority: img.getAttribute('fetchpriority')
+    srcset: img.getAttribute('srcset'), sizes: img.getAttribute('sizes'), width: img.getAttribute('width'), height: img.getAttribute('height'), loading: img.getAttribute('loading'), priority: img.getAttribute('fetchpriority')
   })));
   const hero = images.find(image => image.id === 'hero-img');
   expect(hero).toMatchObject({ loading: 'eager', priority: 'high', width: '1600', height: '700', alt: 'Hero görseli' });
   expect(hero.src).toContain(`${ORIGIN}/storage/v1/object/public/site-media/banners/1/h.webp`);
+  expect(hero.srcset).toContain('render/image/public/site-media/banners/1/h.webp');
+  expect(hero.sizes).toContain('55vw');
   const others = images.filter(image => image.id !== 'hero-img' && image.src);
   expect(others.length).toBeGreaterThan(6);
   for (const image of others) {
@@ -311,6 +319,13 @@ test('görsellerde alt/width/height; yalnızca hero eager ve fetchpriority high;
   }
   const bySrc = part => others.find(image => image.src.includes(part));
   expect(bySrc('products/1/a.webp')).toMatchObject({ alt: 'Kolonya ana görsel', width: '800', height: '1000' });
+  expect(bySrc('products/1/a.webp').srcset).toContain('products/1/a.webp?width=480&quality=82 480w');
+  expect(bySrc('products/1/a.webp').srcset).toContain('products/1/a.webp 800w');
+  expect(bySrc('products/1/a.webp').srcset).not.toContain('data:image');
+  expect(bySrc('products/1/a.webp').src).not.toContain('data:image');
+  await page.locator('#prod-grid .prod-card').first().scrollIntoViewIfNeeded();
+  await expect(page.locator('#prod-grid .prod-card img').first()).toHaveAttribute('srcset', /render\/image\/public\/site-media/);
+  await expect(page.locator('#prod-grid .prod-card img').first()).toHaveAttribute('sizes', /100vw/);
   expect(bySrc('collections/1/c.webp')).toMatchObject({ alt: 'Nişan koleksiyonu kapağı', width: '640', height: '640' });
   expect(bySrc('story/s.webp')).toMatchObject({ alt: 'Atölye görseli', width: '1200', height: '800' });
   expect(bySrc('campaigns/c.webp')).toMatchObject({ alt: 'CTA görseli' });
@@ -460,6 +475,133 @@ test('Faz 10: mobilde Instagram/WhatsApp ve tutarlı kapsam metinleri taşmaz', 
   await expect(page.locator('.footer-about')).toContainText('Baby Shower şu anda sunulmuyor.');
   const sizes = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: document.documentElement.clientWidth }));
   expect(sizes.body).toBeLessThanOrEqual(sizes.viewport + 1);
+});
+
+test('Faz 11: category slug route, dynamic canonical and priced Product JSON-LD', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html?kategori=mum');
+  await waitReady(page);
+  await expect(page.locator('#prod-grid')).toContainText('Mum Ürünü');
+  await expect(page.locator('#filterbar button.active')).toHaveText('Mum');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?kategori=mum');
+
+  await page.goto('/index.html?urun=kolonya-urun');
+  await expect(page.locator('#product-modal')).toHaveClass(/open/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?urun=kolonya-urun');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Açıklama/);
+  const schema = await page.locator('#product-schema').evaluate(node => JSON.parse(node.textContent));
+  expect(schema['@type']).toBe('Product');
+  expect(schema.offers.price).toBe('54.90');
+  await page.goto('/index.html?urun=pasif-urun');
+  await expect(page.locator('#product-schema')).toHaveCount(0);
+});
+
+test('Faz 11: directory taxonomy category route query selects active slug', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html?kategori=mum');
+  await waitReady(page);
+  await expect(page.locator('#prod-grid')).toContainText('Mum Ürünü');
+  await expect(page.locator('#prod-grid')).not.toContainText('Kolonya Ürünü');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?kategori=mum');
+});
+
+test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect(page).toHaveTitle('Davet Sandığı | Ürünler ve Koleksiyonlar');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /sipariş talebinizi WhatsApp/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/');
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /social-card\.png$/);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+  expect(await page.locator('#organization-schema').evaluate(node => node.textContent)).toContain('"@type":"Organization"');
+  await expect(page.locator('h1')).toHaveCount(1);
+  for (const path of ['/robots.txt', '/sitemap.xml', '/assets/images/brand/favicon.svg', '/assets/images/brand/favicon-32.png', '/assets/images/brand/favicon-16.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/social-card.png']) {
+    const response = await page.request.get(path);
+    expect(response.ok(), path).toBeTruthy();
+  }
+});
+
+test('Faz 11: Vercel security headers CSP policy allows Supabase and Google Fonts only where needed', async ({ page }) => {
+  const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  const headers = config.headers[0].headers;
+  const csp = headers.find(header => header.key === 'Content-Security-Policy').value;
+  expect(headers).toContainEqual({ key: 'X-Content-Type-Options', value: 'nosniff' });
+  expect(headers).toContainEqual({ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' });
+  expect(headers).toContainEqual({ key: 'X-Frame-Options', value: 'DENY' });
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).toContain(`connect-src 'self' https://${PROJECT_HOST}`);
+  expect(csp).toContain(`img-src 'self' data: blob: https://${PROJECT_HOST}`);
+  expect(csp).toContain('https://fonts.googleapis.com');
+  expect(csp).toContain('https://fonts.gstatic.com');
+  expect(csp).not.toContain('unsafe-eval');
+
+  const log = await setup(page, { csp });
+  const response = await page.goto('/index.html');
+  expect(response.headers()['content-security-policy']).toBe(csp);
+  await waitReady(page);
+  await expect(page.locator('#prod-grid')).toContainText('Kolonya Ürünü');
+  expect(log.consoleErrors.filter(message => message.includes('Refused to'))).toEqual([]);
+  expect(log.pageErrors).toEqual([]);
+});
+
+test('Faz 11: keyboard dialog focus trap, Escape and opener restoration', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+
+  await page.click('#open-search');
+  await expect(page.locator('#searchview')).toHaveAttribute('aria-modal', 'true');
+  await expect(page.locator('#search-input')).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.locator('#search-close')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#search-input')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#searchview')).not.toHaveClass(/open/);
+  await expect(page.locator('#open-search')).toBeFocused();
+
+  const productOpener = page.locator('#prod-grid .product-detail-trigger').first();
+  await productOpener.click();
+  await expect(page.locator('#product-modal')).toHaveAttribute('aria-modal', 'true');
+  await expect(page.locator('#pm-close')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#product-modal')).not.toHaveClass(/open/);
+  await expect(productOpener).toBeFocused();
+
+  await page.click('#open-cart');
+  await expect(page.locator('#drawer')).toHaveAttribute('aria-modal', 'true');
+  await expect(page.locator('#drawer-close')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#drawer')).not.toHaveClass(/open/);
+  await expect(page.locator('#open-cart')).toBeFocused();
+  expect(await page.locator('h1').count()).toBe(1);
+});
+
+test('Faz 11: closed cart drawer is inert and hidden until opened', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+
+  const drawer = page.locator('#drawer');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+  await expect(drawer).toHaveAttribute('inert', '');
+  await page.locator('#drawer-close').focus();
+  await expect(page.locator('#drawer-close')).not.toBeFocused();
+  await page.locator('#open-cart').focus();
+  await page.keyboard.press('Tab');
+  expect(await drawer.evaluate(node => node.contains(document.activeElement))).toBe(false);
+
+  await page.locator('#open-cart').click();
+  await expect(drawer).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(drawer).not.toHaveAttribute('inert', '');
+  await expect(page.locator('#drawer-close')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+  await expect(drawer).toHaveAttribute('inert', '');
+  await expect(page.locator('#open-cart')).toBeFocused();
 });
 
 test('Faz 9: sepet ekle/çıkar, minimum adet, artış ve saklanan veri biçimi', async ({ page }) => {

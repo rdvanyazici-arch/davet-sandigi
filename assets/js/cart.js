@@ -85,5 +85,5 @@ function renderCart(){
  });
  syncCart();
 }
-function openCart(){renderCart();$('#overlay').classList.add('open');$('#drawer').classList.add('open');document.body.style.overflow='hidden';announceCart('Sepet açıldı.');}
-function closeCart(){$('#overlay').classList.remove('open');$('#drawer').classList.remove('open');document.body.style.overflow='';$('#checkout-fields').classList.remove('show');}
+function openCart(){var drawer=$('#drawer');renderCart();drawer.removeAttribute('aria-hidden');drawer.removeAttribute('inert');$('#overlay').classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';activateFocusLayer(drawer,closeCart);announceCart('Sepet açıldı.');}
+function closeCart(){var drawer=$('#drawer');$('#overlay').classList.remove('open');drawer.classList.remove('open');deactivateFocusLayer(drawer);drawer.setAttribute('aria-hidden','true');drawer.setAttribute('inert','');document.body.style.overflow='';$('#checkout-fields').classList.remove('show');}

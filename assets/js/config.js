@@ -65,7 +65,7 @@ var DEF_HOME={
  cta:{eb:'',t:'',p:'',btn:'',img:''}
 };
 var DEF_BANNER={eyebrow:'',title:'',lead:'',b1t:'',b1l:'',b2t:'',b2l:'',img:''};
-function defSettings(){return{whatsapp:'',banners:[],instagram:'',phone:'',mail:'',addr:'',deliveryText:'',shippingNote:'',heroTitle:'',heroLead:'',minQty:1,stepQty:1,quoteThreshold:0,shipFee:0,shipFree:0,orderNext:1,topbar:[],reviews:[],revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:[],story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
+function defSettings(){return{whatsapp:'',banners:[],instagram:'',phone:'',mail:'',addr:'',deliveryText:'',shippingNote:'',heroTitle:'',heroLead:'',minQty:25,stepQty:25,quoteThreshold:100,shipFee:0,shipFree:0,orderNext:1,topbar:[],reviews:[],revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:[],story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
 function save(k,v){var stored=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){stored=false;}if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}return stored;}
 function pad3(n){return('000'+n).slice(-3);}

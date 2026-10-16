@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#FAF7F0"/>
+  <path d="M0 470C240 350 370 690 640 510s390-150 560-285v405H0z" fill="#F4EFE5"/>
+  <g transform="translate(510 150) scale(3.75)" fill="none" stroke="#596957" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M10 20h28v18H10z"/>
+    <path d="M8 14h32v6H8z"/>
+    <path d="M24 38V14"/>
+    <path d="M24 14s-3-6-7-5a3 3 0 0 0 0 6h7M24 14s3-6 7-5a3 3 0 0 1 0 6h-7"/>
+  </g>
+  <text x="600" y="440" text-anchor="middle" fill="#372D13" font-family="Georgia,serif" font-size="52">Davet Sandığı</text>
+  <text x="600" y="490" text-anchor="middle" fill="#788875" font-family="Arial,sans-serif" font-size="21">Ürünler ve koleksiyonlar</text>
+</svg>

@@ -1,5 +1,73 @@
 /* ============ SETTINGS APPLY + CONTENT ============ */
 function nl2br(s){return esc(s).replace(/\n/g,'<br>');}
+var focusLayerStack=[];
+function focusableElements(root){
+ return Array.prototype.slice.call(root.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(node){return!node.hidden&&node.getAttribute('aria-hidden')!=='true'&&node.getClientRects().length>0;});
+}
+function activateFocusLayer(root,close){
+ if(!root)return;
+ focusLayerStack=focusLayerStack.filter(function(item){return item.root!==root;});
+ if(!root.hasAttribute('role'))root.setAttribute('role','dialog');
+ root.setAttribute('aria-modal','true');
+ var layer={root:root,opener:document.activeElement,close:close};focusLayerStack.push(layer);
+ var items=focusableElements(root);if(items.length)items[0].focus();else{root.tabIndex=-1;root.focus();}
+}
+function deactivateFocusLayer(root){
+ var index=-1;for(var i=focusLayerStack.length-1;i>=0;i--){if(focusLayerStack[i].root===root){index=i;break;}}
+ if(index<0)return;
+ var layer=focusLayerStack.splice(index,1)[0],top=focusLayerStack[focusLayerStack.length-1];
+ if(top){
+  if(layer.opener&&top.root.contains(layer.opener)&&layer.opener.isConnected&&!layer.opener.hidden)layer.opener.focus();
+  else{var items=focusableElements(top.root);if(items.length)items[0].focus();}
+  return;
+ }
+ if(layer.opener&&layer.opener.isConnected&&!layer.opener.hidden&&typeof layer.opener.focus==='function')layer.opener.focus();
+}
+function trapDialogKeys(event){
+ var layer=focusLayerStack[focusLayerStack.length-1];if(!layer)return;
+ if(event.key==='Escape'){event.preventDefault();event.stopPropagation();layer.close();return;}
+ if(event.key!=='Tab')return;
+ var items=focusableElements(layer.root);if(!items.length){event.preventDefault();layer.root.focus();return;}
+ var first=items[0],last=items[items.length-1];
+ if(event.shiftKey&&(document.activeElement===first||!layer.root.contains(document.activeElement))){event.preventDefault();last.focus();}
+ else if(!event.shiftKey&&(document.activeElement===last||!layer.root.contains(document.activeElement))){event.preventDefault();first.focus();}
+}
+document.addEventListener('keydown',trapDialogKeys,true);
+var SEO_ORIGIN='https://davet-sandigi.vercel.app';
+var SEO_DEFAULT_TITLE='Davet Sandığı | Ürünler ve Koleksiyonlar';
+var SEO_DEFAULT_DESCRIPTION='Davet Sandığı ürün kataloğunu ve koleksiyonlarını inceleyin. Yayındaki ürünlerin detaylarına ulaşın; sipariş talebinizi WhatsApp üzerinden iletin.';
+var SEO_DEFAULT_IMAGE=SEO_ORIGIN+'/assets/images/brand/social-card.png';
+function seoMeta(selector,content){var node=$(selector);if(node)node.setAttribute('content',content||'');}
+function seoCanonical(url){var node=$('link[rel="canonical"]');if(node)node.href=url;seoMeta('meta[property="og:url"]',url);}
+function updateOrganizationSchema(){
+ var node=$('#organization-schema');if(!node)return;
+ var schema={'@context':'https://schema.org','@type':'Organization',name:'Davet Sandığı',url:SEO_ORIGIN+'/'};
+ if(settings.instagram)schema.sameAs=[settings.instagram];
+ node.textContent=JSON.stringify(schema);
+}
+function clearProductSchema(){var node=$('#product-schema');if(node)node.remove();}
+function updateSeoRoute(kind,item){
+ var title=SEO_DEFAULT_TITLE,description=SEO_DEFAULT_DESCRIPTION,url=SEO_ORIGIN+'/',image=SEO_DEFAULT_IMAGE,product=null;
+ if(kind==='product'&&item){
+  product=item;title=item.name+' | Davet Sandığı';
+  description=String(item.desc||'Ürün detaylarını inceleyerek sipariş talebinizi oluşturun.').replace(/\s+/g,' ').slice(0,160);
+  url=SEO_ORIGIN+'/?urun='+encodeURIComponent(item.slug);
+  if(item.img)image=item.img.src;
+ }else if(kind==='category'&&item){
+  title=item.label+' | Davet Sandığı';description=String(item.desc||'Yayımdaki '+item.label+' ürünlerini inceleyin.').slice(0,160);
+  url=SEO_ORIGIN+'/?kategori='+encodeURIComponent(item.slug);
+ }
+ document.title=title;seoMeta('meta[name="description"]',description);
+ seoMeta('meta[property="og:title"]',title);seoMeta('meta[property="og:description"]',description);
+ seoMeta('meta[name="twitter:title"]',title);seoMeta('meta[name="twitter:description"]',description);
+ seoMeta('meta[property="og:image"]',image);seoMeta('meta[name="twitter:image"]',image);
+ seoCanonical(url);clearProductSchema();
+ if(product&&catalogState.catalog==='ready'&&product.priceMode==='price'&&Number.isFinite(product.price)&&product.price>=0){
+  var node=document.createElement('script');node.type='application/ld+json';node.id='product-schema';
+    node.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Product',name:product.name,sku:product.code||undefined,description:product.desc||undefined,image:(product.gallery||[]).map(function(image){return image.src;}),url:url,offers:{'@type':'Offer',url:url,priceCurrency:settings.currencyCode||'TRY',price:Number(product.price).toFixed(2)}});
+  document.head.appendChild(node);
+ }
+}
 function applySettings(){applyContact();renderBanners();renderSectionContent();renderReviews();renderFaq();}
 function renderPublicContentStates(){applySettings();}
 function setContact(sel,val,scheme){
@@ -32,6 +100,7 @@ function applyContact(){
  setPublicLink('hdr-ig',settings.instagram,'Instagram');
  setPublicLink('ft-ig',settings.instagram);
  setPublicLink('story-ig',settings.instagram,'Instagram’ı ziyaret edin');
+ updateOrganizationSchema();
  setPublicLink('channel-ig',settings.instagram,'Instagram’ı ziyaret edin');
  var headerRequest=$('#hdr-wa span');if(headerRequest)headerRequest.textContent='WhatsApp’ta Sipariş Talebi';
  var ctaRequest=$('#cta-btnt');if(ctaRequest&&!$('#cta-wa').dataset.custom)ctaRequest.textContent='WhatsApp’ta Sipariş Talebi Oluştur';
@@ -47,7 +116,7 @@ function renderOrderContext(){
  note.textContent=parts.join(' ');
 }
 function contentState(group,hasItems){var st=catalogState[group];if(st==='loading'||st==='error')return st;return hasItems?'ready':'empty';}
-function applyMediaTo(img,m){if(!img||!m)return;img.src=m.src;img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;img.loading='lazy';img.decoding='async';}
+function applyMediaTo(img,m,sizes){if(!img||!m)return;img.src=m.src;if(m.srcset){img.srcset=m.srcset;img.sizes=sizes||m.sizes||'100vw';}else{img.removeAttribute('srcset');img.removeAttribute('sizes');}img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;img.loading='lazy';img.decoding='async';}
 function clearPublicImage(img){if(!img)return;img.removeAttribute('src');img.alt='';img.hidden=true;}
 function setT(sel,val){var e=$(sel);if(e&&val!=null)e.textContent=val;}
 /* ---- BANNER SLIDER ---- */
@@ -60,8 +129,8 @@ function showBanner(b){
  $('#hero-title').innerHTML=titleFmt(b.title);
  setT('#hero-lead',b.lead||'');
  var img=$('#hero-img'),m=b.media,first=bnIndex===0,mediaBox=img.closest('.hero-media');
- if(m){if(img.getAttribute('src')!==m.src)img.src=m.src;img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;}
- else{img.removeAttribute('src');img.alt='';img.hidden=true;}
+ if(m){if(img.getAttribute('src')!==m.src)img.src=m.src;if(m.srcset){img.srcset=m.srcset;img.sizes='(max-width: 760px) 100vw, 55vw';}else{img.removeAttribute('srcset');img.removeAttribute('sizes');}img.alt=m.alt;if(m.width)img.width=m.width;if(m.height)img.height=m.height;img.hidden=false;}
+ else{img.removeAttribute('src');img.removeAttribute('srcset');img.removeAttribute('sizes');img.alt='';img.hidden=true;}
  if(mediaBox)mediaBox.hidden=!m;
  img.loading=first?'eager':'lazy';img.setAttribute('fetchpriority',first?'high':'auto');img.decoding='async';
  var cta=$('#hero-cta');cta.innerHTML='';
@@ -75,7 +144,7 @@ function renderBanners(){
  showBanner(list[bnIndex]);
  var multi=list.length>1,dots=$('#banner-dots');
  dots.hidden=!multi;$('#bn-prev').hidden=!multi;$('#bn-next').hidden=!multi;
- if(multi){dots.innerHTML='';list.forEach(function(b,i){var d=el('button',i===bnIndex?'active':'');d.onclick=function(){bnIndex=i;renderBanners();bnAuto();};dots.appendChild(d);});}
+ if(multi){dots.innerHTML='';list.forEach(function(b,i){var d=el('button',i===bnIndex?'active':'');d.type='button';d.setAttribute('aria-label','Banner '+(i+1)+' göster');d.setAttribute('aria-current',i===bnIndex?'true':'false');d.onclick=function(){bnIndex=i;renderBanners();bnAuto();};dots.appendChild(d);});}
  bnAuto();
 }
 function bnGo(d){var n=bannerList().length;if(n<2)return;bnIndex=(bnIndex+d+n)%n;renderBanners();}
@@ -104,7 +173,7 @@ function renderCta(){
   var url=safeUrl(s.button_url);if(url&&!/wa\.me\//i.test(url)){a.href=url;a.dataset.custom='1';a.classList.remove('btn-wa');a.classList.add('btn-primary');if(s.button_text)setT('#cta-btnt',s.button_text);}
   else{a.classList.remove('btn-primary');a.classList.add('btn-wa');setT('#cta-btnt','WhatsApp’ta Sipariş Talebi Oluştur');}
   var m=mediaFrom(s.media_assets,'',s.title),mediaBox=$('#cta-img').parentNode;
-  if(m){applyMediaTo($('#cta-img'),m);mediaBox.hidden=false;}else{clearPublicImage($('#cta-img'));mediaBox.hidden=true;}
+  if(m){applyMediaTo($('#cta-img'),m,'(max-width: 1000px) 100vw, 40vw');mediaBox.hidden=false;}else{clearPublicImage($('#cta-img'));mediaBox.hidden=true;}
  }else{
   setT('#ctahead-eb',st==='loading'?'İletişim':'');
   setT('#ctahead-t',st==='loading'?'İçerik yükleniyor…':st==='error'?'İçerik şu an yüklenemedi.':'Henüz yayımlanmış içerik bulunmuyor.');
@@ -132,7 +201,7 @@ function renderStory(){
  if($('#story-eyebrow'))$('#story-eyebrow').textContent=s.eyebrow||'Hakkımızda';
  if($('#story-title'))$('#story-title').textContent=s.title||'Hikayemiz';
  if(txt)txt.innerHTML=nl2br(s.body||'');
- var m=mediaFrom(s.media_assets,'',s.title);if(m){applyMediaTo($('#story-img'),m);mediaBox.hidden=false;}else{clearPublicImage($('#story-img'));mediaBox.hidden=true;}
+ var m=mediaFrom(s.media_assets,'',s.title);if(m){applyMediaTo($('#story-img'),m,'(max-width: 1000px) 100vw, 45vw');mediaBox.hidden=false;}else{clearPublicImage($('#story-img'));mediaBox.hidden=true;}
 }
 function renderReviews(){
  var g=$('#review-grid');if(!g)return;
@@ -183,8 +252,8 @@ function renderFaq(){
  observeReveal();
 }
 /* ---- SEARCH ---- */
-function openSearch(){$('#searchview').classList.add('open');document.body.style.overflow='hidden';setTimeout(function(){$('#search-input').focus();},50);}
-function closeSearch(){$('#searchview').classList.remove('open');document.body.style.overflow='';$('#search-input').value='';$('#search-grid').innerHTML='';$('#search-hint').style.display='';}
+function openSearch(){$('#searchview').classList.add('open');document.body.style.overflow='hidden';activateFocusLayer($('#searchview'),closeSearch);setTimeout(function(){$('#search-input').focus();},50);}
+function closeSearch(){var view=$('#searchview');view.classList.remove('open');deactivateFocusLayer(view);document.body.style.overflow='';$('#search-input').value='';$('#search-grid').innerHTML='';$('#search-hint').style.display='';}
 function runSearch(){
  var q=($('#search-input').value||'').trim().toLowerCase();var g=$('#search-grid'),h=$('#search-hint');g.innerHTML='';
  if(catalogState.catalog!=='ready'){h.style.display='';h.textContent=catalogState.catalog==='loading'?'Ürünler yükleniyor…':'Ürünler şu an yüklenemedi.';return;}
@@ -201,8 +270,9 @@ function openLegal(key){
  $('#legal-title').textContent=titles[key]||'Bilgilendirme';
  var text=(settings.legal||{})[key]||'';
  $('#legal-body').textContent=text||'Bu metin henüz yayımlanmamıştır.';
- $('#legal-modal').classList.add('open');
+ $('#legal-modal').classList.add('open');activateFocusLayer($('#legal-modal'),closeLegal);
 }
+function closeLegal(){$('#legal-modal').classList.remove('open');deactivateFocusLayer($('#legal-modal'));}
 /* ---- COOKIE CONSENT ---- */
 function initCookie(){if(!localStorage.getItem('ds_cookie_v1'))$('#cookie-bar').hidden=false;}
 function setCookieChoice(v){localStorage.setItem('ds_cookie_v1',v);$('#cookie-bar').hidden=true;}
@@ -211,15 +281,15 @@ function showCampaign(force){
  var c=settings.campaign||{};
  if(!force){if(!c.enabled)return;if(sessionStorage.getItem('ds_camp_seen'))return;}
  var media=$('#camp-media');
- if(c.media){applyMediaTo($('#camp-img'),c.media);media.classList.remove('no-img');}else{media.classList.add('no-img');}
+ if(c.media){applyMediaTo($('#camp-img'),c.media,'min(440px, 100vw)');media.classList.remove('no-img');}else{media.classList.add('no-img');}
  $('#camp-title').textContent=c.title||'';
  $('#camp-text').textContent=c.text||'';
  var b=$('#camp-btn');
  if(c.btnText&&c.btnLink){b.style.display='';b.textContent=c.btnText;b.setAttribute('href',c.btnLink);}else{b.style.display='none';}
- $('#campaign-modal').classList.add('open');
+ $('#campaign-modal').classList.add('open');activateFocusLayer($('#campaign-modal'),closeCampaign);
  sessionStorage.setItem('ds_camp_seen','1');
 }
-function closeCampaign(){$('#campaign-modal').classList.remove('open');}
+function closeCampaign(){$('#campaign-modal').classList.remove('open');deactivateFocusLayer($('#campaign-modal'));}
 
 /* ============ EVENTS ============ */
 document.addEventListener('click',function(e){
@@ -238,7 +308,7 @@ $('#drawer-close').addEventListener('click',closeCart);
 $('#overlay').addEventListener('click',closeCart);
 $('#continue-btn').addEventListener('click',closeCart);
 $('#checkout-btn').addEventListener('click',checkout);
-$('#rc-close').addEventListener('click',function(){$('#order-modal').classList.remove('open');});
+$('#rc-close').addEventListener('click',closeOrder);
 $('#rc-print').addEventListener('click',function(){window.print();});
 $('#cv-back').addEventListener('click',closeCollection);
 $('#cv-more').addEventListener('click',cvRenderMore);
@@ -246,7 +316,7 @@ $('#collview').addEventListener('scroll',function(){if($('#cv-more-wrap').hidden
 $('#show-all-prod').addEventListener('click',openAllProducts);
 $('#prod-more').addEventListener('click',renderMoreMain);
 window.addEventListener('scroll',function(){var b=$('#prod-more');if(!b||b.hidden)return;var g=$('#prod-grid');if(g&&g.getBoundingClientRect().bottom<=window.innerHeight+300)renderMoreMain();});
-$('#menu-toggle').addEventListener('click',function(){$('#mainnav').classList.toggle('mob');});
+$('#menu-toggle').addEventListener('click',function(){var open=$('#mainnav').classList.toggle('mob');this.setAttribute('aria-expanded',open?'true':'false');});
 $all('#mainnav a').forEach(function(a){a.addEventListener('click',function(){$('#mainnav').classList.remove('mob');});});
 $('#bn-prev').addEventListener('click',function(){bnGo(-1);});
 $('#bn-next').addEventListener('click',function(){bnGo(1);});
@@ -256,10 +326,12 @@ window.addEventListener('resize',function(){updateRevArrows();});
 $('#open-search').addEventListener('click',openSearch);
 $('#search-close').addEventListener('click',closeSearch);
 $('#search-input').addEventListener('input',runSearch);
-$('#legal-close').addEventListener('click',function(){$('#legal-modal').classList.remove('open');});
+$('#legal-close').addEventListener('click',closeLegal);
 $('#kvkk-link').addEventListener('click',function(e){e.preventDefault();openLegal('kvkk');});
 document.addEventListener('click',function(e){var t=e.target.closest('[data-legal]');if(t){e.preventDefault();openLegal(t.getAttribute('data-legal'));}});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSearch();closeProduct();closeCampaign();$('#legal-modal').classList.remove('open');$('#order-modal').classList.remove('open');}});
+document.addEventListener('keydown',function(e){
+ if(e.key==='Enter'||e.key===' '){var legal=e.target.closest('[data-legal][role="button"]');if(legal){e.preventDefault();openLegal(legal.dataset.legal);}}
+});
 /* open product detail on card click (ignore action buttons) */
 document.addEventListener('click',function(e){
  if(e.target.closest('[data-add],[data-wish],.stepper,.prod-add,.wish'))return;
@@ -291,7 +363,7 @@ function refreshSite(){renderCollections();renderFilter();renderProducts();apply
 /* ============ INIT ============ */
 $('#year').textContent=new Date().getFullYear();
 document.addEventListener('click',function(e){if(e.target.closest('[data-retry]'))loadPublicSite();});
-window.addEventListener('hashchange',openProductFromLocation);
+window.addEventListener('hashchange',function(){if(!openProductFromLocation())openCategoryFromLocation();});
 syncCart();observeReveal();initCookie();
 /* Legacy Firebase public akışta başlatılmaz; modül Faz 12'ye kadar dosyada kalır. */
 loadPublicSite();
