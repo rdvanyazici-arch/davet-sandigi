@@ -56,6 +56,7 @@
 - 2026-10-17 — Kullanıcı hukukçu onayını bildirdi. Sekiz yasal metin onaylı/aktif `content_sections` kayıtları olarak uzak Supabase'e uygulandı; public doğrulamada 8/8 metin `legal_review_approved=true` döndü. Metinler yönetim panelinden düzenlenebilir; Production deploy yapılmadı.
 - 2026-10-17 — Koleksiyon → kategori → ürün hiyerarşisi tamamlandı. `category_collections` RLS tablosu, yönetim panelinde çoklu koleksiyon bağlantısı, public koleksiyon/kategori sayfaları, “Tümünü Gör” akışı ve SEO/sitemap rotaları eklendi. Nişan, Kına, Baby Shower ve Düğün koleksiyonları ile Nişan'a bağlı Kolonya Tasarımları kategorisi uzak Supabase'te oluşturuldu.
 - 2026-10-17 — Advisor'daki `site_settings_public` security-definer görünüm bulgusu `security_invoker=true` ve sütun bazlı erişimle giderildi. Auth leaked-password protection ayarı Production öncesi dashboard'da yeniden kontrol edilecek.
+- 2026-10-17 — Değişiklikler `73fa79b` (`feat: add collection hierarchy and publish legal content`) commit'iyle `refactor/faz-2-yapi` branch'ine push edildi. Vercel Preview `davet-sandigi-445d22gnn-rdvanyazici.vercel.app` target=preview ve READY; Production deploy yapılmadı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
