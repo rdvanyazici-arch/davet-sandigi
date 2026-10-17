@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readFile, readdir } from 'node:fs/promises';
@@ -106,6 +107,32 @@ test('uygulama runtime kaynaklarında Firebase istemci kodu veya endpoint kalmad
  for(const file of runtimeFiles){
   const content=await readFile(new URL('../'+file,import.meta.url),'utf8');
   assert.doesNotMatch(content,/firebase|firestore|googleapis/i,file);
+ }
+});
+
+test('repo ve Git geçmişinde gömülü service key, private key veya JWT yok',async()=>{
+ const secretPatterns=[
+  /sb_secret_[A-Za-z0-9_-]{20,}/,
+  /service_role["'\s:=]+[A-Za-z0-9_-]{24,}/i,
+  /-----BEGIN (?:RSA )?PRIVATE KEY-----/,
+  /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/
+ ];
+ const files=await new Promise((resolve,reject)=>{
+    const child=spawn('git',['ls-files','-co','--exclude-standard','-z'],{cwd:new URL('..',import.meta.url),env:{...process.env,GIT_CONFIG_GLOBAL:'/dev/null',GIT_CONFIG_NOSYSTEM:'1'},stdio:['ignore','pipe','pipe']});
+  let output='',error='';child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>error+=chunk);child.on('error',reject);child.on('close',code=>code===0?resolve(output.split('\0').filter(Boolean)):reject(new Error(error||'git ls-files failed')));
+ });
+ for(const file of files){
+  let content;try{content=await readFile(new URL('../'+file,import.meta.url),'utf8');}catch{continue;}
+  for(const pattern of secretPatterns)assert.doesNotMatch(content,pattern,'current file: '+file);
+ }
+ const history=await new Promise((resolve,reject)=>{
+    const child=spawn('git',['rev-list','--objects','--all'],{cwd:new URL('..',import.meta.url),env:{...process.env,GIT_CONFIG_GLOBAL:'/dev/null',GIT_CONFIG_NOSYSTEM:'1'},stdio:['ignore','pipe','pipe']});
+  let output='',error='';child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>error+=chunk);child.on('error',reject);child.on('close',code=>code===0?resolve(output):reject(new Error(error||'git rev-list failed')));
+ });
+ const blobs=new Map();for(const line of history.split('\n')){const parts=line.split(' ');if(parts.length>1)blobs.set(parts[0],parts.slice(1).join(' '));}
+ for(const [oid,file] of blobs){
+    const content=await new Promise((resolve,reject)=>{const child=spawn('git',['cat-file','blob',oid],{cwd:new URL('..',import.meta.url),env:{...process.env,GIT_CONFIG_GLOBAL:'/dev/null',GIT_CONFIG_NOSYSTEM:'1'},stdio:['ignore','pipe','ignore']});let chunks=[];child.stdout.on('data',chunk=>chunks.push(chunk));child.on('error',reject);child.on('close',code=>code===0?resolve(Buffer.concat(chunks)):resolve(Buffer.alloc(0)));});
+  if(content.length>20_000_000)continue;const text=content.toString('utf8');for(const pattern of secretPatterns)assert.doesNotMatch(text,pattern,'reachable Git blob: '+file);
  }
 });
 

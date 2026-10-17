@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 12 yerelde tamamlandı. Örnek Firebase verisi kullanıcı kararıyla aktarılmadı; Firebase runtime kodu temizlendi. Production deploy, commit ve push yapılmadı.
-- Aktif faz: Faz 12 — yerel runtime temizliği ve doğrulamaları tamamlandı.
-- Beklenen: Faz 12 değişikliklerinin kullanıcı incelemesi; Faz 13'e geçmeden önce kullanıcı onayı.
+- Güncel durum: Faz 13 test/güvenlik kabulü yerelde tamamlandı; Preview doğrulandı. Production deploy, commit ve push yapılmadı.
+- Aktif faz: Faz 13 — yerel kabul testleri ve raporlama tamamlandı.
+- Beklenen: Faz 13 raporunun kullanıcı incelemesi; Faz 14'e geçmeden önce kullanıcı onayı.
 
 ### Faz 0–15 durumları
 
@@ -21,7 +21,7 @@
 - Faz 10 — İçerik ve marka tutarlılığı: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
 - Faz 11 — SEO, hız ve erişilebilirlik: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **yerelde tamamlandı — örnek içerikler kullanıcı kararıyla aktarılmadı; runtime temizlendi**
-- Faz 13 — Test, güvenlik ve kabul: **bekliyor**
+- Faz 13 — Test, güvenlik ve kabul: **yerelde tamamlandı — test raporu hazır, kullanıcı incelemesi bekleniyor**
 - Faz 14 — GitHub ve Vercel yayını: **bekliyor**
 - Faz 15 — Yasal metinler ve son yayın kontrolü: **bekliyor**
 
@@ -44,7 +44,9 @@
 - 2026-10-17 — Kullanıcı incelemesinde bulunan kapalı sepet çekmecesi erişilebilirlik hatası düzeltildi: `#drawer` başlangıçta `aria-hidden="true"` ve `inert`; `openCart()` bunları kaldırıyor, `closeCart()` odak iadesinden sonra geri ekliyor. Yeni Playwright regresyon testi kapalı durumdaki klavye erişimini, açılış/kapanışı ve açan düğmeye odak dönüşünü doğruluyor. Public-site Playwright paketi güncel kodda **22/22 başarılı**.
 - 2026-10-17 — Faz 12 ilk salt-okunur karşılaştırması: Firebase yedeği 20 ürün / 7 kategori / 4 koleksiyon / 33 envanter görseli gösteriyor; Firebase Storage yedeğinde 0 nesne. Linked Supabase aggregate sorgusu 0 ürün / 0 kategori / 0 koleksiyon / 0 media_assets / 0 Storage nesnesi döndürdü. Ürün/kategori/koleksiyon/görsellerin tamamı envanterde `SİL`; bu nedenle aktarıma yetkili kayıt yok. Bu ara kontrolde import ve runtime temizliği kullanıcı kararı beklediğinden henüz yapılmamıştı; izleyen maddelerdeki kullanıcı kararı ve son uygulama durumu geçerlidir.
 - 2026-10-17 — Kullanıcı kararıyla Faz 12 veri aktarımı atlandı: Firebase yedeğindeki 20 ürün / 7 kategori / 4 koleksiyon / 33 görsel örnek; hiçbiri Supabase'e taşınmayacak, Supabase boş kalacak ve gerçek içerikler daha sonra panelden girilecek. Import scripti oluşturulmadı, `service_role` kullanılmadı. Runtime temizliği tamamlandı: uygulamadaki Firebase browser modülü/config/SDK, Firebase'e bağlı `resizeImage`/`img:`/`ds_cloudimg_v1` ve legacy localStorage katalog/admin içerik akışları kaldırıldı. Firebase Firestore/Storage yedek otomasyonları `scripts/backup-firebase.mjs`, `scripts/backup-firebase-storage.mjs`, `scripts/firebase-backup-common.mjs` Git'ten geri getirildi ve yalnızca offline backup/rollback araçları olarak korundu; admin JSON import/export eski yolları kaldırıldı; legal metin alanı Faz 15'e kadar statik bilgilendirme gösterir. Firebase snapshot/yedekleri, `docs/rollback.md`, Firebase projesi ve örnek görsel dosyaları korundu.
-- 2026-10-17 — Faz 12 doğrulaması: `tests/admin-auth.test.mjs` **8/8**; public + admin E2E hedef paketi, bilinen baseline sayfalama testi hariç **33/33** (public-site **22/22**, page-content **6/6** [boş DB dahil], taxonomy **3/3**, product-admin **2/2**). Pagination testi dahil dört dosya birlikte çalıştırıldığında tek eski `#product-next` timeout'u hariç tüm diğer testler geçti. Boş Supabase public ve admin durumları hatasız açılıyor; public istek hostları yalnız local + izinli Supabase, admin boş fixture'ında yalnız local; tarayıcı konsol/sayfa hatası yok ve uygulama runtime'ında Firebase/Firestore/googleapis isteği yok. Uygulama HTML/JS runtime kaynak taraması temiz; korunan offline backup scriptleri bu taramadan ayrı değerlendirilir. `node --check`, JSON parse ve `git diff --check` başarılı. Ayrıntı `docs/migration-report.md` içindedir.
+- 2026-10-17 — Faz 12 doğrulaması: `tests/admin-auth.test.mjs` **8/8**; ilk public/admin E2E kabul paketi **33/33**. Bu anda pagination fixture testi henüz çalıştırılmamış/düzeltilmemişti; takip eden Faz 13'te kök neden bulunup giderildi. Boş Supabase public ve admin durumları hatasız açılıyor; public istek hostları yalnız local + izinli Supabase, admin boş fixture'ında yalnız local; tarayıcı konsol/sayfa hatası yok ve uygulama runtime'ında Firebase/Firestore/googleapis isteği yok. Uygulama HTML/JS runtime kaynak taraması temiz; korunan offline backup scriptleri bu taramadan ayrı değerlendirilir. Ayrıntı `docs/migration-report.md` içindedir.
+- 2026-10-17 — Faz 13 sayfalama son düzeltmesi: `productEnsureListControls()` `.product-pagination` container'ını oluşturuyor ancak `id="product-pagination"` atamıyordu; `productRenderPagination()` bu nedenle `#product-pagination` bulamayıp `#product-next` üretmiyordu. Yalnız container ID'si atandı; pagination/durum/koleksiyon senaryosu Chromium, WebKit ve Firefox'ta geçti.
+- 2026-10-17 — Faz 13 nihai kabul: beş linked pgTAP dosyası transaction rollback ile **93/93**; admin-auth + SEO birim testleri **13/13**; tam Playwright (pagination dahil) Chromium **36/36**, WebKit **36/36**, Firefox **36/36**. Docker kurulu; bu oturumda yerel Supabase servisleri başlatılmadı, Supabase CLI `npx --yes supabase@2.121.0` ile çalıştırıldı. Anon GET/yazma reddi, rol sınırları, Storage archive/delete, Türkçe, empty/loading/error, link/image ve admin noindex kontrolleri geçti. Advisor 22 bulgu ve önem dereceleri `docs/test-report.md` içinde. Final Preview `davet-sandigi-13nhmc9ae-rdvanyazici.vercel.app` READY; public/admin `200` ve güvenlik başlıkları doğrulandı. Production deploy, DB kalıcı değişikliği, commit ve push yapılmadı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -95,7 +97,7 @@
 - `scripts/backup-firebase.mjs`, `scripts/backup-firebase-storage.mjs` ve `scripts/firebase-backup-common.mjs` yalnızca açıkça elle çalıştırılan Firebase yedek/geri dönüş araçlarıdır; site HTML'inden yüklenmez, runtime testlerinde çağrılmaz ve uygulama kodunda Firebase istemcisi yoktur.
 - `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
 - Faz 10 grep'inde public runtime için demo/lorem/örnek/sample kalmadı. Envanterdeki onaysız telefon/e-posta/Instagram, müşteri adları ve iddia ifadeleri `catalog.js`/`site.js` içindeki suppression guard listelerinde literal olarak duruyor; sayfaya render edilmezler. Eski admin localStorage render/import/export kodu Faz 12'de kaldırıldı.
-- `tests/e2e/product-admin.spec.mjs` içindeki "ürün listesini sayfalar…" testi, 7b commit'inin (`76adf86`) temiz bir git worktree'sinde ayrı bir portta yeniden çalıştırıldığında da başarısız (`#product-next` bulunamıyor); 7c'den bağımsız olduğu doğrulandı, kod değiştirilmedi.
+- `tests/e2e/product-admin.spec.mjs` ürün pagination testi Faz 13'te düzeltildi: eksik `product-pagination` ID'si pagination container'ına eklendi; Chromium/WebKit/Firefox'ta geçti.
 - Uzak güvenlik advisor'ü iki bulgu veriyor: `site_settings_public` görünümü için `security_definer_view` (Faz 4'te bilinçli tasarlanmış, yalnızca güvenli sütunları açan `security_barrier` görünümü) ve `auth_leaked_password_protection` (Auth ayarı). İkisi de 7b/7c'den kaynaklanmıyor; bu adımda değiştirilmedi.
 - Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
 

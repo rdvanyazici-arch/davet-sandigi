@@ -35,7 +35,7 @@ function productEnsureListControls(){
   '<button class="a-btn" id="product-refresh" type="button">Yenile</button>';
  if(!$('#product-list-status'))view.insertBefore(el('div','admin-note product-list-status',''),$('#admin-rows'));
  var status=view.querySelector('.product-list-status');status.id='product-list-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
- if(!$('#product-pagination'))view.appendChild(el('div','product-pagination',''));
+ if(!$('#product-pagination')){var pagination=el('div','product-pagination','');pagination.id='product-pagination';view.appendChild(pagination);}
  ['admin-search','admin-filter','admin-collection-filter','admin-status-filter'].forEach(function(id){$('#'+id).addEventListener(id==='admin-search'?'input':'change',function(){productState.page=1;renderAdminRows();});});
  $('#product-refresh').addEventListener('click',function(){productInitialize(true);});
 }

@@ -6,7 +6,7 @@ const ORIGIN = `https://${PROJECT_HOST}`;
 const LOCAL_HOST = '127.0.0.1:4175';
 const PRICE_ERROR = 'Fiyat bilgisi şu an yüklenemedi';
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,OPTIONS' };
-const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const PNG = readFileSync('assets/images/brand/favicon-32.png');
 
 const media = (path, alt, width = 800, height = 1000) => ({ storage_path: path, alt_text: alt, width, height });
 
@@ -91,7 +91,8 @@ async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, 
   });
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }));
   await page.route('**/assets/js/supabase-config.generated.js', route => route.fulfill({ contentType: 'text/javascript', body: `window.__DAVET_SANDIGI_ENV__=Object.freeze({SUPABASE_URL:'${ORIGIN}',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_testkey'});` }));
-  await page.route(`${ORIGIN}/storage/v1/{object,render}/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
+  await page.route(`${ORIGIN}/storage/v1/object/public/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
+  await page.route(`${ORIGIN}/storage/v1/render/image/public/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
   await page.route(`${ORIGIN}/rest/v1/**`, async route => {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS, body: '' });
@@ -368,6 +369,36 @@ test('ağ: yalnızca doğru Supabase projesi, yalnızca açık sütunlu GET sorg
     expect(source, file).not.toMatch(/service_role|sb_secret_|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\./);
     expect(source, file).not.toMatch(/select\(\s*['"]\*['"]/);
   }
+});
+
+test('Faz 13: dahili bağlantılar ve yayımlanan görseller eksiksiz', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  const brokenLinks = await page.evaluate(async () => {
+    const results = await Promise.all(Array.from(document.querySelectorAll('a[href]'), async anchor => {
+      const href = anchor.getAttribute('href') || '';
+      if (!href || href === '#' || /^(https?:|mailto:|tel:)/i.test(href)) return null;
+      if (href.startsWith('#')) {
+        const target = decodeURIComponent(href.slice(1)).split(/[/?=]/, 1)[0];
+        return target && !document.getElementById(target) ? href : null;
+      }
+      const target = new URL(href, location.href);
+      if (target.origin !== location.origin) return null;
+      try { return (await fetch(target.pathname + target.search, { method: 'HEAD' })).ok ? null : href; }
+      catch { return href; }
+    }));
+    return results.filter(Boolean);
+  });
+  expect(brokenLinks).toEqual([]);
+
+  const brokenImages = await page.evaluate(async () => {
+    const images = Array.from(document.images).filter(image => !!image.getAttribute('src'));
+    images.forEach(image => { image.loading = 'eager'; });
+    await Promise.all(images.map(image => image.decode().catch(() => null)));
+    return images.filter(image => !image.complete || image.naturalWidth === 0).map(image => image.currentSrc || image.src);
+  });
+  expect(brokenImages).toEqual([]);
 });
 
 test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta tıklanabilir', async ({ page }) => {

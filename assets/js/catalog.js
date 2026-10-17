@@ -208,10 +208,10 @@ function renderCollections(){
   card.setAttribute('aria-label',o.label+' koleksiyonunu görüntüle');
   card.innerHTML='<div class="coll-thumb"><span class="coll-ic">'+glyphSvg(o.glyph)+'</span>'+mediaImg(o.cover,{alt:o.label,sizes:'(max-width: 760px) 100vw, 25vw'})+'</div>'+
    '<div class="coll-body"><h3>'+esc(o.label)+'</h3><p>'+esc(o.sub||'')+'</p><span class="coll-more">Koleksiyonu Gör '+ICON.arr+'</span></div>';
-  card.addEventListener('click',function(){openCollection(o.id);});
+  card.addEventListener('click',function(event){openCollection(o.id,event.currentTarget);});
   g.appendChild(card);
  });
- occasions.forEach(function(o){var li=el('li');li.innerHTML='<a href="#koleksiyonlar" data-occ="'+qesc(o.id)+'">'+esc(o.label)+'</a>';li.firstChild.addEventListener('click',function(e){e.preventDefault();openCollection(o.id);});fc.appendChild(li);});
+ occasions.forEach(function(o){var li=el('li');li.innerHTML='<a href="#koleksiyonlar" data-occ="'+qesc(o.id)+'">'+esc(o.label)+'</a>';li.firstChild.addEventListener('click',function(e){e.preventDefault();openCollection(o.id,e.currentTarget);});fc.appendChild(li);});
  observeReveal();
 }
 
@@ -274,7 +274,7 @@ function productCard(p){
 }
 
 /* ============ COLLECTION VIEW ============ */
-function openCollection(occId){
+function openCollection(occId,opener){
  var o=occasions.filter(function(x){return x.id==occId;})[0];if(!o)return;
  $('#cv-title').textContent=o.label+' Koleksiyonu';
  showCollectionCover(o.cover,o.label);
@@ -282,7 +282,7 @@ function openCollection(occId){
  $('#cv-banner-title').textContent=o.label;$('#cv-banner-sub').textContent=o.sub||'';
  var list=visibleProducts().filter(function(p){return(p.occ||[]).indexOf(occId)>-1;});
  cvOpen(list,'Bu koleksiyonda henüz ürün yok.');
- openCollview();
+ openCollview(opener);
 }
 function showCollectionCover(image,label){
  var node=$('#cv-banner-image');if(!node)return;
@@ -319,9 +319,9 @@ function cvRenderMore(){
  $('#cv-more-wrap').hidden=!more;
  if(more)$('#cv-more').innerHTML='Daha Fazla Ürün ('+cvShown+'/'+cvList.length+') '+ICON.arr;
 }
-function openCollview(){$('#collview').classList.add('open');document.body.style.overflow='hidden';$('#collview').scrollTop=0;window.scrollTo(0,0);activateFocusLayer($('#collview'),closeCollection);}
+function openCollview(opener){$('#collview').classList.add('open');document.body.style.overflow='hidden';$('#collview').scrollTop=0;window.scrollTo(0,0);activateFocusLayer($('#collview'),closeCollection,opener);}
 function closeCollection(){$('#collview').classList.remove('open');deactivateFocusLayer($('#collview'));document.body.style.overflow='';}
-function openAllProducts(){
+function openAllProducts(event){
  var list=visibleProducts();
  var cat=(activeFilter!=='all'&&activeFilter!=='featured')?categories.filter(function(c){return c.id===activeFilter;})[0]:null;
  var title,sub,ban;
@@ -333,12 +333,12 @@ function openAllProducts(){
  showCollectionCover(ban,(list[0]&&list[0].name)||title);
  $('#cv-banner-title').textContent=title;$('#cv-banner-sub').textContent=sub;
  cvOpen(list,'Bu kategoride ürün bulunmuyor.');
- openCollview();
+ openCollview(event&&event.currentTarget);
 }
 
 /* ============ PRODUCT MODAL ============ */
 var pmState={imgs:[],idx:0,id:null},pmQty=25;
-function openProduct(id){
+function openProduct(id,opener){
  var p=prodById(id);if(!p||catalogState.catalog!=='ready')return;
  pmState.id=id;pmState.imgs=(p.gallery||[]).slice();pmState.idx=0;pmQty=productMin(p);
  $('#pm-badge').textContent=catLabel(p.cat);
@@ -350,7 +350,7 @@ function openProduct(id){
  $('#pm-qty').textContent=pmQty;
  $('#pm-note').textContent='Minimum '+productMin(p)+' adet, '+productStep(p)+'’er artışlarla.';
  renderPmGallery();pmUpdateQuote();
- $('#product-modal').classList.add('open');document.body.style.overflow='hidden';activateFocusLayer($('#product-modal'),closeProduct);
+ $('#product-modal').classList.add('open');document.body.style.overflow='hidden';activateFocusLayer($('#product-modal'),closeProduct,opener);
 }
 function pmUpdateQuote(){
  var p=prodById(pmState.id);if(!p)return;var q=isQuote(pmQty);

@@ -41,6 +41,7 @@ function installFakeSupabase(options={}) {
     select() { return this; }
     insert(payload) { this.action = 'insert'; this.payload = payload; return this; }
     update(payload) { this.action = 'update'; this.payload = payload; return this; }
+    delete() { this.action = 'delete'; return this; }
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
     not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); return this; }
@@ -62,6 +63,7 @@ function installFakeSupabase(options={}) {
       } else {
         const matched = rows.filter(row => this.filters.every(filter => filter(row)));
         if (this.action === 'update') matched.forEach(row => Object.assign(row, this.payload, { updated_at: new Date().toISOString() }));
+        if (this.action === 'delete') db[this.table] = rows.filter(row => !matched.includes(row));
         result = matched;
       }
       result = result.map(row => decorate(this.table, row));
@@ -78,10 +80,16 @@ function installFakeSupabase(options={}) {
       mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: 'aal2' }, error: null }) }
     },
     from: table => new Query(table),
-    storage: { from: () => ({ getPublicUrl: path => ({ data: { publicUrl: '/assets/images/fallback/hero.webp?path=' + encodeURIComponent(path) } }) }) },
+    storage: { from: () => ({
+      getPublicUrl: path => ({ data: { publicUrl: '/assets/images/fallback/hero.webp?path=' + encodeURIComponent(path) } }),
+      move: async (from, to) => { window.__PW_STORAGE_MOVES.push({ from, to }); return { data: { path: to }, error: null }; },
+      remove: async paths => { window.__PW_STORAGE_REMOVES.push(...paths); return { data: paths, error: null }; }
+    }) },
     rpc: () => ({ single: async () => ({ data: null, error: null }) })
   };
   window.__PW_DB = db;
+  window.__PW_STORAGE_MOVES = [];
+  window.__PW_STORAGE_REMOVES = [];
   window.supabase = { createClient: () => client };
   window.__DAVET_SANDIGI_ENV__ = { SUPABASE_URL: 'http://local.test', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test' };
 }
@@ -98,6 +106,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 });
 
 test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullanılmaz', async ({ page }) => {
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex,nofollow/);
   const dashboard=page.locator('#dashboard-admin');
   await expect(dashboard.locator('.pg-stat')).toHaveCount(4);
   for(const stat of await dashboard.locator('.pg-stat').all())await expect(stat).toContainText('0');
@@ -132,6 +141,23 @@ test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullan
   expect(urls.some(url=>/firebase|firestore|firebasejs|googleapis|gstatic/i.test(url))).toBe(false);
   expect(pageErrors.get(page)).toEqual([]);
   expect(pageConsoleErrors.get(page)).toEqual([]);
+});
+
+test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister', async ({ page }) => {
+  await page.click('[data-view="media"]');
+  await expect(page.locator('#media-library-status')).toContainText('3 görsel bulundu.');
+  await expect(page.locator('[data-media-archive="2"]')).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await page.click('[data-media-archive="2"]');
+  await expect(page.locator('#media-library-status')).toContainText('3 görsel bulundu.');
+  await expect(page.locator('[data-media-delete="2"]')).toBeVisible();
+  expect(await page.evaluate(() => window.__PW_STORAGE_MOVES)).toEqual([{ from: 'story/b.webp', to: 'archive/story/b.webp' }]);
+
+  page.on('dialog', dialog => dialog.accept());
+  await page.click('[data-media-delete="2"]');
+  await expect(page.locator('#media-library-status')).toContainText('2 görsel bulundu.');
+  expect(await page.evaluate(() => window.__PW_STORAGE_REMOVES)).toEqual(['archive/story/b.webp']);
+  expect(await page.evaluate(() => window.__PW_DB.media_assets.some(asset => asset.id === 2))).toBe(false);
 });
 
 async function approvePreview(page) {

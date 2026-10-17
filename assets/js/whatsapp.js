@@ -30,7 +30,7 @@ function checkout(){
  if(!cf.classList.contains('show')){cf.classList.add('show');$('#c-event-date').focus();announceCart('Sipariş talebi bilgileri açıldı.');return;}
  if(!$('#c-kvkk').checked){alert('Devam etmek için KVKK Aydınlatma Metni onayını işaretleyin.');return;}
  var eventDate=$('#c-event-date').value,generalNote=$('#c-note').value.trim(),reference=requestReference(),text=buildOrderText(reference,eventDate,generalNote);
- renderReceipt(reference,eventDate,generalNote,text);$('#order-modal').classList.add('open');activateFocusLayer($('#order-modal'),closeOrder);
+ renderReceipt(reference,eventDate,generalNote,text);$('#order-modal').classList.add('open');activateFocusLayer($('#order-modal'),closeOrder,$('#checkout-btn'));
 }
 function renderReceipt(reference,eventDate,generalNote,text){
  var r=$('#receipt');
