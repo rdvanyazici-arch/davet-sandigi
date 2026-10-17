@@ -332,7 +332,7 @@ em{color:var(--gold);font-style:italic;}
 /* legal */
 .legal-doc{padding:30px;}
 .legal-doc h3{font-size:23px;margin-bottom:16px;}
-#legal-body{color:var(--ink);font-size:14px;line-height:1.85;}
+#legal-body{color:var(--ink);font-size:14px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;}
 /* product modal */
 .prod-card{cursor:pointer;}
 .pmodal .modal-card,.pmodal{}

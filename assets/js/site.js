@@ -265,12 +265,13 @@ function runSearch(){
  h.style.display='none';res.forEach(function(p){var c=productCard(p);c.classList.add('in');g.appendChild(c);});
 }
 /* ---- LEGAL ---- */
-function openLegal(key){
- var titles={privacy:'Gizlilik Politikası',kvkk:'KVKK Aydınlatma Metni',cookie:'Çerez Politikası',mesafeli:'Sipariş & Mesafeli Satış Koşulları'};
- $('#legal-title').textContent=titles[key]||'Bilgilendirme';
- var text=(settings.legal||{})[key]||'';
- $('#legal-body').textContent=text||'Bu metin henüz yayımlanmamıştır.';
- $('#legal-modal').classList.add('open');activateFocusLayer($('#legal-modal'),closeLegal);
+function openLegal(key,opener){
+ var map={privacy:'legal_privacy',kvkk:'legal_kvkk',cookie:'legal_local_storage',local_storage:'legal_local_storage',data_sharing:'legal_data_sharing',mesafeli:'legal_order_process',order_process:'legal_order_process',returns:'legal_returns',shipping:'legal_shipping',media_permissions:'legal_media_permissions'};
+ var sectionKey=map[key]||key,section=publicSections[sectionKey],json=section&&section.content_json||{},text=section&&section.is_active!==false&&json.legal_review_approved===true?String(section.body||''):'';
+ if(/Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i.test(text))text='';
+ $('#legal-title').textContent=section&&section.title||'Yasal Bilgilendirme';
+ $('#legal-body').textContent=text||'Bu metin henüz onaylanıp yayımlanmamıştır.';
+ $('#legal-modal').classList.add('open');activateFocusLayer($('#legal-modal'),closeLegal,opener);
 }
 function closeLegal(){$('#legal-modal').classList.remove('open');deactivateFocusLayer($('#legal-modal'));}
 /* ---- COOKIE CONSENT ---- */
@@ -327,10 +328,10 @@ $('#open-search').addEventListener('click',function(event){openSearch(event.curr
 $('#search-close').addEventListener('click',closeSearch);
 $('#search-input').addEventListener('input',runSearch);
 $('#legal-close').addEventListener('click',closeLegal);
-$('#kvkk-link').addEventListener('click',function(e){e.preventDefault();openLegal('kvkk');});
-document.addEventListener('click',function(e){var t=e.target.closest('[data-legal]');if(t){e.preventDefault();openLegal(t.getAttribute('data-legal'));}});
+$('#kvkk-link').addEventListener('click',function(e){e.preventDefault();openLegal('kvkk',e.currentTarget);});
+document.addEventListener('click',function(e){var t=e.target.closest('[data-legal]');if(t){e.preventDefault();openLegal(t.getAttribute('data-legal'),t);}});
 document.addEventListener('keydown',function(e){
- if(e.key==='Enter'||e.key===' '){var legal=e.target.closest('[data-legal][role="button"]');if(legal){e.preventDefault();openLegal(legal.dataset.legal);}}
+ if(e.key==='Enter'||e.key===' '){var legal=e.target.closest('[data-legal][role="button"]');if(legal){e.preventDefault();openLegal(legal.dataset.legal,legal);}}
 });
 /* open product detail on card click (ignore action buttons) */
 document.addEventListener('click',function(e){

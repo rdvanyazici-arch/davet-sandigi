@@ -401,6 +401,41 @@ test('Faz 13: dahili bağlantılar ve yayımlanan görseller eksiksiz', async ({
   expect(brokenImages).toEqual([]);
 });
 
+test('Faz 15: yasal footer modalı yalnız onaylı content_sections metnini gösterir', async ({ page }) => {
+  const db=makeDb();
+  db.content_sections.push({section_key:'legal_privacy',title:'Gizlilik Politikası',body:'Hukuk danışmanı onayı bekliyor. [TAMAMLANACAK]',content_json:{legal_document:true,legal_review_approved:false,legal_status:'draft'},is_active:true});
+  const log=await setup(page,{db});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/index.html');
+  await waitReady(page);
+  const footerLegal=page.locator('.footer-legal [data-legal]');
+  await expect(footerLegal).toHaveCount(8);
+  await expect(footerLegal.first()).toHaveAttribute('role','button');
+  await expect.poll(() => page.evaluate(() => catalogState.sections)).toBe('ready');
+  const publicText=await page.locator('body').innerText();
+  expect(publicText).not.toMatch(/örnek|taslak|Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i);
+  await page.locator('[data-legal="privacy"]').click();
+  await expect(page.locator('#legal-modal')).toHaveAttribute('aria-modal','true');
+  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
+  await expect(page.locator('#legal-body')).not.toContainText(/Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i);
+  await page.locator('#legal-close').click();
+  await expect(page.locator('[data-legal="privacy"]')).toBeFocused();
+
+  const legalSection=log.db.content_sections.find(section=>section.section_key==='legal_privacy');
+  legalSection.body='Veri sorumlusu: RIDVAN YAZICI.';
+  legalSection.content_json.legal_review_approved=true;
+  legalSection.content_json.legal_status='lawyer_approved';
+  await page.reload();
+  await waitReady(page);
+  await expect.poll(() => page.evaluate(() => catalogState.sections)).toBe('ready');
+  await page.locator('[data-legal="privacy"]').click();
+  await expect(page.locator('#legal-title')).toHaveText('Gizlilik Politikası');
+  await expect(page.locator('#legal-body')).toHaveText('Veri sorumlusu: RIDVAN YAZICI.');
+  await expect(page.locator('#legal-body')).not.toContainText(/taslak|onay bekliyor|tamamlanacak/i);
+  const dimensions=await page.evaluate(()=>({body:document.body.scrollWidth,viewport:document.documentElement.clientWidth}));
+  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport+1);
+});
+
 test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta tıklanabilir', async ({ page }) => {
   await setup(page);
   await page.goto('/index.html');
@@ -444,7 +479,7 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await expect(page.locator('.footer-about')).toHaveText('Baby Shower şu anda sunulmuyor. Güncel ürünleri katalogda inceleyebilirsiniz.');
   await page.click('#drawer-close');
   await page.click('[data-legal="privacy"]');
-  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz yayımlanmamıştır.');
+  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
 });
 
 test('Faz 10: legacy contact samples suppressed; approved management copy including claims is visible', async ({ page }) => {
@@ -493,7 +528,7 @@ test('Faz 10: legacy contact samples suppressed; approved management copy includ
   await expect(page.locator('body')).not.toContainText('905399413902');
   await page.click('#camp-close');
   await page.click('[data-legal="privacy"]');
-  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz yayımlanmamıştır.');
+  await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
 });
 
 test('Faz 10: mobilde Instagram/WhatsApp ve tutarlı kapsam metinleri taşmaz', async ({ page }) => {

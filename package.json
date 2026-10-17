@@ -15,6 +15,7 @@
     "test:pages": "playwright test tests/e2e/page-content.spec.mjs",
     "test:seo": "node --test tests/seo.test.mjs",
     "test:pages:rls": "npx supabase test db supabase/tests/database/page_content_test.sql",
+    "test:legal:rls": "npx supabase test db supabase/tests/database/legal_content_test.sql",
     "test:cart": "playwright test tests/e2e/public-site.spec.mjs --grep \"Faz 9\""
   },
   "devDependencies": {

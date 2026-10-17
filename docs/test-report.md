@@ -142,3 +142,37 @@ Preview deployment: https://davet-sandigi-70r13w9sl-rdvanyazici.vercel.app (`REA
 ### Production onay kapısı
 
 Production Vercel environment değişkenleri şu anda **boş**. Doğru Supabase URL ve yalnız publishable key'in Production scope'una eklenmesi, canlı deployment ve canlı veriye karşı kabul testleri için kullanıcı onayı gereklidir. Bu rapor **Production yayınına onay değildir**. `ONAYLIYORUM` gelmeden Production env değişikliği/deploy yapılmayacak. Main merge ve Phase 15 de bu çalışmada yapılmadı.
+
+## Faz 15 — Hukuk danışmanı taslakları ve yeniden son kontrol
+
+Bu fazda yalnızca hukuk danışmanının incelemesine sunulacak taslaklar ve panel/public görüntüleme akışı hazırlandı. Bu rapor veya taslak dosya **hukuki danışmanlık değildir**.
+
+- [docs/legal-drafts.md](legal-drafts.md) içinde sekiz metin hazırlandı: gizlilik, KVKK aydınlatma, çerez/yerel depolama, WhatsApp/Instagram veri aktarımı, sipariş talebi/satış süreci, iptal/iade/kişiye özel ürün, kargo/teslimat, müşteri görseli/yorum izni.
+- Her metin zorunlu “Hukuk danışmanı onayı bekliyor” notuyla başlar. Kullanıcının sağladığı bilgiler kullanıldı; resmi adres formatı, sürelerin iş/takvim günü olması, hukuki dayanaklar, başvuru süreci, hasarlı/ayıplı ürün çözümü gibi teyitsiz alanlar taslakta açıkça doldurulmaya bırakıldı. Özel üretim ürünlerde genel ve kesin “iade yok” feragati yazılmadı.
+- Panelde sekiz ayrı `content_sections` anahtarı yapılandırıldı. Yeni kayıtlar taslak/pasif kalır; yayın için hukuk danışmanı onay kutusu, önizleme, metinden taslak uyarısı ve `[TAMAMLANACAK]` yer tutucularının kaldırılması gerekir. Bu fazda metinler DB'ye eklenmedi/yayınlanmadı.
+- Public footer'da sekiz klavyeyle erişilebilir düğme bulunur. Modal yalnız `is_active=true` ve `legal_review_approved=true` içeriği gösterir; aksi durumda onaylanmamış metin yerine “Bu metin henüz onaylanıp yayımlanmamıştır.” gösterilir. Test, taslak marker'ının public DOM'a sızmadığını doğrular.
+- Hukuk danışmanı tarafından onaylanmış gerçek metin bulunmadığından Roadmap §17 “taslak yasal metin bulunmuyor” maddesi ve final legal/publication kabulü **AÇIK**. Production env değerleri de Vercel'de yok; Production yayın kapısı ayrıca beklemededir.
+
+### Roadmap §17 yeniden kontrolü (Phase 15 sonrası)
+
+| Madde | Sonuç |
+|---|---|
+| Site müşteri girişi istemiyor; admin genel nav'da görünmüyor | **GEÇTİ** — önceki Faz 13 testleri tekrar kullanıldı; yeni feature bu davranışı değiştirmedi. |
+| Yalnız admin içerik yazıyor; anon yazma/silme yok | **GEÇTİ** — linked RLS pgTAP ve elle PostgREST denemeleri Faz 13 raporunda. Bu faz DB'ye yazmadı. |
+| Gerçek ürün/kategori/koleksiyon/fiyatlar | **AÇIK** — kullanıcı kararıyla örnekler aktarılmadı; gerçek katalog daha sonra yönetim panelinden doldurulacak. |
+| Tüm gerçek görseller önizleniyor ve kullanımda olanlar silinemiyor | **AÇIK (gerçek içerik)** — medya akışı/politikaları test edildi; gerçek medya henüz eklenmedi. |
+| Instagram doğru; WhatsApp numara/mesaj doğru | **AÇIK (işletme teyidi)** — uygulama akışı testli; yasal taslakta gerçek değerlerin ve iletişim sürecinin hukukçu/işletme teyidi bekleniyor. |
+| Sepet mobil/masaüstünde; ödeme izlenimi yok | **GEÇTİ (test fixture)** — Phase 13 üç motor testleri; site sipariş talebi dilini kullanıyor. Gerçek katalogla canlı kontrol içerik girildikten sonra tekrarlanmalı. |
+| Gerçek olmayan yorum/istatistik yok | **GEÇTİ (uygulama kontrolleri)** — eski örnekler bastırılıyor, aktif testler geçti. |
+| Hukukçu onaylı yasal metin var; taslak/example ifadesi yok | **AÇIK** — yalnız inceleme taslakları hazır. Onaylı metin olmadan `content_sections` yayınlanamaz. Public sayfa DOM testinde “örnek/taslak/onay bekliyor/TAMAMLANACAK” ifadeleri görünmüyor; bu, taslakların hazır olduğu anlamına gelmez. |
+| SEO, mobil taşma, link/görsel, konsol/ağ ve Firebase kontrolü | **GEÇTİ (Preview öncesi test fixture)** — tam E2E Chromium/WebKit/Firefox **38/38'er**, link/görsel kontrolleri ve public DOM taslak-marker testi geçti. |
+| Kimlikler ve rollback yedeği | **GEÇTİ** — Git/Vercel/Supabase hedefleri Faz 14'te doğrulandı; rollback docs/Firebase backup korunuyor. |
+| Production canlı doğrulaması | **BEKLEMEDE / ONAY GEREKİR** — Production Supabase env boş, Production deploy yapılmadı; açık “ONAYLIYORUM” mesajı olmadan yapılmayacak. |
+
+Faz 15 sonrası unit testler **13/13**, Playwright tam paketleri Chromium **38/38**, WebKit **38/38**, Firefox **38/38** geçti. `node --check` ve `git diff --check` başarılı. Bu fazda deploy, uzak Supabase mutation, commit veya push yapılmadı.
+
+### Faz 15 bağımsız şema denetimi
+
+İlk uygulamada yönetim ve public tarayıcı testleri geçmesine rağmen uzak/yerel gerçek şemadaki `content_sections_key_check` yalnız Faz 7c anahtarlarını kabul ediyordu; sekiz `legal_*` kaydı gerçek Supabase'te reddedilecekti. `20261017091000_phase_15_legal_content.sql` ile anahtar listesi genişletildi. Aynı migration; yasal metin aktif edilirken başlık/metin, `legal_review_approved=true`, `legal_status=lawyer_approved` ve taslak yer tutucularının kaldırılmış olmasını DB seviyesinde zorunlu kılar.
+
+Yerel migration uygulandı. Yeni `legal_content_test.sql` **8/8**, mevcut `page_content_test.sql` **20/20**, auth/SEO Node testleri **13/13** ve yerel DB lint geçti. Uzak dry-run yalnız `20261017091000_phase_15_legal_content.sql` migration'ının beklediğini doğruladı. Bu Codex ortamındaki hedef Playwright tekrarında macOS Mach port izni tarayıcıyı başlatmadı; kod/test hatası oluşmadan önce durdu. VS Code'da daha önce alınan üç motor **38/38** sonucu geçerlidir. Migration uzak Supabase'e gönderilmedi.

@@ -67,6 +67,7 @@ function pagesPreviewMarkup(kind,p){
  var image=pagesImage(p.media_id),media=image.url?'<img src="'+pagesEsc(image.url)+'" alt="'+pagesEsc(image.alt)+'">':'<div class="pg-noimg">Görsel seçilmedi</div>';
  var button=function(text){return text?'<span class="pg-btn">'+pagesEsc(text)+'</span>':'';};
  var list=function(items){return'<div class="pg-cards">'+items.map(function(item,index){return'<article><b>'+(index+1)+'</b><h4>'+pagesEsc(item.title)+'</h4><p>'+pagesEsc(item.description)+'</p></article>';}).join('')+'</div>';};
+ if(kind==='legal')return'<section class="pg-section legal-preview"><div class="admin-note">'+(p.content_json&&p.content_json.legal_review_approved?'Hukuk danışmanı onayı işaretlendi.':'Hukuk danışmanı onayı bekliyor; bu yalnızca taslak önizlemesidir.')+'</div><h3>'+pagesEsc(p.title||'Yasal metin başlığı')+'</h3><div class="legal-preview-body">'+pagesEsc(p.body||'')+'</div></section>';
  if(kind==='banner')return'<section class="pg-hero">'+media+'<div class="pg-body"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3><p>'+pagesEsc(p.description||'')+'</p><div class="pg-btns">'+button(p.primary_button_text)+button(p.secondary_button_text)+'</div></div></section><p class="pg-meta">Yayın aralığı: '+(p.starts_at?pagesDate(p.starts_at):'hemen')+' → '+(p.ends_at?pagesDate(p.ends_at):'süresiz')+'</p>';
  if(kind==='topbar')return'<div class="pg-topbar">'+(p.content_json.items.length?p.content_json.items.map(function(item){return'<span>'+pagesEsc(item)+'</span>';}).join(''):'<span>Madde yok</span>')+'</div>';
  if(kind==='process'||kind==='why_us'){var items=p.content_json.steps||p.content_json.items||[];return'<section class="pg-section"><small>'+pagesEsc(p.eyebrow||'')+'</small><h3>'+pagesEsc(p.title)+'</h3>'+(items.length?list(items):'<p class="pg-meta">Madde eklenmedi.</p>')+'</section>';}
@@ -225,7 +226,15 @@ var PAGES_SECTIONS={
  process:{label:'Nasıl Çalışır? (Süreç Adımları)',eyebrow:true,title:true,list:'steps',max:6,itemLabel:'Adım'},
  why_us:{label:'Neden Davet Sandığı?',eyebrow:true,title:true,list:'items',max:6,itemLabel:'Madde'},
  cta:{label:'Alt Çağrı (CTA) Bandı',eyebrow:true,title:true,body:true,button:true,media:true},
- campaign:{label:'Kampanya Pop-up',help:'Siteye ilk girişte açılır; ziyaretçiye oturum başına bir kez gösterilir. Yayında değilse hiç görünmez.',title:true,body:true,button:true,media:true}
+ campaign:{label:'Kampanya Pop-up',help:'Siteye ilk girişte açılır; ziyaretçiye oturum başına bir kez gösterilir. Yayında değilse hiç görünmez.',title:true,body:true,button:true,media:true},
+ legal_privacy:{label:'Gizlilik Politikası',title:true,body:true,legal:true},
+ legal_kvkk:{label:'KVKK Aydınlatma Metni',title:true,body:true,legal:true},
+ legal_local_storage:{label:'Çerez ve Yerel Depolama Bilgisi',title:true,body:true,legal:true},
+ legal_data_sharing:{label:'WhatsApp ve Instagram’a Veri Aktarımı',title:true,body:true,legal:true},
+ legal_order_process:{label:'Sipariş Talebi ve Satış Süreci',title:true,body:true,legal:true},
+ legal_returns:{label:'İptal, İade ve Kişiye Özel Ürünler',title:true,body:true,legal:true},
+ legal_shipping:{label:'Kargo ve Teslimat',title:true,body:true,legal:true},
+ legal_media_permissions:{label:'Yorum ve Görsel Paylaşım İzni',title:true,body:true,legal:true}
 };
 function pagesListRowHtml(item,label,index){
  return'<div class="admin-step-card pg-list-row"><b class="admin-step-label">'+label+' '+index+'</b><input data-li="title" maxlength="80" aria-label="'+label+' başlığı" value="'+pagesEsc(item.title)+'"><textarea class="admin-input-top" data-li="description" rows="2" maxlength="300" aria-label="'+label+' açıklaması">'+pagesEsc(item.description)+'</textarea><button class="a-btn media-danger" data-li-remove type="button">Kaldır</button></div>';
@@ -234,7 +243,8 @@ function pagesSectionForm(key,row){
  var cfg=PAGES_SECTIONS[key],json=(row&&row.content_json)||{},html=cfg.help?'<p class="admin-note">'+pagesEsc(cfg.help)+'</p>':'';
  if(cfg.eyebrow)html+='<label>Üst etiket<input data-f="eyebrow" maxlength="80" value="'+pagesEsc(row&&row.eyebrow)+'"></label>';
  if(cfg.title)html+='<label>Başlık<input data-f="title" maxlength="140" value="'+pagesEsc(row&&row.title)+'"></label>';
- if(cfg.body)html+='<label>Metin<textarea data-f="body" rows="5" maxlength="2000">'+pagesEsc(row&&row.body)+'</textarea></label>';
+ if(cfg.body)html+='<label>Metin<textarea data-f="body" rows="'+(cfg.legal?14:5)+'" maxlength="'+(cfg.legal?30000:2000)+'">'+pagesEsc(row&&row.body)+'</textarea></label>';
+ if(cfg.legal)html+='<label class="taxonomy-check"><input data-f="legal_approved" type="checkbox"'+(row&&row.content_json&&row.content_json.legal_review_approved?' checked':'')+'> Hukuk danışmanı bu son metin sürümünü inceledi ve yayına onayladı</label><p class="admin-note">Taslak kaydı daima yayından kapalıdır. Yayın için baştaki “Hukuk danışmanı onayı bekliyor” notunu ve [TAMAMLANACAK] alanlarını kaldırın; yalnız hukukçu onaylı son sürüm için onay kutusunu işaretleyin.</p>';
  if(cfg.lines)html+='<label>Üst bant maddeleri (her satır bir madde)<textarea data-f="lines" rows="5">'+pagesEsc((json.items||[]).join('\n'))+'</textarea></label>';
  if(cfg.list){var items=json[cfg.list]||[];html+='<div data-list data-label="'+cfg.itemLabel+'">'+items.map(function(item,i){return pagesListRowHtml(item,cfg.itemLabel,i+1);}).join('')+'</div><button class="a-btn" data-li-add type="button">＋ '+cfg.itemLabel+' Ekle</button>';}
  if(cfg.button)html+='<div class="admin-grid-2"><label>Buton yazısı<input data-f="button_text" maxlength="40" value="'+pagesEsc(row&&row.button_text)+'"></label><label>Buton bağlantısı<input data-f="button_url" placeholder="https://wa.me/… veya #urunler" value="'+pagesEsc(row&&row.button_url)+'"></label></div>';
@@ -245,11 +255,18 @@ function pagesSectionCollect(key,card){
  var cfg=PAGES_SECTIONS[key],json={};
  if(cfg.lines)json={items:pagesField(card,'lines').split('\n').map(function(line){return line.trim();}).filter(Boolean)};
  if(cfg.list){json[cfg.list]=$all('.pg-list-row',card).map(function(rowNode){return{title:rowNode.querySelector('[data-li="title"]').value.trim(),description:rowNode.querySelector('[data-li="description"]').value.trim()};});}
+ if(cfg.legal){var approval=card.querySelector('[data-f="legal_approved"]');json={legal_document:true,legal_review_approved:!!(approval&&approval.checked),legal_status:approval&&approval.checked?'lawyer_approved':'draft'};}
  var media=pagesField(card,'media_id');
  return{eyebrow:pagesNull(pagesField(card,'eyebrow')),title:pagesNull(pagesField(card,'title')),body:pagesNull(pagesField(card,'body')),button_text:pagesNull(pagesField(card,'button_text')),button_url:pagesNull(pagesField(card,'button_url')),media_id:media?Number(media):null,content_json:json};
 }
 function pagesSectionValidate(key,p,publish){
  var cfg=PAGES_SECTIONS[key],items=p.content_json.items||p.content_json.steps||[];
+ if(cfg.legal){
+  if(!p.title||!p.body)return'Başlık ve metin zorunludur.';
+  if(publish&&!p.content_json.legal_review_approved)return'Hukuk danışmanı son sürümü onaylamadan bu metin yayımlanamaz.';
+  if(publish&&/Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i.test(p.body))return'Yayın öncesi hukuk danışmanı uyarısını ve tamamlanacak alanları kaldırın.';
+  return'';
+ }
  if(cfg.lines){if(items.length>6)return'Üst bantta en fazla 6 madde olabilir.';if(items.some(function(item){return item.length>120;}))return'Her madde en fazla 120 karakter olabilir.';if(publish&&!items.length)return'Yayınlamak için en az bir madde girin.';}
  if(cfg.list){if(items.length>cfg.max)return'En fazla '+cfg.max+' '+cfg.itemLabel.toLowerCase()+' eklenebilir.';if(items.some(function(item){return!item.title||!item.description;}))return'Her '+cfg.itemLabel.toLowerCase()+' için başlık ve açıklama girin.';if(publish&&!items.length)return'Yayınlamak için en az bir '+cfg.itemLabel.toLowerCase()+' ekleyin.';}
  if(publish&&cfg.title&&!p.title)return'Yayınlamak için başlık zorunludur.';
@@ -267,8 +284,8 @@ function pagesRenderSections(boxSelector,keys,intro){
 function pagesDrawSections(box,keys,intro){
  box.innerHTML=(intro?'<p class="admin-note">'+pagesEsc(intro)+'</p>':'');
  keys.forEach(function(key){
-  var cfg=PAGES_SECTIONS[key],row=pagesState.sections[key]||null,live=!!(row&&row.is_active),card=el('form','taxonomy-form');card.setAttribute('novalidate','');card.dataset.section=key;
-  card.innerHTML='<h3>'+cfg.label+' <span class="badge '+(live?'feat':'hid')+'">'+(live?'Yayında':row?'Taslak':'Henüz yok')+'</span></h3>'+pagesSectionForm(key,row)+pagesActionsHtml(live);
+  var cfg=PAGES_SECTIONS[key],row=pagesState.sections[key]||null,legalApproved=!!(row&&row.content_json&&row.content_json.legal_review_approved&&!/Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i.test(row.body||'')),live=!!(row&&row.is_active&&(!cfg.legal||legalApproved)),badge=cfg.legal?(live?'Hukukçu onaylı · yayında':row?'Taslak · yayında değil':'Henüz yok · taslak bekleniyor'):(live?'Yayında':row?'Taslak':'Henüz yok'),card=el('form','taxonomy-form');card.setAttribute('novalidate','');card.dataset.section=key;
+  card.innerHTML='<h3>'+cfg.label+' <span class="badge '+(live?'feat':'hid')+'">'+badge+'</span></h3>'+pagesSectionForm(key,row)+pagesActionsHtml(live);
   card.onsubmit=function(event){event.preventDefault();};box.appendChild(card);
   var listBox=card.querySelector('[data-list]'),add=card.querySelector('[data-li-add]');
   function relabel(){$all('.pg-list-row',card).forEach(function(rowNode,i){rowNode.querySelector('.admin-step-label').textContent=cfg.itemLabel+' '+(i+1);});}
@@ -284,6 +301,7 @@ function pagesDrawSections(box,keys,intro){
    unpublish:function(){pagesSectionSetLive(row,false,function(){pagesDrawSections(box,keys,intro);});},
    save:async function(payload,publish){
     var client=await pagesClient(),data=Object.assign({},payload,{is_active:publish});
+    if(cfg.legal){data.content_json={legal_document:true,legal_review_approved:!!publish,legal_status:publish?'lawyer_approved':'draft'};}
     var query=row?client.from('content_sections').update(data).eq('id',row.id):client.from('content_sections').insert(data);
     var result=await query.select('*').single();if(result.error)throw result.error;
     pagesState.sections[key]=result.data;toast(publish?'Bölüm yayınlandı.':'Taslak kaydedildi.');pagesDrawSections(box,keys,intro);
@@ -303,6 +321,7 @@ function renderReviewsAdmin(){pagesRenderList('testimonial');}
 function renderHomeAdmin(){pagesRenderSections('#home-admin',['process','why_us','cta'],'Ana sayfadaki süreç adımları, “Neden biz” maddeleri ve alt çağrı bandı. Her bölüm ayrı kaydedilir ve önizleme onayı gerektirir.');}
 function renderContentAdmin(){pagesRenderSections('#content-admin',['topbar','story'],'Üst bant duyuruları ve Hikâyemiz bölümü.');}
 function renderCampaignAdmin(){pagesRenderSections('#campaign-admin',['campaign'],'');}
+function renderLegalAdmin(){pagesRenderSections('#legal-admin',['legal_privacy','legal_kvkk','legal_local_storage','legal_data_sharing','legal_order_process','legal_returns','legal_shipping','legal_media_permissions'],'Her bölüm `content_sections` içinde ayrı bir kayıt olarak saklanır. Taslaklar kapalı tutulur; hukuk danışmanı onayı olmadan yayınlanamaz. İnceleme metinleri `docs/legal-drafts.md` dosyasındadır.');}
 
 /* ---- admin overview (roadmap 8.2) ---- */
 async function pagesDashboardData(){

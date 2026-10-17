@@ -160,6 +160,34 @@ test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister',
   expect(await page.evaluate(() => window.__PW_DB.media_assets.some(asset => asset.id === 2))).toBe(false);
 });
 
+test('yasal content_sections taslak kalır ve hukukçu onayı olmadan yayımlanamaz', async ({ page }) => {
+  await page.click('[data-view="legal"]');
+  await page.setViewportSize({width:390,height:844});
+  const section=page.locator('[data-section="legal_privacy"]');
+  await expect(section).toContainText('Henüz yok · taslak bekleniyor');
+  await section.locator('[data-f="title"]').fill('Gizlilik Politikası');
+  await section.locator('[data-f="body"]').fill('Hukuk danışmanı onayı bekliyor. [TAMAMLANACAK]');
+  await section.locator('[data-pg-preview]').click();
+  await page.locator('[data-pg-approve]').click();
+  await section.locator('[data-pg-publish]').click();
+  await expect(section.locator('[data-pg-status]')).toContainText('Hukuk danışmanı son sürümü onaylamadan');
+
+  await section.locator('[data-f="legal_approved"]').check();
+  await section.locator('[data-pg-preview]').click();
+  await page.locator('[data-pg-approve]').click();
+  await section.locator('[data-pg-publish]').click();
+  await expect(section.locator('[data-pg-status]')).toContainText('uyarısını ve tamamlanacak alanları kaldırın');
+
+  await section.locator('[data-f="body"]').fill('Veri sorumlusu bilgileri ve uygulanan süreçler hakkında bilgilendirme metni.');
+  await section.locator('[data-pg-preview]').click();
+  await page.locator('[data-pg-approve]').click();
+  await section.locator('[data-pg-publish]').click();
+  await expect.poll(() => page.evaluate(() => window.__PW_DB.content_sections.find(row => row.section_key === 'legal_privacy')?.is_active)).toBe(true);
+  expect(await page.evaluate(() => window.__PW_DB.content_sections.find(row => row.section_key === 'legal_privacy')?.content_json.legal_review_approved)).toBe(true);
+  const dimensions=await page.evaluate(()=>({body:document.body.scrollWidth,viewport:document.documentElement.clientWidth}));
+  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport+1);
+});
+
 async function approvePreview(page) {
   await expect(page.locator('.taxonomy-preview-dialog')).toBeVisible();
   await page.click('[data-pg-mode="mobile"]');
