@@ -268,6 +268,7 @@ test('boş durum: yayında içerik yok', async ({ page }) => {
   await expect(state(page, 'topbar')).toHaveAttribute('data-state', 'empty');
   await expect(page.locator('#hdr-wa')).toBeHidden();
   await expect(page.locator('#prod-more')).toBeHidden();
+  expect(log.consoleErrors).toEqual([]);
   expect(log.pageErrors).toEqual([]);
 });
 

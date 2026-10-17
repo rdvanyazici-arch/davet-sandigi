@@ -191,22 +191,3 @@ async function productUnpublish(id){if(!confirm('Ürün yayından kaldırılsın
 async function productArchive(id){if(!confirm('Ürün arşivlensin mi? Ürün silinmeyecek ve ziyaretçilere görünmeyecek.'))return;try{var client=await productClient(),result=await client.from('products').update({is_active:false,archived_at:new Date().toISOString()}).eq('id',id).select('id').single();if(result.error)throw result.error;toast('Ürün arşivlendi.');await productInitialize(true);}catch(error){alert('Ürün arşivlenemedi: '+productError(error));}}
 
 window.__productAdminTest={slug:productSlug,validate:productValidate,signature:productSignature};
-function renderCollAdmin(){
- var box=$('#coll-admin');box.innerHTML='<p class="admin-note">Etkinlik koleksiyonları (ana sayfadaki kartlar). İsim ve alt metni düzenleyip kaydedin. Ürünler bu koleksiyonlara ürün formundan atanır.</p>';
- occasions.forEach(function(o){var cnt=products.filter(function(p){return(p.occ||[]).indexOf(o.id)>-1;}).length;
-  var row=el('div','arow admin-wrap-row');
-  row.innerHTML='<span class="coll-ic admin-coll-icon">'+glyphSvg(o.glyph)+'</span><div class="admin-stack-fields"><input class="oc-lbl" value="'+esc(o.label)+'"><input class="oc-sub" value="'+esc(o.sub)+'"></div><small class="admin-count-label">'+cnt+' ürün</small>';box.appendChild(row);});
- var bar=el('div','admin-toolbar');bar.innerHTML='<button class="a-btn primary" id="oc-save">Değişiklikleri Kaydet</button>';box.appendChild(bar);
- $('#oc-save').onclick=function(){var lbls=$all('.oc-lbl',box),subs=$all('.oc-sub',box);occasions.forEach(function(o,i){if(lbls[i])o.label=lbls[i].value.trim()||o.label;if(subs[i])o.sub=subs[i].value.trim();});save(LS.o,occasions);renderAdmin();refreshSite();alert('Koleksiyonlar kaydedildi.');};
-}
-function renderCatAdmin(){
- var box=$('#cat-admin');box.innerHTML='<p class="admin-note">Ürün türü kategorileri. İsim ve kod ön ekini düzenleyip kaydedin.</p>';
- categories.forEach(function(c){var cnt=products.filter(function(p){return p.cat==c.id;}).length;
-  var row=el('div','arow admin-wrap-row');
-  row.innerHTML='<div class="admin-cat-fields"><input class="cat-lbl" value="'+esc(c.label)+'"><input class="cat-pre admin-uppercase" value="'+esc(c.prefix)+'"></div><small class="admin-count-label">'+cnt+' ürün</small><button class="a-btn" data-cd="'+c.id+'">Sil</button>';box.appendChild(row);});
- var bar=el('div','admin-toolbar');bar.innerHTML='<button class="a-btn primary" id="cat-save">Değişiklikleri Kaydet</button>';box.appendChild(bar);
- var add=el('div','admin-toolbar');add.innerHTML='<input id="newcat" placeholder="Yeni kategori adı"><input class="admin-prefix-input" id="newpre" placeholder="Ön ek (örn. TEP)"><button class="a-btn" id="addcat">＋ Ekle</button>';box.appendChild(add);
- $('#cat-save').onclick=function(){var lbls=$all('.cat-lbl',box),pres=$all('.cat-pre',box);categories.forEach(function(c,i){if(lbls[i])c.label=lbls[i].value.trim()||c.label;if(pres[i])c.prefix=(pres[i].value.trim()||c.prefix).toUpperCase();});save(LS.c,categories);renderAdmin();refreshSite();alert('Kategoriler kaydedildi.');};
- $('#addcat').onclick=function(){var l=$('#newcat').value.trim(),pre=($('#newpre').value.trim()||l.slice(0,3)).toUpperCase();if(!l)return;categories.push({id:'c'+Date.now(),label:l,prefix:pre});save(LS.c,categories);renderAdmin();refreshSite();};
- $all('[data-cd]',box).forEach(function(b){b.onclick=function(){var id=b.getAttribute('data-cd');if(products.some(function(p){return p.cat==id;})){alert('Bu kategoride ürün var, önce onları taşıyın/silin.');return;}categories=categories.filter(function(c){return c.id!=id;});save(LS.c,categories);renderAdmin();refreshSite();};});
-}

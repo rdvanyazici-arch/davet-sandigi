@@ -1,8 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-function installFakeSupabase() {
+const pageRequests=new WeakMap();
+const pageErrors=new WeakMap();
+const pageConsoleErrors=new WeakMap();
+
+function installFakeSupabase(options={}) {
   const now = new Date().toISOString();
-  const db = {
+  const db = options.empty ? {
+    categories: [], collections: [], products: [], product_images: [], product_drafts: [], media_assets: [],
+    banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: [],
+    site_settings: [{ id: 1, brand_name: 'Davet Sandığı', whatsapp_number: '905399999999', instagram_url: null, phone: null, email: null, delivery_text: null, currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: null, is_maintenance_mode: false }]
+  } : {
     admin_profiles: [],
     categories: [{ id: 1, name: 'Kolonya', is_active: true, archived_at: null, updated_at: now }],
     collections: [{ id: 1, name: 'Nişan', is_active: true, archived_at: null, updated_at: now }],
@@ -36,6 +44,7 @@ function installFakeSupabase() {
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
     not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); return this; }
+    range() { return this; }
     order() { return this; }
     single() { return this.execute(true); }
     maybeSingle() { return this.execute(true); }
@@ -77,10 +86,52 @@ function installFakeSupabase() {
   window.__DAVET_SANDIGI_ENV__ = { SUPABASE_URL: 'http://local.test', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test' };
 }
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(installFakeSupabase);
+test.beforeEach(async ({ page }, testInfo) => {
+  pageRequests.set(page,[]);pageErrors.set(page,[]);
+  pageConsoleErrors.set(page,[]);
+  page.on('request',request=>pageRequests.get(page).push(request.url()));
+  page.on('pageerror',error=>pageErrors.get(page).push(String(error)));
+  page.on('console',message=>{if(message.type()==='error')pageConsoleErrors.get(page).push(message.text());});
+  await page.addInitScript(installFakeSupabase,{empty:testInfo.title.includes('boş Supabase')});
   await page.goto('/admin.html');
   await expect(page.locator('#admin-panel')).toHaveClass(/show/);
+});
+
+test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullanılmaz', async ({ page }) => {
+  const dashboard=page.locator('#dashboard-admin');
+  await expect(dashboard.locator('.pg-stat')).toHaveCount(4);
+  for(const stat of await dashboard.locator('.pg-stat').all())await expect(stat).toContainText('0');
+  await expect(dashboard).toContainText('Henüz güncelleme yok.');
+
+  await page.click('[data-view="products"]');
+  await expect(page.locator('#product-list-status')).toContainText('Kayıt bulunamadı');
+  await page.click('[data-view="categories"]');
+  await expect(page.locator('#category-list')).toContainText('Henüz kategori yok.');
+  await page.click('[data-view="collections"]');
+  await expect(page.locator('#collection-list')).toContainText('Henüz koleksiyon yok.');
+  await page.click('[data-view="media"]');
+  await expect(page.locator('#media-library-status')).toContainText('0 görsel bulundu.');
+  await expect(page.locator('#media-library')).toContainText('Bu filtreye uygun görsel yok.');
+  await page.click('[data-view="banner"]');
+  await expect(page.locator('#banner-admin')).toContainText('Henüz kayıt yok.');
+  await page.click('[data-view="faq"]');
+  await expect(page.locator('#faq-admin')).toContainText('Henüz kayıt yok.');
+  await page.click('[data-view="reviews"]');
+  await expect(page.locator('#reviews-admin')).toContainText('Henüz kayıt yok.');
+  await page.click('[data-view="content"]');
+  await expect(page.locator('#content-admin')).toContainText('Henüz yok');
+  await page.click('[data-view="home"]');
+  await expect(page.locator('#home-admin')).toContainText('Henüz yok');
+  await page.click('[data-view="campaign"]');
+  await expect(page.locator('#campaign-admin')).toContainText('Henüz yok');
+  await page.click('[data-view="settings"]');
+  await expect(page.locator('#settings-whatsapp')).toBeVisible();
+
+  const urls=pageRequests.get(page),hosts=new Set(urls.filter(url=>/^https?:/.test(url)).map(url=>new URL(url).host));
+  expect([...hosts]).toEqual(['127.0.0.1:4175']);
+  expect(urls.some(url=>/firebase|firestore|firebasejs|googleapis|gstatic/i.test(url))).toBe(false);
+  expect(pageErrors.get(page)).toEqual([]);
+  expect(pageConsoleErrors.get(page)).toEqual([]);
 });
 
 async function approvePreview(page) {

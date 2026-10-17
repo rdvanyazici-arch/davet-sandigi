@@ -365,5 +365,4 @@ $('#year').textContent=new Date().getFullYear();
 document.addEventListener('click',function(e){if(e.target.closest('[data-retry]'))loadPublicSite();});
 window.addEventListener('hashchange',function(){if(!openProductFromLocation())openCategoryFromLocation();});
 syncCart();observeReveal();initCookie();
-/* Legacy Firebase public akışta başlatılmaz; modül Faz 12'ye kadar dosyada kalır. */
 loadPublicSite();

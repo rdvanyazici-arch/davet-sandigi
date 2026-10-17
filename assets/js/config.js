@@ -13,76 +13,11 @@ var ICON={
 };
 
 /* ============ DATA ============ */
-var LS={p:'ds_products_v6',c:'ds_categories_v6',o:'ds_occasions_v6',s:'ds_settings_v6',cart:'ds_cart_v6'};
-var CLOUD_IMG={};
-try{CLOUD_IMG=JSON.parse(localStorage.getItem('ds_cloudimg_v1')||'{}')||{};}catch(e){CLOUD_IMG={};}
-var IMG={
- "baby-1": "assets/images/fallback/baby-1.webp",
- "baby-2": "assets/images/fallback/baby-2.webp",
- "baby-3": "assets/images/fallback/baby-3.webp",
- "baby-4": "assets/images/fallback/baby-4.webp",
- "baby-5": "assets/images/fallback/baby-5.webp",
- "col-baby": "assets/images/fallback/col-baby.webp",
- "col-kina": "assets/images/fallback/col-kina.webp",
- "col-nikah": "assets/images/fallback/col-nikah.webp",
- "col-nisan": "assets/images/fallback/col-nisan.webp",
- "cta": "assets/images/fallback/cta.webp",
- "hero": "assets/images/fallback/hero.webp",
- "kina-1": "assets/images/fallback/kina-1.webp",
- "kina-2": "assets/images/fallback/kina-2.webp",
- "kina-3": "assets/images/fallback/kina-3.webp",
- "kina-4": "assets/images/fallback/kina-4.webp",
- "kina-5": "assets/images/fallback/kina-5.webp",
- "nikah-1": "assets/images/fallback/nikah-1.webp",
- "nikah-2": "assets/images/fallback/nikah-2.webp",
- "nikah-3": "assets/images/fallback/nikah-3.webp",
- "nikah-4": "assets/images/fallback/nikah-4.webp",
- "nikah-5": "assets/images/fallback/nikah-5.webp",
- "nisan-1-b": "assets/images/fallback/nisan-1-b.webp",
- "nisan-1-c": "assets/images/fallback/nisan-1-c.webp",
- "nisan-1-d": "assets/images/fallback/nisan-1-d.webp",
- "nisan-1-e": "assets/images/fallback/nisan-1-e.webp",
- "nisan-1": "assets/images/fallback/nisan-1.webp",
- "nisan-2": "assets/images/fallback/nisan-2.webp",
- "nisan-3": "assets/images/fallback/nisan-3.webp",
- "nisan-4": "assets/images/fallback/nisan-4.webp",
- "nisan-5": "assets/images/fallback/nisan-5.webp"
-};
-var DEF_OCC=[];
-var DEF_CAT=[];
-var SEED=[];
-var DEF_TOPBAR=[];
-var DEF_REVIEWS=[];
-var DEF_REVHEAD={eb:'',t:'',s:'',note:''};
-var DEF_FAQ=[];
-var DEF_STORY={title:'',lead:'',text:''};
-var DEF_LEGAL={privacy:'',kvkk:'',cookie:'',mesafeli:''};
-var DEF_CAMPAIGN={enabled:false,title:'',text:'',btnText:'',btnLink:'',img:''};
-var DEF_HOME={
- heroEyebrow:'',heroBtn1:'',heroBtn2:'',heroImg:'',proof:[],
- collHead:{eb:'',t:'Yayındaki koleksiyonlar',s:''},prodHead:{eb:'',t:'Yayındaki ürünler',s:''},
- howHead:{eb:'',t:'Süreç'},steps:[],whyHead:{eb:'',t:'Davet Sandığı'},why:[],
- cta:{eb:'',t:'',p:'',btn:'',img:''}
-};
-var DEF_BANNER={eyebrow:'',title:'',lead:'',b1t:'',b1l:'',b2t:'',b2l:'',img:''};
-function defSettings(){return{whatsapp:'',banners:[],instagram:'',phone:'',mail:'',addr:'',deliveryText:'',shippingNote:'',heroTitle:'',heroLead:'',minQty:25,stepQty:25,quoteThreshold:100,shipFee:0,shipFree:0,orderNext:1,topbar:[],reviews:[],revHead:JSON.parse(JSON.stringify(DEF_REVHEAD)),faq:[],story:JSON.parse(JSON.stringify(DEF_STORY)),legal:JSON.parse(JSON.stringify(DEF_LEGAL)),campaign:JSON.parse(JSON.stringify(DEF_CAMPAIGN)),home:JSON.parse(JSON.stringify(DEF_HOME))};}
+var LS={cart:'ds_cart_v6'};
+var products=[],categories=[],occasions=[];
+var settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',legal:{},campaign:{enabled:false}};
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
-function save(k,v){var stored=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){stored=false;}if(typeof FB!=='undefined'&&FB&&typeof fbUser!=='undefined'&&fbUser&&(k===LS.p||k===LS.c||k===LS.o||k===LS.s)){clearTimeout(_cloudT);_cloudT=setTimeout(pushToCloud,700);}return stored;}
-function pad3(n){return('000'+n).slice(-3);}
-function pad5(n){return('00000'+n).slice(-5);}
-function seedProducts(){
- var out=[],cnt={};
- SEED.forEach(function(r,i){
-  var cat=r[1],pre=(DEF_CAT.filter(function(c){return c.id==cat;})[0]||{prefix:'URN'}).prefix;
-  cnt[pre]=(cnt[pre]||0)+1;
-  out.push({id:'p'+(i+1),code:pre+pad3(cnt[pre]),name:r[0],cat:cat,occ:r[2],price:r[3],img:r[4],gallery:[r[4]].concat(r[7]||[]),featured:!!r[5],desc:r[6],visible:true});
- });
- return out;
-}
-var occasions=load(LS.o,[])||[];
-var categories=load(LS.c,[])||[];
-var products=load(LS.p,[])||[];
-var settings=(function(){var d=defSettings(),s=load(LS.s,null);if(!s){save(LS.s,d);return d;}for(var k in d){if(s[k]===undefined)s[k]=d[k];}return s;})();
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}
 var cart=load(LS.cart,[]);
 var wish=load('ds_wish_v1',[]);
 
@@ -92,8 +27,6 @@ function $all(s,r){return Array.prototype.slice.call((r||document).querySelector
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmt(n){return'₺'+Number(n||0).toFixed(2).replace('.',',');}
-function imgSrc(key){if(key&&key.indexOf){if(key.indexOf('img:')===0)return CLOUD_IMG[key.slice(4)]||'';if(key.indexOf('data:')===0||key.indexOf('http')===0||key.indexOf('blob:')===0)return key;}return IMG[key]||IMG['nisan-1']||'';}
-function galleryOf(p){return(p.gallery&&p.gallery.length)?p.gallery:[p.img];}
 function catLabel(id){var c=categories.filter(function(x){return x.id==id;})[0];return c?c.label:id;}
 function occLabel(id){var o=occasions.filter(function(x){return x.id==id;})[0];return o?o.label:id;}
 function glyphSvg(g){

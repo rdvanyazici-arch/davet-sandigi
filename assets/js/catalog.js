@@ -96,8 +96,7 @@ function stateBox(kind,msg,retry){return'<div class="sec-state '+kind+'" role="s
 
 /* Public sayfa yerel örnek verilerle değil yalnızca Supabase verisiyle çalışır. */
 (function resetPublicDefaults(){
- var keep={orderNext:settings.orderNext};
- settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shipFee:0,shipFree:0,shippingNote:'',orderNext:keep.orderNext||1,legal:{},campaign:{enabled:false}};
+ settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',legal:{},campaign:{enabled:false}};
  products=[];categories=[];occasions=[];
 })();
 

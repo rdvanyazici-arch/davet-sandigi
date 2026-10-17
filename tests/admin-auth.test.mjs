@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 const source=await readFile(new URL('../assets/js/admin-auth.js',import.meta.url),'utf8');
 const configSource=await readFile(new URL('../assets/js/config.js',import.meta.url),'utf8');
 const siteSource=await readFile(new URL('../assets/js/site.js',import.meta.url),'utf8');
-const legacyFirebaseSource=await readFile(new URL('../assets/js/legacy-firebase.js',import.meta.url),'utf8');
+const contentSource=await readFile(new URL('../assets/js/admin-content.js',import.meta.url),'utf8');
+const mediaSource=await readFile(new URL('../assets/js/admin-media.js',import.meta.url),'utf8');
 const adminHtml=await readFile(new URL('../admin.html',import.meta.url),'utf8');
 
 function element(){
@@ -84,14 +85,28 @@ test('çıkış paneli kapatır ve geri dönüşte admin sayfasını korumaz',as
  assert.equal(fixture.stats().replaced,'index.html');
 });
 
-test('yönetim paneli ortak HTML kaçış yardımcısını yükler',()=>{
+test('yönetim paneli Supabase ayarlarını yükler ve Firebase/localStorage legacy kodunu içermez',()=>{
  assert.match(configSource,/function esc\(s\)/);
- assert.match(configSource,/localStorage\.getItem\('ds_cloudimg_v1'\)/);
- assert.doesNotMatch(legacyFirebaseSource,/var CLOUD_IMG=/);
+ assert.doesNotMatch(configSource,/firebase|firestore|CLOUD_IMG|ds_cloudimg|pushToCloud|img:/i);
+ assert.doesNotMatch(contentSource,/localStorage|FileReader|firebase|firestore|admin-import|admin-export/i);
+ assert.doesNotMatch(mediaSource,/FileReader|firebase|uploadImage|resizeImage\(/i);
  assert.doesNotMatch(siteSource,/function esc\(s\)/);
+ assert.doesNotMatch(adminHtml,/legacy-firebase|firebasejs|firebaseapp|admin-import|admin-export|googleapis|fonts\.googleapis|fonts\.gstatic/i);
  assert.ok(adminHtml.indexOf('assets/js/config.js')<adminHtml.indexOf('assets/js/admin-products.js'));
  assert.match(adminHtml,/assets\/js\/config\.js\?v=\d{8}-\d+/);
  assert.match(adminHtml,/assets\/js\/admin-auth\.js\?v=\d{8}-\d+/);
+});
+
+test('uygulama runtime kaynaklarında Firebase istemci kodu veya endpoint kalmadı',async()=>{
+ const runtimeFiles=['index.html','admin.html','scripts/generate-supabase-config.mjs','scripts/generate-sitemap.mjs','scripts/sitemap-core.mjs'];
+ for(const directory of ['assets/js']){
+  const entries=await readdir(new URL('../'+directory+'/',import.meta.url),{withFileTypes:true});
+  runtimeFiles.push(...entries.filter(entry=>entry.isFile()&&/\.(?:html|js|mjs)$/i.test(entry.name)).map(entry=>directory+'/'+entry.name));
+ }
+ for(const file of runtimeFiles){
+  const content=await readFile(new URL('../'+file,import.meta.url),'utf8');
+  assert.doesNotMatch(content,/firebase|firestore|googleapis/i,file);
+ }
 });
 
 test('profil ve panel hataları ayrı mesajlarla güvenli biçimde durur',async()=>{
