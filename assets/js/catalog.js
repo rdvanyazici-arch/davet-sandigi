@@ -5,7 +5,7 @@ var PUBLIC_TIMEOUT_MS=12000;
 var MEDIA_COLS='storage_path,alt_text,width,height';
 var PUBLIC_QUERIES={
  settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note',params:{id:'eq.1',limit:'1'}},
- categories:{table:'categories',select:'id,slug,name,description,sort_order',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
+ categories:{table:'categories',select:'id,slug,name,description,sort_order,category_collections(collection_id,sort_order)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  collections:{table:'collections',select:'id,slug,name,short_description,icon_key,sort_order,media_assets!cover_media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  products:{table:'products',select:'id,category_id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,is_featured,sort_order,product_images(alt_text,sort_order,is_primary,media_assets('+MEDIA_COLS+')),product_collections(collection_id)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc',limit:'500'}},
  banners:{table:'banners',select:'id,eyebrow,title,description,primary_button_text,primary_button_url,secondary_button_text,secondary_button_url,sort_order,starts_at,ends_at,media_assets!media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',order:'sort_order.asc,id.asc'}},
@@ -71,7 +71,7 @@ function mediaImg(m,opts){
  var responsive=m.srcset?' srcset="'+qesc(m.srcset)+'" sizes="'+qesc(o.sizes||m.sizes||'100vw')+'"':'';
  return'<img src="'+qesc(m.src)+'"'+responsive+' alt="'+qesc(m.alt)+'"'+(m.width?' width="'+m.width+'"':'')+(m.height?' height="'+m.height+'"':'')+' loading="'+(o.eager?'eager':'lazy')+'" decoding="async">';
 }
-function mapCategory(r){return{id:String(r.id),slug:r.slug||'',label:r.name||'',desc:r.description||''};}
+function mapCategory(r){return{id:String(r.id),slug:r.slug||'',label:r.name||'',desc:r.description||'',occ:(r.category_collections||[]).map(function(x){return String(x.collection_id);})};}
 function mapCollection(r){return{id:String(r.id),slug:r.slug||'',label:r.name||'',sub:r.short_description||'',glyph:r.icon_key||'',cover:mediaFrom(r.media_assets,'',r.name)};}
 function mapProduct(r){
  var imgs=(r.product_images||[]).slice().sort(function(a,b){return(b.is_primary?1:0)-(a.is_primary?1:0)||(a.sort_order-b.sort_order);}).map(function(i){return mediaFrom(i.media_assets,i.alt_text,r.name);}).filter(Boolean);
@@ -128,7 +128,7 @@ function applyPublicCatalog(r){
  renderCollections();renderFilter();renderProducts();
  if(typeof syncCart==='function')syncCart();
  if(removed&&typeof toast==='function')toast('Sepetinizde artık yayında olmayan ürün var.');
- if(!openProductFromLocation())openCategoryFromLocation();
+ if(!openProductFromLocation()&&!openCollectionFromLocation())openCategoryFromLocation();
 }
 function productLinkSlug(){
  var m=location.hash.match(/^#urun[\/=](.+)$/);
@@ -149,6 +149,13 @@ function openCategoryFromLocation(){
  activeFilter=String(category.id);renderFilter();renderProducts();
  if(typeof updateSeoRoute==='function')updateSeoRoute('category',category);
  return true;
+}
+function collectionRoute(){var q=new URLSearchParams(location.search),collection=q.get('koleksiyon')||'',category=q.get('kategori')||'';return{collection:collection,category:category};}
+function openCollectionFromLocation(){
+ var route=collectionRoute();if(!route.collection||catalogState.catalog!=='ready')return false;
+ var collection=occasions.filter(function(item){return item.slug===route.collection;})[0];
+ if(!collection){if(typeof toast==='function')toast('Bu koleksiyon şu an yayında değil.');return true;}
+ openCollection(collection.id,null,route.category||'');return true;
 }
 function publicFail(group){
  if(group==='catalog'){products=[];categories=[];occasions=[];renderCollections();renderFilter();renderProducts();if(typeof syncCart==='function')syncCart();return;}
@@ -206,7 +213,7 @@ function renderCollections(){
   var card=el('button','coll-card reveal');
   card.type='button';
   card.setAttribute('aria-label',o.label+' koleksiyonunu görüntüle');
-  card.innerHTML='<div class="coll-thumb"><span class="coll-ic">'+glyphSvg(o.glyph)+'</span>'+mediaImg(o.cover,{alt:o.label,sizes:'(max-width: 760px) 100vw, 25vw'})+'</div>'+
+  card.innerHTML='<div class="coll-thumb"><span class="coll-ic">'+glyphSvg(o.glyph)+'</span>'+(o.cover?mediaImg(o.cover,{alt:o.label,sizes:'(max-width: 760px) 100vw, 25vw'}):'')+'</div>'+
    '<div class="coll-body"><h3>'+esc(o.label)+'</h3><p>'+esc(o.sub||'')+'</p><span class="coll-more">Koleksiyonu Gör '+ICON.arr+'</span></div>';
   card.addEventListener('click',function(event){openCollection(o.id,event.currentTarget);});
   g.appendChild(card);
@@ -274,14 +281,20 @@ function productCard(p){
 }
 
 /* ============ COLLECTION VIEW ============ */
-function openCollection(occId,opener){
+function setCollectionRoute(collection,category){
+ if(!window.history||!history.replaceState)return;
+ var url=new URL(location.href);url.hash='';url.search='';url.searchParams.set('koleksiyon',collection.slug);if(category&&category.slug)url.searchParams.set('kategori',category.slug);history.replaceState(null,'',url.pathname+url.search);
+}
+function openCollection(occId,opener,categorySlug){
  var o=occasions.filter(function(x){return x.id==occId;})[0];if(!o)return;
  $('#cv-title').textContent=o.label+' Koleksiyonu';
  showCollectionCover(o.cover,o.label);
  if($('#cv-eyebrow'))$('#cv-eyebrow').textContent='Koleksiyon';
  $('#cv-banner-title').textContent=o.label;$('#cv-banner-sub').textContent=o.sub||'';
- var list=visibleProducts().filter(function(p){return(p.occ||[]).indexOf(occId)>-1;});
- cvOpen(list,'Bu koleksiyonda henüz ürün yok.');
+ var list=visibleProducts().filter(function(p){return(p.occ||[]).indexOf(String(occId))>-1;});
+ cvOpenCollection(o,list,categorySlug||'');
+ setCollectionRoute(o,categorySlug?categories.filter(function(c){return c.slug===categorySlug;})[0]:null);
+ if(typeof updateSeoRoute==='function')updateSeoRoute('collection',o);
  openCollview(opener);
 }
 function showCollectionCover(image,label){
@@ -294,14 +307,34 @@ function showCollectionCover(image,label){
 }
 /* ---- collection view: category filter + paging (load-more + infinite scroll) ---- */
 var cvList=[],cvShown=0,CV_PAGE=8,cvBase=[],cvCat='all',cvEmpty='Ürün bulunmuyor.';
+var cvCollection=null;
+function cvOpenCollection(collection,list,categorySlug){
+ cvCollection=collection;cvBase=list||[];cvEmpty='Bu koleksiyonda henüz ürün yok.';
+ var linked=categories.filter(function(category){return(category.occ||[]).indexOf(String(collection.id))>-1;});
+ var chosen=categorySlug&&linked.filter(function(category){return category.slug===categorySlug;})[0];
+ if(chosen){cvShowCategory(chosen);return;}
+ cvCat='index';var bar=$('#cv-filter');bar.hidden=true;bar.innerHTML='';$('#cv-more-wrap').hidden=true;
+ var grid=$('#cv-grid');grid.innerHTML='';
+ var all=el('button','cv-category-card cv-category-all');all.type='button';all.innerHTML='<small>Koleksiyon</small><strong>Tümünü Gör</strong><span>Bu koleksiyondaki tüm ürünleri inceleyin '+ICON.arr+'</span>';all.onclick=function(){cvShowCategory(null);};grid.appendChild(all);
+ linked.forEach(function(category){var count=cvBase.filter(function(p){return p.cat===category.id;}).length,card=el('button','cv-category-card');card.type='button';card.innerHTML='<small>Kategori</small><strong>'+esc(category.label)+'</strong><span>'+esc(category.desc||'Ürünleri inceleyin')+'</span><b>'+count+' ürün '+ICON.arr+'</b>';card.onclick=function(){cvShowCategory(category);};grid.appendChild(card);});
+ if(!linked.length)grid.appendChild(el('div','prod-empty','Bu koleksiyona henüz kategori bağlanmadı.'));
+}
+function cvShowCategory(category){
+ cvCat=category?category.id:'all';setCollectionRoute(cvCollection,category);
+ $('#cv-title').textContent=category?cvCollection.label+' · '+category.label:cvCollection.label+' Koleksiyonu';
+ if($('#cv-eyebrow'))$('#cv-eyebrow').textContent=category?'Kategori':'Koleksiyon';
+ $('#cv-banner-title').textContent=category?category.label:cvCollection.label;
+ $('#cv-banner-sub').textContent=category?(category.desc||cvCollection.sub||''):cvCollection.sub||'';
+ if(typeof updateSeoRoute==='function')updateSeoRoute(category?'category':'collection',category||cvCollection);
+ renderCvFilter();cvApplyFilter();
+}
 function cvOpen(list,emptyMsg){cvBase=list||[];cvCat='all';cvEmpty=emptyMsg||'Ürün bulunmuyor.';renderCvFilter();cvApplyFilter();}
 function renderCvFilter(){
  var bar=$('#cv-filter');if(!bar)return;
- var cats=categories.filter(function(c){return cvBase.some(function(p){return p.cat===c.id;});});
- if(cats.length<2){bar.hidden=true;bar.innerHTML='';return;}
+ var cats=categories.filter(function(c){return cvCollection&&(c.occ||[]).indexOf(String(cvCollection.id))>-1;});
  bar.hidden=false;bar.innerHTML='';
- [{id:'all',label:'Tümü'}].concat(cats.map(function(c){return{id:c.id,label:c.label};})).forEach(function(t){
-  var b=el('button',t.id===cvCat?'active':'',t.label);b.type='button';b.setAttribute('aria-pressed',t.id===cvCat?'true':'false');b.onclick=function(){cvCat=t.id;renderCvFilter();cvApplyFilter();$('#collview').scrollTop=Math.min($('#collview').scrollTop,$('#cv-filter').offsetTop-20);};bar.appendChild(b);
+ [{id:'index',label:'Kategoriler'},{id:'all',label:'Tümünü Gör'}].concat(cats.map(function(c){return{id:c.id,label:c.label,category:c};})).forEach(function(t){
+  var b=el('button',t.id===cvCat?'active':'',t.label);b.type='button';b.setAttribute('aria-pressed',t.id===cvCat?'true':'false');b.onclick=function(){if(t.id==='index'){cvOpenCollection(cvCollection,cvBase,'');setCollectionRoute(cvCollection,null);}else cvShowCategory(t.category||null);};bar.appendChild(b);
  });
 }
 function cvApplyFilter(){var list=cvCat==='all'?cvBase:cvBase.filter(function(p){return p.cat===cvCat;});cvSetList(list,cvEmpty);}
@@ -320,7 +353,7 @@ function cvRenderMore(){
  if(more)$('#cv-more').innerHTML='Daha Fazla Ürün ('+cvShown+'/'+cvList.length+') '+ICON.arr;
 }
 function openCollview(opener){$('#collview').classList.add('open');document.body.style.overflow='hidden';$('#collview').scrollTop=0;window.scrollTo(0,0);activateFocusLayer($('#collview'),closeCollection,opener);}
-function closeCollection(){$('#collview').classList.remove('open');deactivateFocusLayer($('#collview'));document.body.style.overflow='';}
+function closeCollection(){$('#collview').classList.remove('open');deactivateFocusLayer($('#collview'));document.body.style.overflow='';cvCollection=null;if(history.replaceState)history.replaceState(null,'',location.pathname);if(typeof updateSeoRoute==='function')updateSeoRoute('home');}
 function openAllProducts(event){
  var list=visibleProducts();
  var cat=(activeFilter!=='all'&&activeFilter!=='featured')?categories.filter(function(c){return c.id===activeFilter;})[0]:null;

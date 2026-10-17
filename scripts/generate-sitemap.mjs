@@ -19,16 +19,18 @@ async function loadConfig() {
 
 let productSlugs = [];
 let categorySlugs = [];
+let collectionSlugs = [];
 try {
   const config = await loadConfig();
-  [productSlugs, categorySlugs] = await Promise.all([
+  [productSlugs, categorySlugs, collectionSlugs] = await Promise.all([
     fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'products' }),
-    fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'categories' })
+    fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'categories' }),
+    fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'collections' })
   ]);
 } catch (error) {
   console.warn('[sitemap] Public catalog could not be fetched; writing homepage-only sitemap:', error.message);
 }
 
-const urls = buildSitemapUrls(productSlugs, categorySlugs);
+const urls = buildSitemapUrls(productSlugs, categorySlugs, collectionSlugs);
 await writeFile(outputPath, buildSitemapXml(urls), 'utf8');
-console.log('[sitemap] Wrote ' + urls.length + ' public URLs (' + productSlugs.length + ' products, ' + categorySlugs.length + ' categories).');
+console.log('[sitemap] Wrote ' + urls.length + ' public URLs (' + productSlugs.length + ' products, ' + categorySlugs.length + ' categories, ' + collectionSlugs.length + ' collections).');

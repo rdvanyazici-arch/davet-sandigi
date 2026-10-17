@@ -3,19 +3,20 @@ import { expect, test } from '@playwright/test';
 function installFakeSupabase() {
   const db = {
     categories: [{ id: 1, name: 'Kullanımdaki Kategori', slug: 'kullanilan', code_prefix: 'KUL', description: 'Açıklama', sort_order: 1, is_active: true, archived_at: null }],
-    collections: [],
+    collections: [{ id: 1, name: 'Nişan', slug: 'nisan', short_description: 'Nişan tasarımları', cover_media_id: 1, sort_order: 1, is_active: true, archived_at: null }],
     media_assets: [{ id: 1, storage_path: 'collections/test/cover.webp', original_name: 'cover.webp', alt_text: 'Koleksiyon kapağı', usage_type: 'collection', status: 'active', archived_at: null, created_at: new Date().toISOString() }],
     products: [{ id: 1, category_id: 1, name: 'Bağlı Ürün', slug: 'bagli-urun', sku: 'BAG-001', price: 10, min_quantity: 1, quantity_step: 1, is_active: false, archived_at: null, sort_order: 1, updated_at: new Date().toISOString() }],
-    product_collections: [], product_images: [], product_drafts: [],
+    product_collections: [], category_collections: [], product_images: [], product_drafts: [],
     site_settings: [{ id: 1, brand_name: 'Davet Sandığı', whatsapp_number: '905399999999', instagram_url: 'https://www.instagram.com/davetsandigi', phone: '+90 539 999 99 99', email: 'info@example.com', delivery_text: 'Türkiye geneli teslimat', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo görüşmede netleşir.', is_maintenance_mode: false }]
   };
-  const sequences = { categories: 2, collections: 1 };
+  const sequences = { categories: 2, collections: 2 };
   const session = { user: { id: '7590fe38-46b1-47dd-bd17-b83a0212e87c' }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
 
   class Query {
     constructor(table) { this.table = table; this.action = 'select'; this.filters = []; this.payload = null; }
     select() { return this; }
     insert(payload) { this.action = 'insert'; this.payload = payload; return this; }
+    delete() { this.action = 'delete'; return this; }
     update(payload) { this.action = 'update'; this.payload = payload; return this; }
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
@@ -26,11 +27,12 @@ function installFakeSupabase() {
     async execute(single) {
       if (this.table === 'admin_profiles') return { data: { user_id: session.user.id, display_name: 'Test Owner', role: 'owner', is_active: true }, error: null };
       let rows = db[this.table] || [];
-      if (this.action === 'insert') {
-        const value = { ...this.payload, id: this.payload.id || sequences[this.table]++ };
+      if (this.action === 'insert') (Array.isArray(this.payload) ? this.payload : [this.payload]).forEach(payload => {
+        const value = { ...payload, id: payload.id || (sequences[this.table] ? sequences[this.table]++ : undefined) };
         rows.push(value);
-      }
+      });
       if (this.action === 'update') rows.filter(row => this.filters.every(filter => filter(row))).forEach(row => Object.assign(row, this.payload));
+      if (this.action === 'delete') db[this.table] = rows = rows.filter(row => !this.filters.every(filter => filter(row)));
       const result = rows.filter(row => this.filters.every(filter => filter(row)));
       return { data: single ? (result[0] || null) : result, error: null };
     }
@@ -67,6 +69,7 @@ test('kategori ekler, bağlı ürün sayısını gösterir ve arşivler', async 
   await page.fill('#category-name', 'Çiçekli Hediyeler');
   await expect(page.locator('#category-slug')).toHaveValue('cicekli-hediyeler');
   await page.fill('#category-prefix', 'CHK');
+  await page.check('.category-collection');
   await page.click('#category-preview');
   await page.click('[data-taxonomy-approve]');
   await page.click('#category-save');

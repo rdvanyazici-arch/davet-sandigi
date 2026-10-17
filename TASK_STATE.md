@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 15 taslakları, yönetim/public akışı ve yasal yayın için veritabanı koruması yerelde ve uzak Supabase'te hazırlandı. Faz 14 Production onay kapısı beklemede; Production deploy ve main merge yapılmadı.
-- Aktif faz: Faz 15 — yasal taslaklar hazır, hukuk danışmanı ve işletme teyidi/yayın onayı bekleniyor.
-- Beklenen: Hukuk danışmanı metinleri ve tamamlanacak alanları onaylasın; taslaklar content_sections içinde pasif kalacak. Faz 14 Production için ayrıca Production env değerlerinin eklenmesi ve kullanıcının açık “ONAYLIYORUM” mesajı gereklidir.
+- Güncel durum: Koleksiyon → kategori → ürün hiyerarşisi ve hukukçu onaylı sekiz yasal metin yerelde ve uzak Supabase'te hazır. Faz 14 Production onay kapısı beklemede; Production deploy ve main merge yapılmadı.
+- Aktif faz: Faz 15 tamamlandı; katalog hiyerarşisi ek geliştirmesi tamamlandı.
+- Beklenen: Gerçek ürün/fiyat/görseller yönetim panelinden girilecek. Faz 14 Production için Production env değerlerinin eklenmesi ve kullanıcının açık “ONAYLIYORUM” mesajı gereklidir.
 
 ### Faz 0–15 durumları
 
@@ -18,12 +18,12 @@
 - Faz 7 — Yönetim paneli ürün ve içerik modülleri: **tamamlandı (7a, 7b, 7c; migration'lar uzakta, kod GitHub branch'inde)**
 - Faz 8 — Public showroom'un Supabase'e bağlanması: **tamamlandı**
 - Faz 9 — Sepet ve WhatsApp akışı: **tamamlandı**
-- Faz 10 — İçerik ve marka tutarlılığı: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
-- Faz 11 — SEO, hız ve erişilebilirlik: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
+- Faz 10 — İçerik ve marka tutarlılığı: **tamamlandı**
+- Faz 11 — SEO, hız ve erişilebilirlik: **tamamlandı**
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **yerelde tamamlandı — örnek içerikler kullanıcı kararıyla aktarılmadı; runtime temizlendi**
-- Faz 13 — Test, güvenlik ve kabul: **yerelde tamamlandı — test raporu hazır, kullanıcı incelemesi bekleniyor**
+- Faz 13 — Test, güvenlik ve kabul: **tamamlandı**
 - Faz 14 — GitHub ve Vercel yayını: **feature branch push edildi, Preview READY; Production değişkenleri/onayı bekleniyor; main merge ve production deploy yapılmadı**
-- Faz 15 — Yasal metinler ve son yayın kontrolü: **taslaklar, content_sections akışı ve uzak DB yayın koruması hazır — hukukçu onayı ve gerçek koşullar teyidi bekliyor; canlı yayın açık**
+- Faz 15 — Yasal metinler ve son yayın kontrolü: **tamamlandı — hukukçu onayı kullanıcı tarafından bildirildi, sekiz metin uzak Supabase'te aktif**
 
 ## Tamamlanan fazlar
 
@@ -53,6 +53,9 @@
 - 2026-10-17 — Faz 15 kontrolleri: admin yasal content_sections draft/approval gate, public modal onay gate, sekiz footer link, odak iadesi ve 390 px modal/editor taşma kontrolleri Chromium/WebKit/Firefox'ta geçti; tam Playwright paketleri her motorda **38/38**, Node auth/SEO birim testleri **13/13**. Public DOM testinde hukuk danışmanı marker'ı, `[TAMAMLANACAK]`, “örnek” veya “taslak” metni görünmüyor. Son yayın kontrol listesi `docs/test-report.md` içinde yeniden işaretlendi; hukukçu onaylı metin/gerçek işletme verisi/Production eksikleri nedeniyle ilgili kabul kalemleri AÇIK bırakıldı. Production, Supabase kalıcı veri değişikliği, commit ve push yapılmadı.
 - 2026-10-17 — Faz 15 bağımsız denetiminde mevcut `content_sections_key_check` constraint'inin sekiz `legal_*` anahtarını reddettiği bulundu. `20261017091000_phase_15_legal_content.sql` migration'ı anahtarları ekledi ve taslak/placeholder içeren veya hukukçu onayı işaretlenmemiş yasal metnin DB seviyesinde aktif edilmesini engelledi. Yerel legal pgTAP **8/8**, mevcut sayfa içerik pgTAP **20/20**, Node auth/SEO **13/13** ve DB lint geçti. Uzak dry-run yalnız bu migration'ın beklediğini doğruladı; migration uzak Supabase'e gönderilmedi.
 - 2026-10-17 — Kullanıcı onayıyla Faz 15 migration'ı bağlı `Davet Sandığı` projesine (`zdksvgtkeeweufuajugd`) uygulandı. Yerel/uzak migration geçmişindeki 11 sürüm eşleşiyor; linked DB lint temiz. Salt-okunur uzak sorgu sekiz `legal_*` anahtarının ve `content_sections_legal_publication_check` constraint'inin etkin olduğunu doğruladı. Veri eklenmedi, yasal taslak yayımlanmadı ve Production deploy yapılmadı.
+- 2026-10-17 — Kullanıcı hukukçu onayını bildirdi. Sekiz yasal metin onaylı/aktif `content_sections` kayıtları olarak uzak Supabase'e uygulandı; public doğrulamada 8/8 metin `legal_review_approved=true` döndü. Metinler yönetim panelinden düzenlenebilir; Production deploy yapılmadı.
+- 2026-10-17 — Koleksiyon → kategori → ürün hiyerarşisi tamamlandı. `category_collections` RLS tablosu, yönetim panelinde çoklu koleksiyon bağlantısı, public koleksiyon/kategori sayfaları, “Tümünü Gör” akışı ve SEO/sitemap rotaları eklendi. Nişan, Kına, Baby Shower ve Düğün koleksiyonları ile Nişan'a bağlı Kolonya Tasarımları kategorisi uzak Supabase'te oluşturuldu.
+- 2026-10-17 — Advisor'daki `site_settings_public` security-definer görünüm bulgusu `security_invoker=true` ve sütun bazlı erişimle giderildi. Auth leaked-password protection ayarı Production öncesi dashboard'da yeniden kontrol edilecek.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -65,12 +68,11 @@
 - Supabase bölgesi `ap-southeast-2` — Oceania (Sydney) olarak doğrulandı.
 - Mevcut 20 ürün, 7 kategori, 4 koleksiyon, fiyatlar, adet kuralları, 33 görsel, 6 yorum, 5 SSS, iletişim bilgileri ve pazarlama iddiaları örnektir; Supabase'e gerçek içerik olarak taşınmayacaktır.
 - Gerçek ürünler, kategoriler, koleksiyonlar, fiyatlar, adet kuralları ve görseller canlıya alınmadan önce yönetim panelinden girilecektir.
-- Baby Shower şu anda sunulmamaktadır; ileride yönetim panelinden kategori/koleksiyon olarak eklenebilir.
+- Baby Shower, Nişan, Kına ve Düğün ayrı koleksiyonlar olarak oluşturuldu; gerçek kategori ve ürünler yönetim panelinden bağlanacaktır.
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
-- Faz 15 yasal taslaklarının tamamı “Hukuk danışmanı onayı bekliyor” durumunda; `content_sections` kayıtları hukukçu son metni onaylamadan aktif edilmeyecek. Adresin resmi yazımı/no-daire biçimi, vergi kaydı, iade/ayıp iş akışı ve sürelerin takvim/iş günü niteliği ayrıca doğrulanmalı.
-- Faz 15 migration'ı uzak Supabase'e uygulandı; yönetim paneli artık sekiz `legal_*` taslağını kaydedebilir. Hukukçu onayı ve gerçek koşullar teyit edilmeden kayıtlar aktif edilmeyecek.
+- Faz 15 yasal metinleri için hukukçu onayı kullanıcı tarafından bildirildi; sekiz `legal_*` kayıt uzak Supabase'te aktif ve yönetim panelinden düzenlenebilir.
 - Vercel Production ortamında SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY yok; kullanıcı değerleri ekleyip doğrulatana ve açık “ONAYLIYORUM” yazana kadar Production deployment yapılmayacak.
 - Production yayını gerçekleştiği gün kaydedilecek; o tarihten 30 gün sonra “Firebase kapatma kararı” kullanıcıyla tekrar gözden geçirilecek. Production henüz yayınlanmadığından takvim tarihi şu an belirlenmemiştir.
 - Supabase CLI tarayıcı girişi ve `zdksvgtkeeweufuajugd` proje bağlantısı tamamlandı.
@@ -108,12 +110,12 @@
 - `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
 - Faz 10 grep'inde public runtime için demo/lorem/örnek/sample kalmadı. Envanterdeki onaysız telefon/e-posta/Instagram, müşteri adları ve iddia ifadeleri `catalog.js`/`site.js` içindeki suppression guard listelerinde literal olarak duruyor; sayfaya render edilmezler. Eski admin localStorage render/import/export kodu Faz 12'de kaldırıldı.
 - `tests/e2e/product-admin.spec.mjs` ürün pagination testi Faz 13'te düzeltildi: eksik `product-pagination` ID'si pagination container'ına eklendi; Chromium/WebKit/Firefox'ta geçti.
-- Uzak güvenlik advisor'ü iki bulgu veriyor: `site_settings_public` görünümü için `security_definer_view` (Faz 4'te bilinçli tasarlanmış, yalnızca güvenli sütunları açan `security_barrier` görünümü) ve `auth_leaked_password_protection` (Auth ayarı). İkisi de 7b/7c'den kaynaklanmıyor; bu adımda değiştirilmedi.
+- Önceki iki orta Advisor bulgusundan `site_settings_public` security-definer görünüm bulgusu giderildi. Kalan `auth_leaked_password_protection` Auth ayarı Production öncesi dashboard'da yeniden değerlendirilecek.
 - Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
 
 - Production'daki canlı sürüm henüz Faz 8 commit/deploy'u almadı ve eski Firebase tabanlı kaynağı kullanmaya devam ediyor; yerel Faz 8 kodu ise public içeriği Supabase'ten okuyor (Preview/Production yayını Faz 14'te).
 - `index.html` 6.321.661 bayttan 23.769 bayta düşürüldü; görseller artık ayrı dosyalardan yükleniyor.
-- Canlı yasal metinler taslak durumunda.
+- Yasal metinler uzak Supabase'te onaylı/aktif; Production deploy henüz yapılmadı.
 - Mevcut müşteri yorumları ve sayısal pazarlama iddiaları örnektir; yeni sisteme taşınmamalıdır.
 - Canlı site hâlen örnek ürünler, görseller, fiyatlar, yorumlar ve iddialar gösteriyor; gerçek içerik girilmeden nihai production yayını yapılmamalı.
 - Eski demo parola güncel koddan kaldırıldı ancak Git geçmişinde `81a3f8c` ve `5fc1878` commit'lerinde bulunuyor; gerçek bir hesapta kullanıldıysa veya başka yerde tekrarlandıysa değiştirilmelidir.
@@ -143,6 +145,9 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-17 — Koleksiyon hiyerarşisi pgTAP **9/9**, yasal yayın pgTAP **8/8**, genel RLS pgTAP **28/28**, SEO birim testleri **4/4**: başarılı. Yerel ve uzak DB lint temiz; 13 migration sürümü yerel/uzak eşleşiyor.
+- 2026-10-17 — Public katalog + yönetim kategori/koleksiyon Playwright paketi **27/27** geçti. Koleksiyon kartı → bağlı kategoriler → kategori ürünleri ve “Tümünü Gör” akışı, klavye kullanımı dahil doğrulandı.
+- 2026-10-17 — Uzak public doğrulama: 4 koleksiyon (`nisan`, `kina`, `baby-shower`, `dugun`), 1 başlangıç kategorisi (`kolonya-tasarimlari`), 1 kategori-koleksiyon bağı ve 8 onaylı yasal metin: başarılı. Sitemap **6 URL** üretti.
 - 2026-10-17 — Faz 11 Lighthouse (yerel, headless; mobil 412×823 / masaüstü 1350×940): önce/sonra mobil Performance 85→97, Accessibility 94→100, Best Practices 96→100, SEO 91→100; masaüstü Performance 96→96, Accessibility 94→100, Best Practices 96→100, SEO 91→100. Son ölçümde kontrast, heading-order, meta-description, canonical ve image-alt denetimleri geçti. Ayrıntı ve laboratuvar metrikleri `docs/performance.md` içinde.
 - 2026-10-17 — Faz 11 `npm run build`: başarılı; read-only Supabase slug sorguları 0 aktif ürün ve 0 aktif kategori döndürdü, bu nedenle sitemap yalnız canonical ana sayfayı içeriyor. Hata durumunda warning + ana sayfa-only fallback davranışı SEO birim testleriyle doğrulandı. Production deploy veya Supabase yazma işlemi yapılmadı.
 - 2026-10-17 — `node --test tests/seo.test.mjs tests/admin-auth.test.mjs`: **11/11 başarılı**; `tests/e2e/public-site.spec.mjs`: ilk doğrulamada **21/21**, kapalı sepet düzeltmesinden sonra **22/22 başarılı** (SEO, sitemap kaynakları, canonical/Product JSON-LD, CSP, responsive görseller, mobil taşma ve klavye/modal odağı dahil).
@@ -285,5 +290,7 @@
 
 ## Sonraki adım
 
-- Faz 15 değişikliklerini feature branch'te commit et. Uzak Supabase migration'ı, hukukçu/işletme teyidi, gerçek katalog ve Vercel Production env tamamlanmadan production yayını yapma.
-- Production öncesi kayıtlı iki orta Advisor bulgusunu yeniden değerlendir: `site_settings_public` security-definer görünümü ve Auth leaked-password protection.
+- Değişiklikleri `refactor/faz-2-yapi` branch'inde commit/push et; Vercel Preview sonucunu doğrula.
+- Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
+- Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
+- Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

@@ -12,6 +12,15 @@
 - Auth/SEO birim testleri **13/13**.
 - Preview deployment **Ready**; public ve admin sayfaları `200`, güvenlik başlıkları mevcut.
 
+## 17 Ekim 2026 — Faz 15 ve katalog hiyerarşisi güncellemesi
+
+- Kullanıcı hukukçu onayını bildirdi; sekiz yasal metin onaylı ve aktif olarak uzak Supabase'e uygulandı.
+- Nişan, Kına, Baby Shower ve Düğün koleksiyonları; koleksiyon-kategori bağlantı tablosu ve Nişan'a bağlı Kolonya Tasarımları kategorisi uzak Supabase'e uygulandı.
+- Public akış koleksiyon → kategori → ürün ve “Tümünü Gör” rotalarını destekliyor. Yönetim paneli bir kategoriyi bir veya daha fazla koleksiyona bağlayabiliyor.
+- Ek pgTAP sonuçları: hiyerarşi **9/9**, yasal içerik **8/8**, genel RLS **28/28**. Public katalog + taxonomy Playwright paketi **27/27** geçti. Sitemap 4 koleksiyon + 1 kategori + ana sayfa olmak üzere **6 URL** üretti.
+- Önceki Advisor `security_definer_view` bulgusu görünümün `security_invoker=true` çalışması ve sütun bazlı public grant ile giderildi. Kalan orta bulgu Auth leaked-password protection ayarıdır.
+- Production deploy ve main merge yapılmadı; aşağıdaki Faz 13/Faz 15 tarihsel sonuçlarında aksi belirtilen eski bekleme notları bu güncelleme ile aşılmıştır.
+
 ## Roadmap Faz 13 kontrol listesi
 
 | Kontrol | Sonuç | Kanıt / kapsam |
@@ -26,7 +35,7 @@
 | Boş/yükleniyor/hata durumları | **GEÇTİ** | Boş public katalog, boş Supabase admin paneli, yükleniyor, katalog/SSS içerik hataları ve yeniden deneme akışları test edildi. Boş admin paneli her motor ve konsol/sayfa hatasız açıldı. |
 | Türkçe karakterler | **GEÇTİ** | Ürün adı “Çiçekli Şişe & Özel Ürün” için `cicekli-sise-ozel-urun` slug'ı; ürün/kategori metinleri ve Türkçe içerik E2E ile üç motor test edildi. |
 | Kırık dahili bağlantı ve eksik görsel taraması | **GEÇTİ (dahili kapsam)** | Fragment hedefleri ve aynı-origin href'ler kontrol edildi; sayfada yüklenen her görselin `decode()`, `complete` ve `naturalWidth` durumu kontrol edildi. Supabase Storage yanıtları tarayıcı testlerinde geçerli PNG fixture ile taklit edildi; uzak tabloda aktif ürün/görsel olmadığı için gerçek kullanıcı görsellerinin dosya mevcudiyeti bu testle ölçülemedi. Dinamik dış hedeflerin canlı erişilebilirliği doğrulanmadı. |
-| Supabase security/performance advisor | **GEÇTİ (bulgular var)** | Linked advisor salt-okunur çalıştı; 22 bulgu: 1 ERROR (`security_definer_view`), 11 WARN, 10 INFO. Ayrıntı aşağıda. Hiçbir DB değişikliği yapılmadı. |
+| Supabase security/performance advisor | **GEÇTİ (1 orta Auth ayarı kaldı)** | `security_definer_view` migration ile giderildi. Leaked-password protection Production öncesi dashboard'da yeniden değerlendirilecek. |
 | Vercel Preview kabulü | **GEÇTİ** | Final Preview: https://davet-sandigi-13nhmc9ae-rdvanyazici.vercel.app — `target=preview`, `READY`. `/index.html` ve `/admin.html` HEAD `200`; CSP, Referrer-Policy, `X-Content-Type-Options`, `X-Frame-Options` mevcut. Vercel Preview `X-Robots-Tag: noindex` (beklenen); admin HTML ayrıca `noindex,nofollow,noarchive`. Production deploy yapılmadı. |
 
 ## Sayfalama testi kök nedeni ve düzeltme
@@ -63,7 +72,7 @@ Tüm çağrılar yalnızca yoksayılan yerel runtime yapılandırmasındaki `sb_
 
 | Seviye | Bulgu | Etki değerlendirmesi / işlem |
 |---|---|---|
-| **Orta** (advisor ERROR) | `public.site_settings_public` `security_definer_view` | Bu görünüm yalnızca `id=1` için tanımlı public ayar kolonlarını projekte eder; `anon` base `site_settings` tablosuna erişemez (PostgREST `401`), `security_barrier=true`. Public projection tasarımı kasıtlıdır. RLS/grant mimarisini değiştirecek migration bu test fazında uygulanmadı. |
+| **Giderildi** | `public.site_settings_public` `security_definer_view` | `20261017092518_add_collection_category_hierarchy.sql` ile görünüm `security_invoker=true` yapıldı; yalnız public sütunlara SELECT grant ve `id=1` RLS politikası eklendi. Yerel/uzak DB lint temiz. |
 | **Orta** (advisor WARN) | Leaked password protection kapalı | Supabase Auth konfigürasyon uyarısı. Kimlik doğrulama sağlayıcısı ayarıdır; uzaktan değiştirilmedi. Owner tarafından dashboard'da değerlendirilmesi önerilir. |
 | **Düşük** (10 advisor WARN) | `authenticated` için public+admin SELECT politikalarının örtüşmesi (10 içerik tablosu) | İki ayrı politika public aktif satırlar ve admin taslak/arşiv okumasını sağlıyor; yetki testleri beklenen sonuç verdi. Advisor performans uyarısı; politika konsolidasyonu gerektirecek şema değişikliği yapılmadı. |
 | **Düşük** (10 advisor INFO) | Kullanılmayan indeksler | Boş/çok az kullanılmış veritabanında advisor sayaçlarıdır; indeksler güvenlik riski değil. İndeks silinmedi. |
@@ -120,7 +129,7 @@ Docker kurulu. Bu oturumda Docker üzerinden **yerel Supabase servisleri başlat
 | Yönetim paneli genel navigasyonda görünmüyor | **GEÇTİ** | Public navigasyon/E2E kontrolleri. |
 | Yalnızca yönetici içerik yazabiliyor | **GEÇTİ** | RLS pgTAP ve anon PostgREST yazma testleri. |
 | Public kullanıcı Supabase'e yazamıyor/silemiyor | **GEÇTİ** | Anon POST/PATCH/DELETE `401`; RLS pgTAP **28/28**. |
-| Tüm ürün/kategori/koleksiyonlar doğru | **BEKLEMEDE** | Kullanıcı kararı gereği örnek kayıtlar taşınmadı; Supabase katalog boş. Gerçek katalog panelden girilecek. |
+| Tüm ürün/kategori/koleksiyonlar doğru | **İSKELET GEÇTİ / GERÇEK ÜRÜN BEKLEMEDE** | Nişan, Kına, Baby Shower ve Düğün koleksiyonları ile Nişan'a bağlı Kolonya Tasarımları kategorisi oluşturuldu. Gerçek ürünler panelden girilecek. |
 | Tüm fiyat/adet kuralları doğru | **KOD GEÇTİ / GERÇEK İÇERİK BEKLEMEDE** | Kurallar test fixture'larında doğru; yayındaki gerçek ürün/fiyat mevcut değil. |
 | Tüm görseller yönetim panelinde önizlenebiliyor | **TEST AKIŞI GEÇTİ / GERÇEK MEDYA BEKLEMEDE** | Storage politika/UI testleri geçti; gerçek medya yüklenmedi. |
 | Kullanımdaki görsel yanlışlıkla silinemiyor | **GEÇTİ** | Storage RLS/policy testleri ve UI arşiv→iki onaylı silme senaryosu. Canlı dosya silinmedi. |
@@ -129,7 +138,7 @@ Docker kurulu. Bu oturumda Docker üzerinden **yerel Supabase servisleri başlat
 | Sepet mobil/masaüstünde çalışıyor | **AKIŞ GEÇTİ / GERÇEK KATALOG BEKLEMEDE** | Chromium/WebKit/Firefox testleri geçti; Supabase gerçek kataloğu boş olduğu için canlı ürünle Preview sepet kontrolü yapılamadı. |
 | Site ödeme alıyormuş gibi görünmüyor | **GEÇTİ** | Sipariş talebi dilini doğrulayan E2E. |
 | Gerçek olmayan yorum/istatistik bulunmuyor | **GEÇTİ** | İçerik boş durumları ve onaysız legacy içerik bastırma testleri. |
-| Taslak yasal metin bulunmuyor | **GEÇTİ** | Public legal modal taslak yerine henüz yayımlanmadı bilgisi gösteriyor. |
+| Taslak yasal metin bulunmuyor | **GEÇTİ** | Sekiz metin kullanıcı tarafından bildirilen hukukçu onayıyla `lawyer_approved` ve aktif; public doğrulama 8/8. |
 | SEO temel dosyaları mevcut | **GEÇTİ** | `robots.txt`, `sitemap.xml`, canonical, metadata ve JSON-LD E2E. |
 | Mobil taşma/kırık düzen bulunmuyor | **GEÇTİ** | 390 px E2E; Chromium/WebKit/Firefox. |
 | Konsol/ağ hatası bulunmuyor | **GEÇTİ (TEST ORTAMI)** | Boş içerik ve ana public/admin fixture testlerinde console/page errors yok; tam browser E2E geçti. |
@@ -143,15 +152,15 @@ Preview deployment: https://davet-sandigi-70r13w9sl-rdvanyazici.vercel.app (`REA
 
 Production Vercel environment değişkenleri şu anda **boş**. Doğru Supabase URL ve yalnız publishable key'in Production scope'una eklenmesi, canlı deployment ve canlı veriye karşı kabul testleri için kullanıcı onayı gereklidir. Bu rapor **Production yayınına onay değildir**. `ONAYLIYORUM` gelmeden Production env değişikliği/deploy yapılmayacak. Main merge ve Phase 15 de bu çalışmada yapılmadı.
 
-## Faz 15 — Hukuk danışmanı taslakları ve yeniden son kontrol
+## Faz 15 — Hukuk danışmanı metinleri ve yeniden son kontrol
 
-Bu fazda yalnızca hukuk danışmanının incelemesine sunulacak taslaklar ve panel/public görüntüleme akışı hazırlandı. Bu rapor veya taslak dosya **hukuki danışmanlık değildir**.
+İlk hazırlıkta taslaklar ve panel/public görüntüleme akışı oluşturuldu. Kullanıcı daha sonra hukukçu onayını bildirdi; aşağıdaki tarihsel taslak adımları tamamlanarak onaylı metinler uzak Supabase'e uygulandı.
 
 - [docs/legal-drafts.md](legal-drafts.md) içinde sekiz metin hazırlandı: gizlilik, KVKK aydınlatma, çerez/yerel depolama, WhatsApp/Instagram veri aktarımı, sipariş talebi/satış süreci, iptal/iade/kişiye özel ürün, kargo/teslimat, müşteri görseli/yorum izni.
 - Her metin zorunlu “Hukuk danışmanı onayı bekliyor” notuyla başlar. Kullanıcının sağladığı bilgiler kullanıldı; resmi adres formatı, sürelerin iş/takvim günü olması, hukuki dayanaklar, başvuru süreci, hasarlı/ayıplı ürün çözümü gibi teyitsiz alanlar taslakta açıkça doldurulmaya bırakıldı. Özel üretim ürünlerde genel ve kesin “iade yok” feragati yazılmadı.
 - Panelde sekiz ayrı `content_sections` anahtarı yapılandırıldı. Yeni kayıtlar taslak/pasif kalır; yayın için hukuk danışmanı onay kutusu, önizleme, metinden taslak uyarısı ve `[TAMAMLANACAK]` yer tutucularının kaldırılması gerekir. Bu fazda metinler DB'ye eklenmedi/yayınlanmadı.
 - Public footer'da sekiz klavyeyle erişilebilir düğme bulunur. Modal yalnız `is_active=true` ve `legal_review_approved=true` içeriği gösterir; aksi durumda onaylanmamış metin yerine “Bu metin henüz onaylanıp yayımlanmamıştır.” gösterilir. Test, taslak marker'ının public DOM'a sızmadığını doğrular.
-- Hukuk danışmanı tarafından onaylanmış gerçek metin bulunmadığından Roadmap §17 “taslak yasal metin bulunmuyor” maddesi ve final legal/publication kabulü **AÇIK**. Production env değerleri de Vercel'de yok; Production yayın kapısı ayrıca beklemededir.
+- Hukukçu onayı kullanıcı tarafından bildirildi; sekiz metin `legal_review_approved=true`, `legal_status=lawyer_approved`, `is_active=true` olarak yayımlandı. Production env değerleri Vercel'de hâlâ yok; Production yayın kapısı ayrıca beklemededir.
 
 ### Roadmap §17 yeniden kontrolü (Phase 15 sonrası)
 
@@ -159,12 +168,12 @@ Bu fazda yalnızca hukuk danışmanının incelemesine sunulacak taslaklar ve pa
 |---|---|
 | Site müşteri girişi istemiyor; admin genel nav'da görünmüyor | **GEÇTİ** — önceki Faz 13 testleri tekrar kullanıldı; yeni feature bu davranışı değiştirmedi. |
 | Yalnız admin içerik yazıyor; anon yazma/silme yok | **GEÇTİ** — linked RLS pgTAP ve elle PostgREST denemeleri Faz 13 raporunda. Bu faz DB'ye yazmadı. |
-| Gerçek ürün/kategori/koleksiyon/fiyatlar | **AÇIK** — kullanıcı kararıyla örnekler aktarılmadı; gerçek katalog daha sonra yönetim panelinden doldurulacak. |
+| Gerçek ürün/kategori/koleksiyon/fiyatlar | **KISMEN TAMAM** — 4 koleksiyon ve başlangıç kategorisi hazır; gerçek ürün/fiyatlar yönetim panelinden doldurulacak. |
 | Tüm gerçek görseller önizleniyor ve kullanımda olanlar silinemiyor | **AÇIK (gerçek içerik)** — medya akışı/politikaları test edildi; gerçek medya henüz eklenmedi. |
 | Instagram doğru; WhatsApp numara/mesaj doğru | **AÇIK (işletme teyidi)** — uygulama akışı testli; yasal taslakta gerçek değerlerin ve iletişim sürecinin hukukçu/işletme teyidi bekleniyor. |
 | Sepet mobil/masaüstünde; ödeme izlenimi yok | **GEÇTİ (test fixture)** — Phase 13 üç motor testleri; site sipariş talebi dilini kullanıyor. Gerçek katalogla canlı kontrol içerik girildikten sonra tekrarlanmalı. |
 | Gerçek olmayan yorum/istatistik yok | **GEÇTİ (uygulama kontrolleri)** — eski örnekler bastırılıyor, aktif testler geçti. |
-| Hukukçu onaylı yasal metin var; taslak/example ifadesi yok | **AÇIK** — yalnız inceleme taslakları hazır. Onaylı metin olmadan `content_sections` yayınlanamaz. Public sayfa DOM testinde “örnek/taslak/onay bekliyor/TAMAMLANACAK” ifadeleri görünmüyor; bu, taslakların hazır olduğu anlamına gelmez. |
+| Hukukçu onaylı yasal metin var; taslak/example ifadesi yok | **GEÇTİ** — kullanıcı hukukçu onayını bildirdi; sekiz onaylı metin uzak Supabase'te aktif ve public okuma ile doğrulandı. |
 | SEO, mobil taşma, link/görsel, konsol/ağ ve Firebase kontrolü | **GEÇTİ (Preview öncesi test fixture)** — tam E2E Chromium/WebKit/Firefox **38/38'er**, link/görsel kontrolleri ve public DOM taslak-marker testi geçti. |
 | Kimlikler ve rollback yedeği | **GEÇTİ** — Git/Vercel/Supabase hedefleri Faz 14'te doğrulandı; rollback docs/Firebase backup korunuyor. |
 | Production canlı doğrulaması | **BEKLEMEDE / ONAY GEREKİR** — Production Supabase env boş, Production deploy yapılmadı; açık “ONAYLIYORUM” mesajı olmadan yapılmayacak. |
@@ -175,4 +184,4 @@ Faz 15 sonrası unit testler **13/13**, Playwright tam paketleri Chromium **38/3
 
 İlk uygulamada yönetim ve public tarayıcı testleri geçmesine rağmen uzak/yerel gerçek şemadaki `content_sections_key_check` yalnız Faz 7c anahtarlarını kabul ediyordu; sekiz `legal_*` kaydı gerçek Supabase'te reddedilecekti. `20261017091000_phase_15_legal_content.sql` ile anahtar listesi genişletildi. Aynı migration; yasal metin aktif edilirken başlık/metin, `legal_review_approved=true`, `legal_status=lawyer_approved` ve taslak yer tutucularının kaldırılmış olmasını DB seviyesinde zorunlu kılar.
 
-Yerel migration uygulandı. Yeni `legal_content_test.sql` **8/8**, mevcut `page_content_test.sql` **20/20**, auth/SEO Node testleri **13/13** ve yerel DB lint geçti. Uzak dry-run yalnız `20261017091000_phase_15_legal_content.sql` migration'ının beklediğini doğruladı. Bu Codex ortamındaki hedef Playwright tekrarında macOS Mach port izni tarayıcıyı başlatmadı; kod/test hatası oluşmadan önce durdu. VS Code'da daha önce alınan üç motor **38/38** sonucu geçerlidir. Migration uzak Supabase'e gönderilmedi.
+Yerel migration uygulandı. Yeni `legal_content_test.sql` **8/8**, mevcut `page_content_test.sql` **20/20**, auth/SEO Node testleri **13/13** ve yerel DB lint geçti. `20261017091000_phase_15_legal_content.sql` daha önce uzak Supabase'e uygulanmıştı. Onaylı metinleri yayımlayan `20261017092519_publish_approved_legal_content.sql` ve katalog hiyerarşisini ekleyen `20261017092518_add_collection_category_hierarchy.sql` da son kullanıcı talebiyle uzak projeye uygulandı; 13 migration sürümü yerel/uzak eşleşiyor ve linked DB lint temiz.

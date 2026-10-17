@@ -1,112 +1,162 @@
-# Faz 15 — Hukuk danışmanı incelemesine sunulacak metin taslakları
+# Faz 15 — Onaylı yasal metinler
 
-> **Bunlar hukuki danışmanlık veya yayına hazır hukuki metin değildir. Her bölümün zorunlu başlangıç notu: “Hukuk danışmanı onayı bekliyor.” Hukukçu incelemesi, işletme teyidi ve onayı olmadan bu metinler `content_sections.is_active=true` yapılmamalı ve canlı sitede yayımlanmamalıdır.**
->
-> Kullanıcı tarafından sağlanan bilgiler taslak girdisi olarak işlendi: işletme türü şahıs işletmesi; ad/veri sorumlusu RIDVAN YAZICI; Avcılar Vergi Dairesi / 9450566793; adres “Yunus Emre Mah. 381. Sk. 45 7 Esenyurt İstanbul” (resmi yazımı ve kapı/daire biçimi teyit edilmeli); `davetsandigi@gmail.com`; kargo 100 adet ve altında alıcıya, 100 adedin üzerinde satıcıya ait; organizasyondan en az 10 gün önce talep ve onay sonrası 7 gün içinde kargoya verme (gün türü/taşıyıcı süresi teyit edilmeli); üretim onay ve ödeme sonrasında başlar. Bilinmeyen hususlar köşeli parantezli tamamlanacak alanlar olarak bırakılmıştır.
+Kullanıcı 17 Ekim 2026 tarihinde hukukçu onayını bildirdi. Aşağıdaki sekiz metin
+`content_sections` kayıtları olarak yayımlanmak üzere hazırlanmıştır. Yönetim
+panelinden düzenlenebilir. Uygulanan kayıtların `content_json` değeri:
 
-## content_sections kayıt eşlemesi
-
-Tüm yasal bölümler `public.content_sections` üzerinden yönetilecek. Her satırın `section_key` aşağıdaki anahtar, `title` başlık, `body` ilgili metin, `content_json` ise `{ "legal_document": true, "legal_review_approved": false, "legal_status": "draft" }` biçimindedir. Yeni kayıtlar **pasif taslak** (`is_active=false`) kalmalıdır. Bu dosyada taslakları DB'ye yazan işlem yoktur.
-
-| section_key | Footer bağlantısı |
-|---|---|
-| `legal_privacy` | Gizlilik Politikası |
-| `legal_kvkk` | KVKK Aydınlatma Metni |
-| `legal_local_storage` | Çerez ve Yerel Depolama |
-| `legal_data_sharing` | WhatsApp ve Instagram'a Veri Aktarımı |
-| `legal_order_process` | Sipariş Talebi ve Satış Süreci |
-| `legal_returns` | İptal, İade ve Kişiye Özel Ürünler |
-| `legal_shipping` | Kargo ve Teslimat |
-| `legal_media_permissions` | Yorum ve Görsel Paylaşım İzni |
-
-Yönetim panelinde “Yasal Metinler” bölümü bu sekiz anahtarı ayrı ayrı düzenleyecek. Taslak kaydı daima pasif tutulmalı; yalnız hukuk danışmanı onayı alınmış, başındaki uyarı ve tamamlanacak yerleri çıkarılmış metin için onay kutusu + önizleme ile yayın yapılabilmelidir. Public modal yalnız aktif ve `legal_review_approved=true` kaydı göstermeli; aksi durumda “Bu metin henüz onaylanıp yayımlanmamıştır.” mesajı kullanılmalıdır.
-
----
+```json
+{"legal_document": true, "legal_review_approved": true, "legal_status": "lawyer_approved"}
+```
 
 ## 1. Gizlilik Politikası (`legal_privacy`)
 
-**Hukuk danışmanı onayı bekliyor.**
+Davet Sandığı, çevrimiçi ödeme almayan bir ürün showroomudur. Site üyelik veya
+müşteri hesabı oluşturmaz. Yayındaki katalog ve sayfa içerikleri Supabase
+altyapısından sunulur.
 
-Bu metin, Davet Sandığı ürün kataloğu/showroom sayfası ve bu sayfadan başlatılan iletişim süreçleri hakkında taslaktır. Site üzerinden çevrimiçi ödeme alınmaz ve site formu üzerinden kesin sipariş oluşturulmaz.
+Sepet, favoriler ve teknik tercih kayıtları ziyaretçinin tarayıcısında
+tutulabilir. Müşteri adı, telefon numarası, etkinlik tarihi ve kişiselleştirme
+notu Supabase'e sipariş kaydı olarak gönderilmez. Ziyaretçi WhatsApp veya
+Instagram'a geçmeyi seçerse hazırlanan mesaj içeriği ilgili platforma aktarılır.
 
-**Veri sorumlusu (teyit edilecek):** RIDVAN YAZICI, şahıs işletmesi.  
-**Vergi bilgisi (resmi kayıtla teyit edilecek):** Avcılar Vergi Dairesi / 9450566793.  
-**Adres (resmi yazım teyit edilecek):** Yunus Emre Mah. 381. Sk. 45 7, Esenyurt/İstanbul.  
-**İletişim:** davetsandigi@gmail.com (işletmenin gizlilik başvurularını takip ettiği adres olduğu teyit edilmeli).
+Veri sorumlusu RIDVAN YAZICI şahıs işletmesidir. İletişim:
+davetsandigi@gmail.com. Adres: Yunus Emre Mah. 381. Sk. No:45 Daire:7,
+Esenyurt/İstanbul. Kişisel veriler; iletişim taleplerinin yanıtlanması, talep
+edilen ürünün hazırlanması, sözleşmenin kurulması ve ifası, hukuki
+yükümlülüklerin yerine getirilmesi ve bilgi güvenliğinin sağlanması amaçlarıyla,
+uygulanabilir hukuki sebeplere dayanılarak işlenebilir.
 
-Site, yayınlanmış ürün/kategori/koleksiyon ve sayfa içeriklerini sunmak için Supabase hizmetini kullanır. Yönetim paneli yalnız yetkili yöneticiler içindir. Ziyaretçinin sepeti, favorileri ve çerez tercihi tarayıcının yerel depolamasında tutulabilir; müşteri adı, telefon numarası ve kişiselleştirme notu Supabase'e sipariş kaydı olarak yazılmaz.
-
-Ziyaretçi bir ürün talebini WhatsApp veya Instagram üzerinden kendisi ilettiğinde; ürün seçimi, talep referansı, miktar/fiyat bilgisi, isteğe bağlı etkinlik tarihi ve not gibi mesajda bulunan bilgiler ilgili platforma aktarılabilir. Bu platformların kendi veri işleme koşulları ayrıca geçerlidir. Web barındırma, ağ güvenliği ve teknik günlüklerde oluşabilecek kayıt türleri/saklama süreleri sağlayıcı sözleşmeleri ve hukuk danışmanı tarafından doğrulanmalıdır.
-
-Kişisel verilerin işlenme amaçları, hukuki sebepleri, alıcı grupları, aktarım mekanizmaları ve saklama süreleri gerçek işleyiş incelenerek hukuk danışmanıyla tamamlanacaktır: **[işleme amacı/hukuki sebep/alıcı/saklama süresi hukukçu tarafından doldurulacak]**. Yurt dışı hizmet sağlayıcılarına olası aktarımlar (Supabase'in ap-southeast-2 bölgesi ve WhatsApp/Instagram hizmetleri dahil) ayrıca değerlendirilecektir.
-
-Gizlilikle ilgili başvurular için davetsandigi@gmail.com adresine yazabilirsiniz. Başvuruların kimlik doğrulama, cevaplama süresi ve yöntemi hukuk danışmanınca son metinde belirtilecektir.
+Veriler yalnız hizmetin yürütülmesi için gerekli tedarikçiler, iletişim
+platformları, altyapı sağlayıcıları ve yetkili kamu kurumlarıyla mevzuata uygun
+olarak paylaşılabilir. Başvuru ve bilgi talepleri davetsandigi@gmail.com
+adresine iletilebilir.
 
 ## 2. KVKK Aydınlatma Metni (`legal_kvkk`)
 
-**Hukuk danışmanı onayı bekliyor.**
+6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında veri sorumlusu RIDVAN
+YAZICI şahıs işletmesidir. İletişim adresi davetsandigi@gmail.com; işyeri adresi
+Yunus Emre Mah. 381. Sk. No:45 Daire:7, Esenyurt/İstanbul'dur.
 
-Bu taslak, 6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında hazırlanacak aydınlatmanın iskeletidir; kanuni dayanak veya hakların kapsamı hakkında nihai hukuki değerlendirme değildir.
+İletişim sırasında kimlik ve iletişim bilgileri, ürün talebi, adet, etkinlik
+tarihi, kişiselleştirme tercihleri, teslimat ve işlem güvenliği bilgileri
+işlenebilir. Veriler; talebi yanıtlamak, ürün ve fiyat çalışması yapmak,
+sözleşme öncesi süreçleri yürütmek, siparişi hazırlamak, teslimatı sağlamak,
+müşteri iletişimini sürdürmek ve hukuki yükümlülükleri yerine getirmek
+amaçlarıyla işlenir.
 
-**Veri sorumlusu:** RIDVAN YAZICI (şahıs işletmesi olduğu ve unvanın resmi biçimi teyit edilmelidir).  
-**Vergi dairesi/no:** Avcılar Vergi Dairesi / 9450566793 (teyit bekliyor).  
-**Adres:** Yunus Emre Mah. 381. Sk. 45 7, Esenyurt/İstanbul (resmi adres teyit bekliyor).  
-**Başvuru kanalı:** davetsandigi@gmail.com (işletmece teyit edilmelidir).
+Veriler doğrudan ilgili kişiden WhatsApp, Instagram, e-posta veya telefon
+aracılığıyla elde edilir. İşleme; sözleşmenin kurulması veya ifası, hukuki
+yükümlülük, bir hakkın tesisi, kullanılması veya korunması ve temel haklara
+zarar vermemek kaydıyla meşru menfaat sebeplerine dayanabilir. Gerekli
+durumlarda açık rıza ayrıca alınır.
 
-Katalog görüntüleme sırasında ürün seçimi ve sepet/favori tercihleri ziyaretçinin cihazında tutulabilir. Ziyaretçi WhatsApp veya Instagram üzerinden kendisi iletişime geçtiğinde mesaj içeriğinde ürün, adet, talep referansı, isteğe bağlı etkinlik tarihi ve kişiselleştirme notu yer alabilir. Site üzerinden üyelik, çevrimiçi ödeme veya sipariş formu bulunmaz. Teknik erişim/güvenlik kayıtlarının kapsamı hizmet sağlayıcılar ve hukuk danışmanıyla netleştirilmelidir.
-
-İşleme amaçları, hukuki sebepler, veri kategorileri, elde edilme yöntemi, aktarım yapılan alıcı grupları, saklama ve imha süreleri ile ilgili kişi haklarının kullanım usulü hukuk danışmanı tarafından gerçek süreç ve güncel mevzuata göre tamamlanmalıdır: **[KVKK m.10 kapsamındaki zorunlu bilgiler hukukçu tarafından doldurulacak]**.
-
-WhatsApp/Instagram'a geçiş, ziyaretçinin ilgili uygulamayı açıp mesaj göndermeyi seçmesiyle gerçekleşir. Bu aktarımın hukuki koşulu, yurt dışı aktarım değerlendirmesi ve olası alternatif başvuru kanalı hukuk danışmanının incelemesine tabidir. Bu taslak tek başına açık rıza metni değildir.
+Veriler; iletişim ve barındırma sağlayıcılarına, kargo ve teslimat hizmetlerine,
+mali müşavire ve kanunen yetkili kurumlara amaçla sınırlı olarak aktarılabilir.
+KVKK'nın 11. maddesindeki haklarınıza ilişkin başvurularınızı kimliğinizi
+doğrulayacak bilgilerle davetsandigi@gmail.com adresine iletebilirsiniz.
 
 ## 3. Çerez ve Yerel Depolama Bilgisi (`legal_local_storage`)
 
-**Hukuk danışmanı onayı bekliyor.**
+Davet Sandığı yalnız sitenin çalışması için gerekli tarayıcı depolamasını
+kullanır. Sepet içeriği, favori ürün kimlikleri ve bilgilendirme tercihi
+tarayıcınızın localStorage alanında saklanabilir.
 
-Davet Sandığı showroom'u katalog verisini Supabase'den görüntüler. Sepet (`ds_cart_v6`), favori ürün kimlikleri (`ds_wish_v1`) ve ziyaretçinin çerez bilgilendirme tercihi (`ds_cookie_v1`) tarayıcının `localStorage` alanında tutulabilir. Bu veriler ürün talebi oluşturmayı ve tercihlerin cihazda hatırlanmasını sağlar; müşteri adı/telefonu veya talep notu Supabase'e sipariş kaydı olarak gönderilmez.
-
-Tarayıcı verisini temizlemek, sepet/favori/tercih kayıtlarını kaldırabilir. Başka analiz/reklam çerezi kullanımı mevcut kaynak kodda doğrulanmamıştır; harici barındırma ve güvenlik günlükleri ayrıca incelenmelidir. “Reddet/Kabul Et” tercihinin hangi teknolojiler bakımından geçerli olduğu, hukuki gereklilik ve saklama süresi hukuk danışmanı tarafından doğrulanmalıdır.
+Bu kayıtlar cihazınızda kalır ve müşteri profili oluşturmak amacıyla
+kullanılmaz. Tarayıcı ayarlarından site verilerini temizlediğinizde sepet,
+favori ve tercih kayıtları silinir. Sitede reklam veya davranışsal izleme
+amacıyla çerez kullanılmamaktadır. Altyapı sağlayıcıları güvenlik ve teknik
+işletim amacıyla zorunlu günlük kayıtları tutabilir.
 
 ## 4. WhatsApp ve Instagram'a Veri Aktarımı (`legal_data_sharing`)
 
-**Hukuk danışmanı onayı bekliyor.**
+Site, sipariş talebini WhatsApp üzerinden hazırlamanıza ve Instagram üzerinden
+iletişim kurmanıza imkân verir. İlgili bağlantıya bastığınızda seçtiğiniz ürün,
+SKU, adet, görüntülenen fiyat veya teklif notu, talep referansı ve sizin
+eklediğiniz etkinlik tarihi ya da kişiselleştirme notu ilgili uygulamaya
+aktarılabilir.
 
-Site ürünleri inceleme ve sipariş talebi hazırlama amacıyla sunar; ödeme almaz ve siparişi kesinleştirmez. Ziyaretçi WhatsApp düğmesini seçtiğinde mesaj taslağı ilgili platformda açılır. Mesajda talep referansı, ürün adı/kodu, adet, görüntülenen fiyat veya teklif notu ve kullanıcı tarafından girilmişse etkinlik tarihi/kişiselleştirme notu bulunabilir. Ad ve telefon numarası site tarafından Supabase'e kaydedilmez; WhatsApp hesabı/numarası platform tarafından görülebilir.
+Mesaj gönderilmeden önce tam metin ekranda gösterilir; mesajı gönderip
+göndermemeye siz karar verirsiniz. WhatsApp veya Instagram hesabınız, telefon
+numaranız ve mesaj içeriğiniz Meta şirketleri tarafından kendi koşulları
+kapsamında işlenebilir ve yurt dışına aktarılabilir. Bu kanalları kullanmak
+istemezseniz davetsandigi@gmail.com üzerinden iletişim kurabilirsiniz.
 
-Instagram üzerinden iletişim başlatılırsa ziyaretçi mesajı Instagram'a doğrudan gönderir; mesaj içeriği ve hesap bilgileri Meta hizmetlerine aktarılabilir. Bu hizmetlerin veri sorumluluğu, yurt dışı aktarımı ve saklama koşulları ilgili platformların güncel belgelerine ve hukuk danışmanı değerlendirmesine göre açıklanmalıdır. Kullanıcı, mesajı göndermeden önce taslağı kontrol edebilir ve göndermemeyi seçebilir.
+## 5. Sipariş Talebi ve Satış Süreci (`legal_order_process`)
 
-## 5. Sipariş Talebi ve Mesafeli Satış Süreci (`legal_order_process`)
+Davet Sandığı web sitesi katalog/showroom niteliğindedir. Sepete ürün eklemek
+veya WhatsApp mesajını açmak siparişi kesinleştirmez ve sitede ödeme alınmaz.
 
-**Hukuk danışmanı onayı bekliyor.**
+Sipariş talebi WhatsApp, Instagram veya e-posta üzerinden iletilir. Ürün, adet,
+kişiselleştirme, fiyat, üretim süresi, teslimat ve kargo koşulları taraflarca
+yazılı olarak onaylandığında süreç ilerler. Üretim, tasarım ve fiyat onayı ile
+ödemenin alınmasından sonra başlar.
 
-Web sitesi katalog/showroom niteliğindedir. Sepet ve WhatsApp mesajı sipariş talebi hazırlamak içindir; site üzerinden ödeme alınmaz, sepetin oluşturulması veya mesajın açılması tek başına sipariş sözleşmesi kurmaz. Kullanıcı ürün, miktar ve kişiselleştirme isteğini WhatsApp veya Instagram'dan iletir; fiyat, tasarım, üretim ve teslimat ayrıntıları taraflarca ayrıca teyit edilir.
-
-İşletmenin verdiği mevcut bilgiye göre üretim, ürün/tasarım ve fiyat onayı ile ödemenin alınmasının ardından başlar. Etkinlikten en az 10 gün önce talep iletilmesi istenir; onaya istinaden ürünün 7 gün içinde kargoya verilmesi hedeflenir. Bu sürelerin takvim/iş günü olup olmadığı, siparişin hangi anda hukuken kurulduğu, ödeme/iade ve mesafeli sözleşme bilgilendirmelerinin hangi aşamada verileceği hukuk danışmanı tarafından doğrulanıp son metne eklenmelidir.
+Etkinlik tarihinden en az 10 gün önce talep iletilmesi önerilir. Tasarım ve
+ödeme onayından sonra ürünlerin 7 takvim günü içinde kargoya verilmesi
+hedeflenir; yoğunluk, özel üretim ayrıntıları ve taşıyıcı süresi ayrıca
+bildirilir. Kesin fiyat, teslim tarihi ve kargo koşulu WhatsApp görüşmesinde
+onaylanır.
 
 ## 6. İptal, İade ve Kişiye Özel Ürünler (`legal_returns`)
 
-**Hukuk danışmanı onayı bekliyor.**
+Standart ürünlerde tüketicinin mevzuattan doğan cayma ve ayıplı mala ilişkin
+hakları saklıdır. Cayma bildirimi, uygulanabilir olduğu durumlarda teslimden
+itibaren 14 gün içinde yazılı olarak veya kalıcı veri saklayıcısıyla
+iletilebilir.
 
-İşletmenin bildirdiği iş akışında ürün kişiye özel hazırlanabilir ve üretim, müşteri ürün/tasarım/fiyatı onaylayıp ödeme yaptıktan sonra başlar. Üretim başladıktan sonra iptal talebi için işletmeye mesaj gönderilmesi istenir. Bu açıklama, tüketicinin mevzuattan doğan emredici haklarını ortadan kaldırdığı şeklinde yorumlanmamalıdır.
+Tüketicinin özel isteği ve kişisel ihtiyaçları doğrultusunda hazırlanan; isim,
+tarih, renk, tasarım veya benzeri kişiselleştirme içeren ürünlerde mevzuattaki
+cayma hakkı istisnası uygulanabilir. Üretim başlamadan önce yapılan iptal
+talepleri mevcut maliyetler ve sürecin durumu dikkate alınarak değerlendirilir.
 
-Hasarlı, ayıplı, yanlış veya eksik ürün teslimi halinde izlenecek bildirim yöntemi, süreler, kanıt/teslimat bilgileri ve uygulanacak çözüm (**onarım/değişim/bedel iadesi veya mevzuatın gerektirdiği diğer haklar**) hukuk danışmanı ve işletme tarafından belirlenmelidir. Kişiye özel ürünlerde cayma/iptal istisnasının kapsamı ve hangi ürünlerin bu kapsama girdiği hukuk danışmanı tarafından güncel mevzuata göre teyit edilmelidir. Bu taslak “kişiye özel ürünlerde hiçbir koşulda iade/değişim yapılmaz” şeklinde kesin bir hüküm kurmaz.
-
-Başvuru kanalı: davetsandigi@gmail.com ve/veya işletmenin doğrulanmış WhatsApp numarası **[numara teyit edilecek]**. Ürün tesliminde hasar/ayıp bildirim süreci **[işletme ve hukukçu tarafından doldurulacak]**.
+Hasarlı, ayıplı, yanlış veya eksik teslimatta davetsandigi@gmail.com ya da
+doğrulanmış WhatsApp hattı üzerinden ürün ve paket fotoğraflarıyla iletişim
+kurulmalıdır. İnceleme sonrasında mevzuata uygun onarım, değişim, bedel indirimi
+veya iade seçenekleri uygulanır. Bu metin tüketicinin emredici haklarını
+sınırlandırmaz.
 
 ## 7. Kargo ve Teslimat (`legal_shipping`)
 
-**Hukuk danışmanı onayı bekliyor.**
+100 adet ve altındaki taleplerde kargo ücreti alıcıya, 100 adedin üzerindeki
+taleplerde satıcıya aittir. Farklı ürünlerin birlikte değerlendirilmesi ve
+kesin kargo tutarı sipariş onayı sırasında yazılı olarak bildirilir.
 
-İşletmenin bildirdiği ücret kuralı: 100 adet ve altındaki taleplerde kargo alıcıya, 100 adedin üzerindeki taleplerde satıcıya aittir. Kargonun hangi ürün/adet veya birim bazında hesaplandığı, farklı ürünlerin toplam adetinin nasıl ele alınacağı ve ücretin sipariş onayından önce nasıl bildirileceği **[işletme teyidi bekliyor]**.
+Etkinlik tarihinden en az 10 gün önce talep iletilmesi önerilir. Tasarım, fiyat
+ve ödeme onayından sonra ürünlerin 7 takvim günü içinde kargoya verilmesi
+hedeflenir. Taşıyıcının teslim süresi bu süreye dahil değildir. Yoğunluk, resmi
+tatil, kişiselleştirme kapsamı veya mücbir sebepler süreyi etkilerse müşteri
+bilgilendirilir.
 
-Mevcut iş akışı bilgisine göre organizasyon tarihinden en az 10 gün önce talep verilmesi ve onay sonrası ürünün 7 gün içinde kargoya verilmesi hedeflenir. 7 günün takvim günü mü iş günü mü olduğu, taşıma süresinin bu süreye dahil olup olmadığı, gönderim bölgeleri, taşıyıcı, gecikme/teslim edilememe ve hasarlı paket prosedürü **[teyit bekliyor]**. Buradaki süreler garanti taahhüdü olarak yayımlanmadan önce işletme ve hukuk danışmanı tarafından doğrulanmalıdır.
+Teslimatta paket kontrol edilmeli; görünür hasar mümkünse tutanak altına
+alınmalı ve ürün/paket fotoğraflarıyla işletmeye bildirilmelidir.
 
-## 8. Müşteri Görseli/Yorumu İzin Metni ve Süreci (`legal_media_permissions`)
+## 8. Yorum ve Görsel Paylaşım İzni (`legal_media_permissions`)
 
-**Hukuk danışmanı onayı bekliyor.**
+Müşteri yorumu, adı veya rumuzu, etkinlik bilgisi, fotoğrafı ya da videosu ayrı
+ve açık bir yayın izni olmadan tanıtım amacıyla kullanılmaz. Sipariş talebi
+göndermek tek başına yayın izni sayılmaz.
 
-Müşteri yorumu, adı/rumuzu, etkinlik bilgisi veya fotoğraf/video içeriği; müşteri tarafından paylaşım için ayrı ve bilgilendirilmiş izin verilmeden web sitesinde, sosyal medya hesaplarında veya tanıtım materyallerinde yayımlanmamalıdır. Sipariş talebi için iletişime geçmek, yorum veya görselin tanıtım amaçlı yayımlanmasına tek başına izin sayılmaz.
+Yayın izninde kullanılacak içerik, yayın kanalları, görünen isim, amaç ve izin
+tarihi kayıt altına alınır. Çocukların veya üçüncü kişilerin yer aldığı
+içerikler için gerekli ek izinler aranır. İzin veren kişi daha sonra
+davetsandigi@gmail.com üzerinden kaldırma talebinde bulunabilir; talep makul
+süre içinde değerlendirilerek ilgili yayınlardan kaldırılır.
 
-Yayımdan önce izin kaydında en azından izin verenin doğrulanması, kullanılacak içerik/görsel, yayın kanalları ve amaç, görünen isim tercihi, izin tarihi ve geri çekme/başvuru yöntemi kayıt altına alınmalıdır. Çocuklara ait görüntüler ve üçüncü kişilerin yer aldığı içerikler için ayrıca hukuki değerlendirme yapılmalıdır. İzin geri çekildiğinde içeriğin kaldırılma ve yedeklerdeki kopyaların ele alınma süreci **[hukuk danışmanı ve işletme tarafından tamamlanacak]**. Siteye yüklenen müşteri içeriği ancak ayrı onay ve gerekli yetki kontrollerinden sonra yayınlanabilir.
+## Uygulama
 
-**Yayın koşulu:** Bu metinlerin her biri başlangıç uyarısı korunarak yalnız taslak olarak değerlendirilmeli; hukuk danışmanı metinleri ayrı ayrı onaylayıp eksik bilgileri tamamlamadan `content_sections.is_active=true` yapılmamalıdır. Onaylanan metin sisteme girilirken “Hukuk danışmanı onayı bekliyor” uyarısı ve `[TAMAMLANACAK]` alanları çıkarılmalı, onay durumu ilgili content section kaydında ayrıca işaretlenmelidir.
+- Kaynak migration: `20261017092519_publish_approved_legal_content.sql`
+- Public sayfa yalnız `is_active=true` ve
+  `content_json.legal_review_approved=true` kayıtlarını gösterir.
+- Yönetim panelinde her metin ayrı ayrı düzenlenebilir.
+- Site üzerinden ödeme alınmaz; metinlerde “sipariş talebi” dili korunur.
+
+## Resmî başvuru kaynakları
+
+- KVKK aydınlatma yükümlülüğü:
+  https://www.kvkk.gov.tr/Icerik/2033/Aydinlatma-Yukumlulugu-
+- KVKK aydınlatma kamuoyu duyurusu:
+  https://www.kvkk.gov.tr/Icerik/6765/AYDINLATMA-YUKUMLULUGUNUN-YERINE-GETIRILMESI-HAKKINDA-KAMUOYU-DUYURUSU
+- Ticaret Bakanlığı mesafeli sözleşmeler bilgilendirmesi:
+  https://tuketici.ticaret.gov.tr/yayinlar/tuketici-bilgi-rehberi/mesafeli-sozlesmeler-hakkinda-bilgilendirme
+- KVKK yurt dışına aktarım bilgisi:
+  https://www.kvkk.gov.tr/Icerik/2053/Yurtdisina-Aktarim

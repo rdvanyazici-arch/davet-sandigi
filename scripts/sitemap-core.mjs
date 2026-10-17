@@ -2,17 +2,18 @@ export const canonicalOrigin = 'https://davet-sandigi.vercel.app';
 export const approvedSupabaseHost = 'zdksvgtkeeweufuajugd.supabase.co';
 
 export function publicSlugUrl(kind, slug) {
-  if (!['urun', 'kategori'].includes(kind) || typeof slug !== 'string' || !slug.trim()) throw new Error('A public route requires an active slug.');
+  if (!['urun', 'kategori', 'koleksiyon'].includes(kind) || typeof slug !== 'string' || !slug.trim()) throw new Error('A public route requires an active slug.');
   const url = new URL('/', canonicalOrigin);
   url.searchParams.set(kind, slug.trim());
   return url.href;
 }
 
-export function buildSitemapUrls(products, categories) {
+export function buildSitemapUrls(products, categories, collections = []) {
   return Array.from(new Set([
     canonicalOrigin + '/',
     ...products.map(slug => publicSlugUrl('urun', slug)),
-    ...categories.map(slug => publicSlugUrl('kategori', slug))
+    ...categories.map(slug => publicSlugUrl('kategori', slug)),
+    ...collections.map(slug => publicSlugUrl('koleksiyon', slug))
   ]));
 }
 
@@ -30,7 +31,7 @@ export async function fetchActiveSlugs({ endpoint, publishableKey, table, fetchI
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.host !== approvedSupabaseHost) throw new Error('Sitemap fetch is restricted to the approved Supabase project.');
   if (!String(publishableKey || '').startsWith('sb_publishable_')) throw new Error('Sitemap fetch requires a publishable key.');
-  if (!['products', 'categories'].includes(table)) throw new Error('Unsupported sitemap table.');
+  if (!['products', 'categories', 'collections'].includes(table)) throw new Error('Unsupported sitemap table.');
 
   const slugs = [];
   for (let offset = 0; ; offset += pageSize) {

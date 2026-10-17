@@ -5,16 +5,17 @@ import { buildSitemapUrls, buildSitemapXml, fetchActiveSlugs } from '../scripts/
 const endpoint = 'https://zdksvgtkeeweufuajugd.supabase.co';
 const key = 'sb_publishable_test';
 
-test('sitemap contains canonical homepage and active product/category slug routes', () => {
-  const urls = buildSitemapUrls(['nişan-kolonyası', 'mum'], ['nişan & söz']);
+test('sitemap contains canonical homepage and active product/category/collection slug routes', () => {
+  const urls = buildSitemapUrls(['nişan-kolonyası', 'mum'], ['nişan & söz'], ['nişan']);
   assert.deepEqual(urls, [
     'https://davet-sandigi.vercel.app/',
     'https://davet-sandigi.vercel.app/?urun=ni%C5%9Fan-kolonyas%C4%B1',
     'https://davet-sandigi.vercel.app/?urun=mum',
-    'https://davet-sandigi.vercel.app/?kategori=ni%C5%9Fan+%26+s%C3%B6z'
+    'https://davet-sandigi.vercel.app/?kategori=ni%C5%9Fan+%26+s%C3%B6z',
+    'https://davet-sandigi.vercel.app/?koleksiyon=ni%C5%9Fan'
   ]);
   const xml = buildSitemapXml(urls);
-  assert.equal((xml.match(/<url>/g) || []).length, 4);
+  assert.equal((xml.match(/<url>/g) || []).length, 5);
   assert.match(xml, /<loc>https:\/\/davet-sandigi\.vercel\.app\//);
 });
 
@@ -49,5 +50,5 @@ test('fallback sitemap can be generated with homepage only when Supabase is unav
   const xml = buildSitemapXml(buildSitemapUrls([], []));
   assert.equal((xml.match(/<url>/g) || []).length, 1);
   assert.match(xml, /https:\/\/davet-sandigi\.vercel\.app\//);
-  assert.doesNotMatch(xml, /\?urun=|\?kategori=/);
+  assert.doesNotMatch(xml, /\?urun=|\?kategori=|\?koleksiyon=/);
 });

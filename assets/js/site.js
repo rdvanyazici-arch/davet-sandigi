@@ -56,6 +56,9 @@ function updateSeoRoute(kind,item){
  }else if(kind==='category'&&item){
   title=item.label+' | Davet Sandığı';description=String(item.desc||'Yayımdaki '+item.label+' ürünlerini inceleyin.').slice(0,160);
   url=SEO_ORIGIN+'/?kategori='+encodeURIComponent(item.slug);
+ }else if(kind==='collection'&&item){
+  title=item.label+' Koleksiyonu | Davet Sandığı';description=String(item.sub||item.label+' koleksiyonundaki kategori ve ürünleri inceleyin.').slice(0,160);
+  url=SEO_ORIGIN+'/?koleksiyon='+encodeURIComponent(item.slug);
  }
  document.title=title;seoMeta('meta[name="description"]',description);
  seoMeta('meta[property="og:title"]',title);seoMeta('meta[property="og:description"]',description);

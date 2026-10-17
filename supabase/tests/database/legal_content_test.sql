@@ -22,6 +22,10 @@ insert into auth.users (
 insert into public.admin_profiles (user_id, display_name, role, is_active)
 values ('77777777-7777-7777-7777-777777777775', 'Legal Owner', 'owner', true);
 
+-- The approved legal-content migration seeds this key. Isolate the publication
+-- guard scenario inside the transaction without changing persisted seed data.
+delete from public.content_sections where section_key = 'legal_privacy';
+
 set local role authenticated;
 select set_config(
   'request.jwt.claims',

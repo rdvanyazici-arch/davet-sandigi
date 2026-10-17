@@ -21,8 +21,8 @@ function makeDb(extraProducts = []) {
   return {
     site_settings_public: [{ id: 1, whatsapp_number: '905301112233', instagram_url: 'https://www.instagram.com/brand-channel-check', phone: '+90 212 000 00 00', email: 'info@example.test', delivery_text: 'Teslimat bilgisi panelde yönetilir.', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo bilgisi panelde yönetilir.' }],
     categories: [
-      { id: 1, slug: 'kolonya', name: 'Kolonya', description: '', sort_order: 1, is_active: true, archived_at: null },
-      { id: 2, slug: 'mum', name: 'Mum', description: '', sort_order: 2, is_active: true, archived_at: null },
+      { id: 1, slug: 'kolonya', name: 'Kolonya', description: '', sort_order: 1, is_active: true, archived_at: null, category_collections: [{ collection_id: 1, sort_order: 1 }] },
+      { id: 2, slug: 'mum', name: 'Mum', description: '', sort_order: 2, is_active: true, archived_at: null, category_collections: [{ collection_id: 2, sort_order: 1 }] },
       { id: 9, slug: 'gizli', name: 'Gizli Kategori', description: '', sort_order: 3, is_active: false, archived_at: null }
     ],
     collections: [
@@ -224,13 +224,17 @@ test('kategori ve koleksiyon filtreleri', async ({ page }) => {
   await expect(page.locator('#prod-grid')).toContainText('Kolonya Ürünü');
   await expect(page.locator('#prod-grid')).not.toContainText('Mum Ürünü');
 
+  await page.locator('#cookie-reject').click();
   await expect(page.locator('#coll-grid .coll-card')).toHaveCount(2);
   await page.locator('#coll-grid .coll-card', { hasText: 'Nişan' }).click();
   await expect(page.locator('#collview')).toHaveClass(/open/);
+  await expect(page.locator('#cv-grid .cv-category-card')).toHaveCount(2);
+  await page.locator('#cv-grid .cv-category-card', { hasText: 'Kolonya' }).press('Enter');
   await expect(page.locator('#cv-grid .prod-card')).toHaveCount(1);
   await expect(page.locator('#cv-grid')).toContainText('Kolonya Ürünü');
   await page.click('#cv-back');
   await page.locator('#coll-grid .coll-card', { hasText: 'Kına' }).click();
+  await page.locator('#cv-grid .cv-category-card', { hasText: 'Tümünü Gör' }).press('Enter');
   await expect(page.locator('#cv-grid .prod-card')).toHaveCount(1);
   await expect(page.locator('#cv-grid')).toContainText('Mum Ürünü');
   await expect(page.locator('#footer-coll li')).toHaveCount(2);
@@ -476,7 +480,7 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await expect(page.locator('#review-grid')).toContainText('A. Y.');
   await expect(page.locator('#review-grid')).not.toContainText('Elif & Burak');
   await expect(page.locator('#review-grid')).not.toContainText('Zeynep Y.');
-  await expect(page.locator('.footer-about')).toHaveText('Baby Shower şu anda sunulmuyor. Güncel ürünleri katalogda inceleyebilirsiniz.');
+  await expect(page.locator('.footer-about')).toHaveText('Nişan, kına, Baby Shower ve düğün koleksiyonlarını inceleyebilirsiniz.');
   await page.click('#drawer-close');
   await page.click('[data-legal="privacy"]');
   await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
@@ -539,7 +543,7 @@ test('Faz 10: mobilde Instagram/WhatsApp ve tutarlı kapsam metinleri taşmaz', 
   await page.click('#cookie-reject');
   await expect(page.locator('#channel-ig')).toBeVisible();
   await expect(page.locator('#channel-wa')).toBeVisible();
-  await expect(page.locator('.footer-about')).toContainText('Baby Shower şu anda sunulmuyor.');
+  await expect(page.locator('.footer-about')).toContainText('Baby Shower ve düğün koleksiyonlarını');
   const sizes = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: document.documentElement.clientWidth }));
   expect(sizes.body).toBeLessThanOrEqual(sizes.viewport + 1);
 });

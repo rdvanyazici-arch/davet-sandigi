@@ -12,12 +12,12 @@ select is(
     where n.nspname = 'public'
       and c.relname = any (array[
         'admin_profiles', 'site_settings', 'categories', 'collections',
-        'products', 'product_collections', 'product_drafts', 'media_assets', 'product_images',
+        'products', 'product_collections', 'category_collections', 'product_drafts', 'media_assets', 'product_images',
         'banners', 'content_sections', 'testimonials', 'faqs'
       ])
       and c.relrowsecurity
   ),
-  13::bigint,
+  14::bigint,
   'RLS is enabled on every application table'
 );
 
@@ -26,7 +26,7 @@ select is(
     select count(*)
     from unnest(array[
       'admin_profiles', 'site_settings', 'categories', 'collections',
-      'products', 'product_collections', 'product_drafts', 'media_assets', 'product_images',
+      'products', 'product_collections', 'category_collections', 'product_drafts', 'media_assets', 'product_images',
       'banners', 'content_sections', 'testimonials', 'faqs'
     ]) as table_names(table_name)
     where has_table_privilege('anon', 'public.' || table_name, 'INSERT')
@@ -40,7 +40,7 @@ select is(
     select count(*)
     from unnest(array[
       'admin_profiles', 'site_settings', 'categories', 'collections',
-      'products', 'product_collections', 'product_drafts', 'media_assets', 'product_images',
+      'products', 'product_collections', 'category_collections', 'product_drafts', 'media_assets', 'product_images',
       'banners', 'content_sections', 'testimonials', 'faqs'
     ]) as table_names(table_name)
     where has_table_privilege('anon', 'public.' || table_name, 'UPDATE')
@@ -54,7 +54,7 @@ select is(
     select count(*)
     from unnest(array[
       'admin_profiles', 'site_settings', 'categories', 'collections',
-      'products', 'product_collections', 'product_drafts', 'media_assets', 'product_images',
+      'products', 'product_collections', 'category_collections', 'product_drafts', 'media_assets', 'product_images',
       'banners', 'content_sections', 'testimonials', 'faqs'
     ]) as table_names(table_name)
     where has_table_privilege('anon', 'public.' || table_name, 'DELETE')
@@ -151,7 +151,7 @@ update public.products set is_active = true where id = 9001;
 set local role anon;
 
 select results_eq(
-  $$select count(*) from public.categories$$,
+  $$select count(*) from public.categories where slug in ('active-category', 'inactive-category')$$,
   array[1::bigint],
   'anon can read only the active category'
 );
