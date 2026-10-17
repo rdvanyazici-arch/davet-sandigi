@@ -88,3 +88,57 @@ Docker kurulu. Bu oturumda Docker üzerinden **yerel Supabase servisleri başlat
 - Node: `tests/admin-auth.test.mjs` + `tests/seo.test.mjs` **13/13**.
 - Playwright tam kabul paketi (pagination dahil): Chromium **36/36**, WebKit **36/36**, Firefox **36/36**.
 - JavaScript/test syntax, JSON parse ve `git diff --check`: **GEÇTİ**.
+
+## Faz 14 — Preview hazırlığı ve Roadmap §17 ön kontrolü
+
+**Bu bölüm yalnız Preview ve ön kabul durumudur. Production deploy veya `main` merge yapılmadı.** Production ortamına değişken eklemek/kullanmak ve yayınlamak için kullanıcının açık `ONAYLIYORUM` mesajı bekleniyor.
+
+### Hedef doğrulama
+
+| Hedef | Doğrulanan değer | Durum |
+|---|---|---|
+| Git remote | `origin` → `https://github.com/rdvanyazici-arch/davet-sandigi.git` | **GEÇTİ** |
+| Branch | `refactor/faz-2-yapi`; remote tracking branch ile eşit; worktree temiz | **GEÇTİ** |
+| Phase 13 commit | `2d23e8b test: complete Phase 13 security acceptance` | **GEÇTİ** |
+| Main | `origin/main` ref'i doğrulandı; merge/push yapılmadı | **GEÇTİ — DEĞİŞMEDİ** |
+| Vercel proje | `rdvanyazici/davet-sandigi`, project ID `prj_IZyfmfA3gwqBZFkk3a2kx2j6kojL` | **GEÇTİ** |
+| Supabase | `Davet Sandığı`, ref `zdksvgtkeeweufuajugd`, `ap-southeast-2`, `ACTIVE_HEALTHY` | **GEÇTİ** |
+| Branch PR hazırlığı | Tek anlamlı Phase 13 commit'i feature branch'e push edildi. Karşılaştırma: https://github.com/rdvanyazici-arch/davet-sandigi/compare/main...refactor/faz-2-yapi?expand=1 | **HAZIR**; `gh` CLI mevcut olmadığından PR kaydı web arayüzünde açılmadı. |
+
+### Vercel environment variable kontrolü
+
+| Scope | `SUPABASE_URL` | `SUPABASE_PUBLISHABLE_KEY` | Durum |
+|---|---|---|---|
+| Preview | Tanımlı; onaylı Supabase ref'ine eşleşiyor | Tanımlı; `sb_publishable_` prefix'i doğrulandı | **GEÇTİ**; Preview/Production'dan ayrı scope |
+| Production | Tanımlı değil | Tanımlı değil | **KALDI / YAYIN ENGELİ**; Production env değişkenleri henüz eklenmedi. Hiçbir değer eklenmedi veya değiştirilmedi. |
+
+### Roadmap bölüm 17 — Preview üzerinde işaretleme
+
+| Kabul maddesi | Durum | Kanıt / not |
+|---|---|---|
+| Site müşteri girişi istemiyor | **GEÇTİ** | Public HTML'de login/registration akışı yok; public tarayıcı testleri. |
+| Yönetim paneli genel navigasyonda görünmüyor | **GEÇTİ** | Public navigasyon/E2E kontrolleri. |
+| Yalnızca yönetici içerik yazabiliyor | **GEÇTİ** | RLS pgTAP ve anon PostgREST yazma testleri. |
+| Public kullanıcı Supabase'e yazamıyor/silemiyor | **GEÇTİ** | Anon POST/PATCH/DELETE `401`; RLS pgTAP **28/28**. |
+| Tüm ürün/kategori/koleksiyonlar doğru | **BEKLEMEDE** | Kullanıcı kararı gereği örnek kayıtlar taşınmadı; Supabase katalog boş. Gerçek katalog panelden girilecek. |
+| Tüm fiyat/adet kuralları doğru | **KOD GEÇTİ / GERÇEK İÇERİK BEKLEMEDE** | Kurallar test fixture'larında doğru; yayındaki gerçek ürün/fiyat mevcut değil. |
+| Tüm görseller yönetim panelinde önizlenebiliyor | **TEST AKIŞI GEÇTİ / GERÇEK MEDYA BEKLEMEDE** | Storage politika/UI testleri geçti; gerçek medya yüklenmedi. |
+| Kullanımdaki görsel yanlışlıkla silinemiyor | **GEÇTİ** | Storage RLS/policy testleri ve UI arşiv→iki onaylı silme senaryosu. Canlı dosya silinmedi. |
+| Instagram bağlantısı doğru | **BEKLEMEDE** | Gerçek doğrulanmış sosyal ayar henüz sağlanmadı; test fixture URL'si gerçek işletme kabul edilmedi. |
+| WhatsApp numarası/mesajı doğru | **AKIŞ GEÇTİ / GERÇEK NUMARA BEKLEMEDE** | Mesaj biçimi/encode ve yönlendirme testleri geçti; canlı işletme değeri doğrulanmadı. |
+| Sepet mobil/masaüstünde çalışıyor | **AKIŞ GEÇTİ / GERÇEK KATALOG BEKLEMEDE** | Chromium/WebKit/Firefox testleri geçti; Supabase gerçek kataloğu boş olduğu için canlı ürünle Preview sepet kontrolü yapılamadı. |
+| Site ödeme alıyormuş gibi görünmüyor | **GEÇTİ** | Sipariş talebi dilini doğrulayan E2E. |
+| Gerçek olmayan yorum/istatistik bulunmuyor | **GEÇTİ** | İçerik boş durumları ve onaysız legacy içerik bastırma testleri. |
+| Taslak yasal metin bulunmuyor | **GEÇTİ** | Public legal modal taslak yerine henüz yayımlanmadı bilgisi gösteriyor. |
+| SEO temel dosyaları mevcut | **GEÇTİ** | `robots.txt`, `sitemap.xml`, canonical, metadata ve JSON-LD E2E. |
+| Mobil taşma/kırık düzen bulunmuyor | **GEÇTİ** | 390 px E2E; Chromium/WebKit/Firefox. |
+| Konsol/ağ hatası bulunmuyor | **GEÇTİ (TEST ORTAMI)** | Boş içerik ve ana public/admin fixture testlerinde console/page errors yok; tam browser E2E geçti. |
+| Firebase isteği bulunmuyor | **GEÇTİ (TEST ORTAMI)** | Kaynak taraması ve üç motorun request allowlist kontrolleri. |
+| GitHub/Vercel/Supabase hedefleri doğru | **GEÇTİ** | Yukarıdaki ID/remote kontrolleri. |
+| Rollback yedeği mevcut | **GEÇTİ** | Firebase snapshot'ları ve `docs/rollback.md` mevcut; silinmedi. |
+
+Preview deployment: https://davet-sandigi-70r13w9sl-rdvanyazici.vercel.app (`READY`, Preview). `/index.html` ve `/admin.html` HEAD `200`; CSP ve güvenlik başlıkları mevcut. Vercel deployment protection nedeniyle tarayıcıda tam oturumlu canlı kullanım doğrulaması bu kontrole dahil değildir; eşdeğer uygulama akışları yerel Playwright browser paketinde test edilmiştir.
+
+### Production onay kapısı
+
+Production Vercel environment değişkenleri şu anda **boş**. Doğru Supabase URL ve yalnız publishable key'in Production scope'una eklenmesi, canlı deployment ve canlı veriye karşı kabul testleri için kullanıcı onayı gereklidir. Bu rapor **Production yayınına onay değildir**. `ONAYLIYORUM` gelmeden Production env değişikliği/deploy yapılmayacak. Main merge ve Phase 15 de bu çalışmada yapılmadı.

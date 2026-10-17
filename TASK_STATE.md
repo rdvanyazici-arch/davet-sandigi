@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 13 test/güvenlik kabulü yerelde tamamlandı; Preview doğrulandı. Production deploy, commit ve push yapılmadı.
-- Aktif faz: Faz 13 — yerel kabul testleri ve raporlama tamamlandı.
-- Beklenen: Faz 13 raporunun kullanıcı incelemesi; Faz 14'e geçmeden önce kullanıcı onayı.
+- Güncel durum: Faz 14 hazırlığı tamamlandı; branch push edildi ve Preview READY. Production deploy, main merge ve branch merge yapılmadı.
+- Aktif faz: Faz 14 — Preview kabulü hazır; Production ortam değişkenleri eksik ve açık “ONAYLIYORUM” onayı bekleniyor.
+- Beklenen: Önce kullanıcı Production Supabase URL/publishable key değişkenlerini Vercel Production ortamına eklemeli/doğrulatmalı; sonra yalnızca kullanıcı “ONAYLIYORUM” yazarsa Production deploy ve canlı kontrol yapılabilir.
 
 ### Faz 0–15 durumları
 
@@ -22,7 +22,7 @@
 - Faz 11 — SEO, hız ve erişilebilirlik: **yerelde tamamlandı — kullanıcı incelemesi bekleniyor**
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **yerelde tamamlandı — örnek içerikler kullanıcı kararıyla aktarılmadı; runtime temizlendi**
 - Faz 13 — Test, güvenlik ve kabul: **yerelde tamamlandı — test raporu hazır, kullanıcı incelemesi bekleniyor**
-- Faz 14 — GitHub ve Vercel yayını: **bekliyor**
+- Faz 14 — GitHub ve Vercel yayını: **feature branch push edildi, Preview READY; Production değişkenleri/onayı bekleniyor; main merge ve production deploy yapılmadı**
 - Faz 15 — Yasal metinler ve son yayın kontrolü: **bekliyor**
 
 ## Tamamlanan fazlar
@@ -47,6 +47,8 @@
 - 2026-10-17 — Faz 12 doğrulaması: `tests/admin-auth.test.mjs` **8/8**; ilk public/admin E2E kabul paketi **33/33**. Bu anda pagination fixture testi henüz çalıştırılmamış/düzeltilmemişti; takip eden Faz 13'te kök neden bulunup giderildi. Boş Supabase public ve admin durumları hatasız açılıyor; public istek hostları yalnız local + izinli Supabase, admin boş fixture'ında yalnız local; tarayıcı konsol/sayfa hatası yok ve uygulama runtime'ında Firebase/Firestore/googleapis isteği yok. Uygulama HTML/JS runtime kaynak taraması temiz; korunan offline backup scriptleri bu taramadan ayrı değerlendirilir. Ayrıntı `docs/migration-report.md` içindedir.
 - 2026-10-17 — Faz 13 sayfalama son düzeltmesi: `productEnsureListControls()` `.product-pagination` container'ını oluşturuyor ancak `id="product-pagination"` atamıyordu; `productRenderPagination()` bu nedenle `#product-pagination` bulamayıp `#product-next` üretmiyordu. Yalnız container ID'si atandı; pagination/durum/koleksiyon senaryosu Chromium, WebKit ve Firefox'ta geçti.
 - 2026-10-17 — Faz 13 nihai kabul: beş linked pgTAP dosyası transaction rollback ile **93/93**; admin-auth + SEO birim testleri **13/13**; tam Playwright (pagination dahil) Chromium **36/36**, WebKit **36/36**, Firefox **36/36**. Docker kurulu; bu oturumda yerel Supabase servisleri başlatılmadı, Supabase CLI `npx --yes supabase@2.121.0` ile çalıştırıldı. Anon GET/yazma reddi, rol sınırları, Storage archive/delete, Türkçe, empty/loading/error, link/image ve admin noindex kontrolleri geçti. Advisor 22 bulgu ve önem dereceleri `docs/test-report.md` içinde. Final Preview `davet-sandigi-13nhmc9ae-rdvanyazici.vercel.app` READY; public/admin `200` ve güvenlik başlıkları doğrulandı. Production deploy, DB kalıcı değişikliği, commit ve push yapılmadı.
+- 2026-10-17 — Faz 14 yeniden doğrulama: branch `refactor/faz-2-yapi`, origin `https://github.com/rdvanyazici-arch/davet-sandigi.git`, Vercel projesi `rdvanyazici/davet-sandigi`, Supabase ref `zdksvgtkeeweufuajugd` (ACTIVE_HEALTHY). Faz 13 commit'i `2d23e8b test: complete Phase 13 security acceptance` olarak yeniden adlandırılıp yalnız feature branch'e push edildi; worktree temiz ve `main` değişmedi. PR karşılaştırma bağlantısı hazır: `https://github.com/rdvanyazici-arch/davet-sandigi/compare/main...refactor/faz-2-yapi?expand=1` (GitHub CLI mevcut değil; PR web arayüzünde oluşturulmadı).
+- 2026-10-17 — Faz 14 Preview: deployment `davet-sandigi-70r13w9sl-rdvanyazici.vercel.app`, `target=preview`, READY. Preview `SUPABASE_URL` onaylı ref'e eşleşiyor, `SUPABASE_PUBLISHABLE_KEY` prefix'i `sb_publishable_`; Production `env ls` boş (SUPABASE_URL ve key tanımlı değil), Preview/Production scope'ları ayrı. Preview deploy public/admin HEAD `200`; CSP, Referrer-Policy, nosniff, X-Frame-Options mevcut; Vercel X-Robots-Tag noindex. Roadmap §17 ön kontrolü ve henüz doğrulanamayan gerçek içerik maddeleri `docs/test-report.md` içindedir. Production için kesin ifade onayı verilmediğinden deploy ve main merge yapılmadı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -63,6 +65,7 @@
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
+- Production yayını gerçekleştiği gün kaydedilecek; o tarihten 30 gün sonra “Firebase kapatma kararı” kullanıcıyla tekrar gözden geçirilecek. Production henüz yayınlanmadığından takvim tarihi şu an belirlenmemiştir.
 - Supabase CLI tarayıcı girişi ve `zdksvgtkeeweufuajugd` proje bağlantısı tamamlandı.
 - Statik site için build sırasında ortam yapılandırması üretme yöntemi kullanıcı tarafından onaylandı ve uygulandı.
 - Vercel Preview ortamında `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` tanımlandı; Production ortamına eklenmedi.
