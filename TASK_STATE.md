@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Koleksiyon → kategori → ürün hiyerarşisi ve hukukçu onaylı sekiz yasal metin yerelde ve uzak Supabase'te hazır. Faz 14 Production onay kapısı beklemede; Production deploy ve main merge yapılmadı.
+- Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. Eski `Davet-Sandigi-Claude` klasörü korunarak GitHub remote bağlantısı kaldırıldı; Vercel bağlantısı zaten yoktu. Production Supabase değişkenleri eklendi ve kullanıcı main/Production yayınına açık onay verdi.
 - Aktif faz: Faz 15 tamamlandı; katalog hiyerarşisi ek geliştirmesi tamamlandı.
-- Beklenen: Gerçek ürün/fiyat/görseller yönetim panelinden girilecek. Faz 14 Production için Production env değerlerinin eklenmesi ve kullanıcının açık “ONAYLIYORUM” mesajı gereklidir.
+- Beklenen: Güncel branch `main` dalına alınacak, Production yayınlanıp Firebase isteği bulunmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
 
@@ -74,7 +74,10 @@
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
 - Faz 15 yasal metinleri için hukukçu onayı kullanıcı tarafından bildirildi; sekiz `legal_*` kayıt uzak Supabase'te aktif ve yönetim panelinden düzenlenebilir.
-- Vercel Production ortamında SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY yok; kullanıcı değerleri ekleyip doğrulatana ve açık “ONAYLIYORUM” yazana kadar Production deployment yapılmayacak.
+- Vercel Production ortamına `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` eklendi; URL tek Supabase ref'i `zdksvgtkeeweufuajugd` ile eşleşiyor ve anahtar publishable türündedir.
+- Vercel'de görünen çok sayıdaki `davet-sandigi-...vercel.app` adresi ayrı proje değil, aynı `davet-sandigi` projesinin Preview geçmişidir; tek canlı Production adresini etkilemez.
+- Kullanıcı eski Firebase Production adreslerini kullanmama kararı verdi. Vercel proje adı `davet-sandigi-guncel` olarak değiştirildi; yeni Production yayını bu proje üzerinden yapılacak.
+- Masaüstündeki eski `/Users/mac/Desktop/Davet-Sandigi-Claude` klasörü kullanıcı isteğiyle korunuyor; `origin` remote bağlantısı kaldırıldı ve Vercel bağlantısı yok. İçeriğine başka müdahale edilmeyecek. Aktif çalışma yalnız `/Users/mac/Desktop/Davet-Sandigi-Guncel` üzerinden sürdürülecek.
 - Production yayını gerçekleştiği gün kaydedilecek; o tarihten 30 gün sonra “Firebase kapatma kararı” kullanıcıyla tekrar gözden geçirilecek. Production henüz yayınlanmadığından takvim tarihi şu an belirlenmemiştir.
 - Supabase CLI tarayıcı girişi ve `zdksvgtkeeweufuajugd` proje bağlantısı tamamlandı.
 - Statik site için build sırasında ortam yapılandırması üretme yöntemi kullanıcı tarafından onaylandı ve uygulandı.
@@ -115,6 +118,7 @@
 - Supabase CLI `npx` ile `supabase@2.121.0` olarak indirildi (`package.json`'da sabitli değil); önceki fazlarda 2.120.0 kullanılmıştı.
 
 - Production'daki canlı sürüm henüz Faz 8 commit/deploy'u almadı ve eski Firebase tabanlı kaynağı kullanmaya devam ediyor; yerel Faz 8 kodu ise public içeriği Supabase'ten okuyor (Preview/Production yayını Faz 14'te).
+- 2026-10-17 kontrolünde `https://davet-sandigi.vercel.app` ve mevcut Production alias'ı aynı eski Firebase/base64 sürümünü döndürdü. Feature branch `main` dalından 23 commit ileride; Production'a alınana kadar canlı ile yeni panel birbirinden farklıdır.
 - `index.html` 6.321.661 bayttan 23.769 bayta düşürüldü; görseller artık ayrı dosyalardan yükleniyor.
 - Yasal metinler uzak Supabase'te onaylı/aktif; Production deploy henüz yapılmadı.
 - Mevcut müşteri yorumları ve sayısal pazarlama iddiaları örnektir; yeni sisteme taşınmamalıdır.
@@ -132,7 +136,7 @@
 
 - GitHub deposu: `rdvanyazici-arch/davet-sandigi`
 - GitHub remote: `https://github.com/rdvanyazici-arch/davet-sandigi.git`
-- Vercel proje adı: `davet-sandigi`
+- Vercel proje adı: `davet-sandigi-guncel`
 - Canlı adres: `https://davet-sandigi.vercel.app`
 - Supabase organizasyonu: `rdvanyazici-arch's Org`
 - Supabase proje adı: `Davet Sandığı`
