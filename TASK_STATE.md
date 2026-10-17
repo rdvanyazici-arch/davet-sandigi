@@ -2,9 +2,9 @@
 
 ## Güncel faz
 
-- Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. Eski `Davet-Sandigi-Claude` klasörü korunarak GitHub remote bağlantısı kaldırıldı; Vercel bağlantısı zaten yoktu. Production Supabase değişkenleri eklendi ve kullanıcı main/Production yayınına açık onay verdi.
+- Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
 - Aktif faz: Faz 15 tamamlandı; katalog hiyerarşisi ek geliştirmesi tamamlandı.
-- Beklenen: Güncel branch `main` dalına alınacak, Production yayınlanıp Firebase isteği bulunmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
+- Beklenen: Özel alan adı bağlanacak; kullanıcı ayrıca canlı yayın onayı verdikten sonra Vercel `Require Log In` kapatılacak ve public/admin uçları ile Firebase isteği olmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
 
@@ -73,6 +73,8 @@
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
+- Kullanıcı kararı: Özel alan adı bağlanmadan site herkese açılmayacak; Vercel `Require Log In` koruması o zamana kadar açık kalacak.
+- `davet-sandigi-5ln8ek385-rdvanyazici.vercel.app`, `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9` kimlikli 2026-10-16 tarihli eski Preview dağıtımıdır; güncel yayın adresi olarak kullanılmayacak. Güncel Supabase'te aktif banner kaydı 0'dır; gerçek banner yönetim panelinden eklenip yayımlanacaktır.
 - Faz 15 yasal metinleri için hukukçu onayı kullanıcı tarafından bildirildi; sekiz `legal_*` kayıt uzak Supabase'te aktif ve yönetim panelinden düzenlenebilir.
 - Vercel Production ortamına `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` eklendi; URL tek Supabase ref'i `zdksvgtkeeweufuajugd` ile eşleşiyor ve anahtar publishable türündedir.
 - Vercel'de görünen çok sayıdaki `davet-sandigi-...vercel.app` adresi ayrı proje değil, aynı `davet-sandigi` projesinin Preview geçmişidir; tek canlı Production adresini etkilemez.
