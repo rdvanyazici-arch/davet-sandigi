@@ -2,7 +2,7 @@
 
 ## Güncel faz
 
-- Güncel durum: Faz 15 taslakları, yönetim/public akışı ve yasal yayın için veritabanı koruması yerelde hazırlandı. Faz 14 Production onay kapısı beklemede; Production deploy ve main merge yapılmadı.
+- Güncel durum: Faz 15 taslakları, yönetim/public akışı ve yasal yayın için veritabanı koruması yerelde ve uzak Supabase'te hazırlandı. Faz 14 Production onay kapısı beklemede; Production deploy ve main merge yapılmadı.
 - Aktif faz: Faz 15 — yasal taslaklar hazır, hukuk danışmanı ve işletme teyidi/yayın onayı bekleniyor.
 - Beklenen: Hukuk danışmanı metinleri ve tamamlanacak alanları onaylasın; taslaklar content_sections içinde pasif kalacak. Faz 14 Production için ayrıca Production env değerlerinin eklenmesi ve kullanıcının açık “ONAYLIYORUM” mesajı gereklidir.
 
@@ -23,7 +23,7 @@
 - Faz 12 — Firebase verisini taşıma ve Firebase'i koddan çıkarma: **yerelde tamamlandı — örnek içerikler kullanıcı kararıyla aktarılmadı; runtime temizlendi**
 - Faz 13 — Test, güvenlik ve kabul: **yerelde tamamlandı — test raporu hazır, kullanıcı incelemesi bekleniyor**
 - Faz 14 — GitHub ve Vercel yayını: **feature branch push edildi, Preview READY; Production değişkenleri/onayı bekleniyor; main merge ve production deploy yapılmadı**
-- Faz 15 — Yasal metinler ve son yayın kontrolü: **yerelde taslaklar, content_sections akışı ve DB yayın koruması hazır — hukukçu onayı, gerçek koşullar teyidi ve uzak migration bekliyor; canlı yayın açık**
+- Faz 15 — Yasal metinler ve son yayın kontrolü: **taslaklar, content_sections akışı ve uzak DB yayın koruması hazır — hukukçu onayı ve gerçek koşullar teyidi bekliyor; canlı yayın açık**
 
 ## Tamamlanan fazlar
 
@@ -52,6 +52,7 @@
 - 2026-10-17 — Faz 15: `docs/legal-drafts.md` içinde sekiz adet hukuk danışmanı onay bekleyen taslak hazırlandı (gizlilik, KVKK, localStorage, kanal aktarımı, sipariş, iade/iptal/özel ürün, kargo/teslimat, yorum/görsel izni). Kullanıcının verdiği şahıs işletmesi/unvan, vergi bilgisi, adres, e-posta, kargo ve üretim akışı işlendi; belirsiz adres yazımı, süre türü, başvuru ve hukuki dayanak gibi alanlar açıkça teyide bırakıldı. Admin Yasal Metinler bölümü sekiz ayrı `content_sections` anahtarıyla yönetilecek; kayıtlar pasif taslak olur, hukukçu onayı kutusu olmadan veya marker/placeholder dururken yayın engellenir. Public footer sekiz erişilebilir bağlantı sunar; public modal yalnız `is_active` + `legal_review_approved` içeriği gösterir, diğer durumda yayımlanmamış mesajı verir. Taslaklar DB'ye veya Production'a yüklenmedi.
 - 2026-10-17 — Faz 15 kontrolleri: admin yasal content_sections draft/approval gate, public modal onay gate, sekiz footer link, odak iadesi ve 390 px modal/editor taşma kontrolleri Chromium/WebKit/Firefox'ta geçti; tam Playwright paketleri her motorda **38/38**, Node auth/SEO birim testleri **13/13**. Public DOM testinde hukuk danışmanı marker'ı, `[TAMAMLANACAK]`, “örnek” veya “taslak” metni görünmüyor. Son yayın kontrol listesi `docs/test-report.md` içinde yeniden işaretlendi; hukukçu onaylı metin/gerçek işletme verisi/Production eksikleri nedeniyle ilgili kabul kalemleri AÇIK bırakıldı. Production, Supabase kalıcı veri değişikliği, commit ve push yapılmadı.
 - 2026-10-17 — Faz 15 bağımsız denetiminde mevcut `content_sections_key_check` constraint'inin sekiz `legal_*` anahtarını reddettiği bulundu. `20261017091000_phase_15_legal_content.sql` migration'ı anahtarları ekledi ve taslak/placeholder içeren veya hukukçu onayı işaretlenmemiş yasal metnin DB seviyesinde aktif edilmesini engelledi. Yerel legal pgTAP **8/8**, mevcut sayfa içerik pgTAP **20/20**, Node auth/SEO **13/13** ve DB lint geçti. Uzak dry-run yalnız bu migration'ın beklediğini doğruladı; migration uzak Supabase'e gönderilmedi.
+- 2026-10-17 — Kullanıcı onayıyla Faz 15 migration'ı bağlı `Davet Sandığı` projesine (`zdksvgtkeeweufuajugd`) uygulandı. Yerel/uzak migration geçmişindeki 11 sürüm eşleşiyor; linked DB lint temiz. Salt-okunur uzak sorgu sekiz `legal_*` anahtarının ve `content_sections_legal_publication_check` constraint'inin etkin olduğunu doğruladı. Veri eklenmedi, yasal taslak yayımlanmadı ve Production deploy yapılmadı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -69,7 +70,7 @@
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
 - Faz 15 yasal taslaklarının tamamı “Hukuk danışmanı onayı bekliyor” durumunda; `content_sections` kayıtları hukukçu son metni onaylamadan aktif edilmeyecek. Adresin resmi yazımı/no-daire biçimi, vergi kaydı, iade/ayıp iş akışı ve sürelerin takvim/iş günü niteliği ayrıca doğrulanmalı.
-- Faz 15 migration'ı yalnız yerel Supabase'e uygulandı. Uzak projeye gönderilmeden yönetim paneli `legal_*` kayıtlarını kaydedemez; uzak DB push için ayrıca kullanıcı onayı alınacak.
+- Faz 15 migration'ı uzak Supabase'e uygulandı; yönetim paneli artık sekiz `legal_*` taslağını kaydedebilir. Hukukçu onayı ve gerçek koşullar teyit edilmeden kayıtlar aktif edilmeyecek.
 - Vercel Production ortamında SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY yok; kullanıcı değerleri ekleyip doğrulatana ve açık “ONAYLIYORUM” yazana kadar Production deployment yapılmayacak.
 - Production yayını gerçekleştiği gün kaydedilecek; o tarihten 30 gün sonra “Firebase kapatma kararı” kullanıcıyla tekrar gözden geçirilecek. Production henüz yayınlanmadığından takvim tarihi şu an belirlenmemiştir.
 - Supabase CLI tarayıcı girişi ve `zdksvgtkeeweufuajugd` proje bağlantısı tamamlandı.
