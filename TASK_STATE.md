@@ -111,6 +111,11 @@
 - Eski localStorage render/import/export kodu Faz 12'de `admin-content.js` ve eski admin akışlarından kaldırıldı; güncel panel Supabase modüllerini kullanıyor.
 
 ## Bilinen riskler
+- 2026-10-18 — 768 px tablet header taşması, boş yorum bilgi kutusu ve mobil dokunma alanları düzeltildi. Header 900 px altında mobil düzene geçiyor; boş `#revhead-note` gizleniyor; header ikonları ve ürün filtreleri en az 44 px. Boş içerik bölümleri yönetim panelinden doldurulmak üzere görünür bırakıldı.
+- Footer bağlantıları ek dikey dokunma payı gerektiriyor; bu görev kapsamı dışında bırakıldı.
+- Yayındaki içerik eksikleri: aktif banner ve ürün yok; dört koleksiyonun kapak görselleri yok; Kına, Baby Shower ve Düğün koleksiyonlarına kategori bağlı değil; süreç, neden biz, hikâyemiz, CTA/iletişim, SSS ve müşteri yorumu içerikleri yayımlanmamış. Footer iletişim sütunu boş ve Instagram/WhatsApp eylem bağlantıları görünmüyor. Nişan altında yalnız `Kolonya Tasarımları` kategorisi var ve ürün sayısı 0.
+- Boş içerik bölümleri mobil sayfayı yaklaşık 6.5 bin px yüksekliğe çıkarıyor. Gerçek içerikler girilene kadar boş bölümlerin tamamen gizlenmesi veya daha kompakt gösterilmesi değerlendirilmeli.
+- Boş hikâye bölümünde görünür metni olmayan `h2`, boş CTA bölümünde ise bölüm adı yerine “Henüz yayımlanmış içerik bulunmuyor.” başlığı oluşuyor; içerik girilmeden önce erişilebilir başlık yapısı düzeltilmeli.
 - Fiyat değişikliği bildirimi açık oturumdaki katalog yenilemelerinde çalışır; gizlilik kuralı gereği önceki fiyat localStorage'a yazılmadığından tarayıcı tamamen kapatılıp açıldıktan sonra eski fiyatla karşılaştırma yapılamaz.
 - `scripts/backup-firebase.mjs`, `scripts/backup-firebase-storage.mjs` ve `scripts/firebase-backup-common.mjs` yalnızca açıkça elle çalıştırılan Firebase yedek/geri dönüş araçlarıdır; site HTML'inden yüklenmez, runtime testlerinde çağrılmaz ve uygulama kodunda Firebase istemcisi yoktur.
 - `index.html` içindeki eski statik süreç/neden biz metinleri HTML'de duruyor; çalışma anında yükleniyor durumuyla değiştiriliyor.
@@ -151,6 +156,9 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-18 — Public site genel kontrolü: 320/390/430 px telefon, 768 px tablet ve 1440 px masaüstü; ana sayfa, mobil menü, arama, sepet, sekiz yasal bağlantıdan gizlilik modalı ve Nişan/Kına/Baby Shower/Düğün koleksiyon rotaları incelendi. Telefonlarda `document.scrollWidth = viewport`; konsol hatası/uyarısı yok. 768 px header taşması ve yukarıdaki boş içerik/dokunma alanı eksikleri bulundu. VS Code Playwright kabul koşusu 22. testten sonra ilerleme göstermediği için durduruldu; bu turda tam paket sonucu doğrulanmadı.
+- 2026-10-18 — Kapsamlı mobil düzeltme kontrolü: güncel kaynak yerel sunucuda 320, 390 ve 768 px ölçüldü. Yatay taşma yok (`scrollWidth = viewport`); sepet/header ekran içinde; arama, sepet ve menü düğmeleri 44×44 px; ürün filtreleri 44 px; boş yorum notu görünmüyor; konsol hatası yok. Geçici viewport sıfırlandı.
 
 - 2026-10-17 — Koleksiyon hiyerarşisi pgTAP **9/9**, yasal yayın pgTAP **8/8**, genel RLS pgTAP **28/28**, SEO birim testleri **4/4**: başarılı. Yerel ve uzak DB lint temiz; 13 migration sürümü yerel/uzak eşleşiyor.
 - 2026-10-17 — Public katalog + yönetim kategori/koleksiyon Playwright paketi **27/27** geçti. Koleksiyon kartı → bağlı kategoriler → kategori ürünleri ve “Tümünü Gör” akışı, klavye kullanımı dahil doğrulandı.
