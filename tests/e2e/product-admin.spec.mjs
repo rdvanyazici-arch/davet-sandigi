@@ -5,7 +5,8 @@ function installFakeSupabase() {
     categories: [{ id: 1, name: 'Kolonya Şişeleri', code_prefix: 'KOL', is_active: true, sort_order: 0 }],
     collections: [{ id: 1, name: 'Nişan', is_active: true, sort_order: 0 }],
     media_assets: [{ id: 1, storage_path: 'products/test.webp', alt_text: 'Ürün ana görseli', original_name: 'test.webp', status: 'active', archived_at: null, usage_type: 'product', created_at: new Date().toISOString() }],
-    products: [], product_drafts: [], product_images: [], product_collections: []
+    products: [], product_drafts: [], product_images: [], product_collections: [],
+    adminProfile: { user_id: '7590fe38-46b1-47dd-bd17-b83a0212e87c', display_name: 'Test Owner', role: 'owner', is_active: true }
   };
   let productSequence = 1;
   let draftSequence = 1;
@@ -30,25 +31,34 @@ function installFakeSupabase() {
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
     not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); return this; }
     in(column, values) { this.filters.push(row => values.map(String).includes(String(row[column]))); return this; }
-    or() { return this; }
+    or(expression) {
+      const match = String(expression || '').match(/\.ilike\.%(.*?)%/);
+      if (match) {
+        const search = match[1].toLocaleLowerCase('tr-TR');
+        this.filters.push(row => [row.name, row.sku, row.slug].some(value => String(value || '').toLocaleLowerCase('tr-TR').includes(search)));
+      }
+      return this;
+    }
     order() { return this; }
     range(from, to) { this.rangeValue = [from, to]; return this; }
     maybeSingle() { return this.execute(true); }
     single() { return this.execute(true); }
     then(resolve, reject) { return this.execute(false).then(resolve, reject); }
     async execute(single) {
-      if (this.table === 'admin_profiles') return { data: { user_id: session.user.id, display_name: 'Test Owner', role: 'owner', is_active: true }, error: null };
+      if (this.table === 'admin_profiles') return { data: db.adminProfile, error: null };
       let rows = db[this.table] || [];
+      let insertedRows = null;
       if (this.action === 'update') {
         rows.filter(row => this.filters.every(filter => filter(row))).forEach(row => Object.assign(row, this.payload));
       } else if (this.action === 'insert') {
         const values = Array.isArray(this.payload) ? this.payload : [this.payload];
-        values.forEach(value => rows.push({ ...value }));
+        insertedRows = values.map(value => ({ id: value.id || (Math.max(0, ...rows.map(row => Number(row.id) || 0)) + 1), ...value }));
+        insertedRows.forEach(value => rows.push(value));
       } else if (this.action === 'delete') {
         db[this.table] = rows.filter(row => !this.filters.every(filter => filter(row)));
         rows = db[this.table];
       }
-      let result = rows.filter(row => this.filters.every(filter => filter(row)));
+      let result = insertedRows || rows.filter(row => this.filters.every(filter => filter(row)));
       const count = result.length;
       if (this.table === 'products') result = result.map(decorateProduct);
       if (this.rangeValue) result = result.slice(this.rangeValue[0], this.rangeValue[1] + 1);
@@ -67,7 +77,7 @@ function installFakeSupabase() {
       mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: 'aal2' }, error: null }) }
     },
     from: table => new Query(table),
-    storage: { from: () => ({ getPublicUrl: path => ({ data: { publicUrl: '/assets/images/fallback/nisan-1.webp?path=' + encodeURIComponent(path) } }) }) },
+    storage: { from: () => ({ getPublicUrl: path => ({ data: { publicUrl: '/assets/images/fallback/nisan-1.webp?path=' + encodeURIComponent(path) } }), move: async () => ({ error: null }), remove: async () => ({ error: null }), upload: async () => ({ error: null }) }) },
     rpc(name, args) {
       const run = async () => {
         if (name === 'save_product_draft') {
@@ -92,6 +102,11 @@ function installFakeSupabase() {
           db.product_drafts = db.product_drafts.filter(item => item.id !== draft.id);
           return { data: product.id, error: null };
         }
+        if (name === 'delete_empty_product_draft') {
+          db.product_drafts = db.product_drafts.filter(item => item.product_id !== args.p_product_id);
+          db.products = db.products.filter(item => item.id !== args.p_product_id);
+          return { data: true, error: null };
+        }
         return { data: null, error: new Error('Unknown RPC') };
       };
       return { single: run, then: (resolve, reject) => run().then(resolve, reject) };
@@ -107,7 +122,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(installFakeSupabase);
   await page.goto('/admin.html');
   await expect(page.locator('#admin-panel')).toHaveClass(/show/);
-  await expect(page.locator('#product-list-status')).toContainText('Kayıt bulunamadı');
+  await expect(page.locator('#product-list-status')).toContainText('0 filtreli sonuç');
 });
 
 test('ürün ekleme, düzenleme, yayınlama ve arşivleme akışı', async ({ page }) => {
@@ -131,10 +146,118 @@ test('ürün ekleme, düzenleme, yayınlama ve arşivleme akışı', async ({ pa
   await expect(page.locator('.product-admin-row')).toContainText('Yayında');
   await expect.poll(() => page.evaluate(() => window.__visitorProducts().map(item => item.name))).toEqual(['İnci Detaylı Nişan Kolonyası']);
 
-  page.once('dialog', dialog => dialog.accept());
   await page.click('[data-product-archive="1"]');
+  await page.click('[data-dialog-confirm]');
   await expect(page.locator('.product-admin-row')).toContainText('Arşiv');
   await expect.poll(() => page.evaluate(() => window.__visitorProducts().length)).toBe(0);
+  await page.click('[data-product-restore="1"]');
+  await expect(page.locator('.product-admin-row')).toContainText('Yayında değil');
+});
+
+test('boş taslağı yalnız owner görür ve güvenli RPC ile siler', async ({ page }) => {
+  await page.click('[data-view="products"]');
+  await page.evaluate(async () => {
+    window.__PW_DB.products.push({ id: 50, name: null, slug: null, sku: null, is_active: false, archived_at: null, product_images: [] });
+    window.__PW_DB.product_drafts.push({ id: 50, product_id: 50, payload: { name: '', sku: '', images: [] }, updated_at: new Date().toISOString() });
+    await productInitialize(true);
+  });
+  await expect(page.locator('[data-product-delete-draft="50"]')).toBeVisible();
+  await page.click('[data-product-delete-draft="50"]');
+  await page.click('[data-dialog-confirm]');
+  await expect(page.locator('[data-product-delete-draft="50"]')).toHaveCount(0);
+  await expect(page.locator('#admin-count')).toHaveText('0 ürün');
+});
+
+test('editör owner eylemlerini görmez ve sayaç filtreden bağımsız kalır', async ({ page }) => {
+  await page.click('[data-view="products"]');
+  await page.evaluate(async () => {
+    window.adminAuthProfile.role = 'editor';
+    window.__PW_DB.products.push({ id: 60, name: null, slug: null, sku: null, is_active: false, archived_at: null, product_images: [] });
+    window.__PW_DB.product_drafts.push({ id: 60, product_id: 60, payload: { name: '', sku: '', images: [] }, updated_at: new Date().toISOString() });
+    await productInitialize(true);
+  });
+  await expect(page.locator('[data-product-delete-draft="60"]')).toHaveCount(0);
+  await expect(page.locator('#admin-count')).toHaveText('1 ürün');
+  await page.fill('#admin-search', 'eşleşmeyen');
+  await expect(page.locator('#product-list-status')).toContainText('0 filtreli sonuç');
+  await expect(page.locator('#admin-count')).toHaveText('1 ürün');
+});
+
+test('ortak dialog odağı tutar, Esc ile kapanır ve odağı geri verir', async ({ page }) => {
+  await page.click('[data-view="products"]');
+  await page.evaluate(() => {
+    window.__PW_DB.products.push({ id: 70, name: 'Test', slug: 'test', sku: 'TEST', is_active: true, archived_at: null, updated_at: new Date().toISOString() });
+  });
+  await page.evaluate(() => productInitialize(true));
+  const trigger = page.locator('[data-product-archive="70"]');
+  await trigger.focus();
+  await trigger.click();
+  await expect(page.locator('[role="dialog"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('medya listesi yükleme bayrağından bağımsız yenilenir ve arşiv sonrası güncellenir', async ({ page }) => {
+  await page.click('[data-view="media"]');
+  await page.evaluate(async () => {
+    window.__PW_DB.media_assets.push({ id: 8, storage_path: 'products/8/test.webp', original_name: 'new.webp', alt_text: 'Yeni görsel', usage_type: 'product', status: 'active', archived_at: null, width: 800, height: 1000, file_size: 1000, mime_type: 'image/webp', created_at: new Date().toISOString() });
+    mediaState.uploading = true;
+    await renderMediaLibrary();
+  });
+  await expect(page.locator('.media-card').filter({ hasText: 'new.webp' })).toBeVisible();
+  await page.click('[data-media-archive="8"]');
+  await page.click('[data-dialog-confirm]');
+  await page.selectOption('#media-filter', 'archived');
+  await expect(page.locator('.media-card').filter({ hasText: 'new.webp' })).toContainText('Arşiv');
+});
+
+test('görsel yükleme ve değiştirme sonrası kütüphane yenilenir', async ({ page }) => {
+  await page.click('[data-view="media"]');
+  await page.evaluate(async () => {
+    const selected = { original: { name: 'yeni.png' }, blob: new Blob(['image'], { type: 'image/webp' }), hash: 'a'.repeat(64), width: 800, height: 1000 };
+    mediaState.selected = selected;
+    document.querySelector('#media-alt').value = 'Yeni ürün görseli';
+    await mediaUploadSelected();
+  });
+  await expect(page.locator('.media-card').filter({ hasText: 'yeni.png' })).toBeVisible();
+  const uploadedId = await page.evaluate(() => Math.max(...window.__PW_DB.media_assets.map(item => item.id)));
+  await page.evaluate(async id => {
+    mediaState.replaceId = id;
+    mediaState.selected = { original: { name: 'degisen.png' }, blob: new Blob(['replacement'], { type: 'image/webp' }), hash: 'b'.repeat(64), width: 900, height: 1100 };
+    document.querySelector('#media-alt').value = 'Değiştirilen görsel';
+    await mediaUploadSelected();
+  }, uploadedId);
+  await expect(page.locator('.media-card').filter({ hasText: 'degisen.png' })).toBeVisible();
+});
+
+test('hata çevirileri güvenli Türkçe mesaj ve teknik ayrıntı üretir', async ({ page }) => {
+  const errors = await page.evaluate(() => ({
+    sku: window.__adminUiTest.errorInfo({ code: '23505', message: 'duplicate key products_sku_key' }),
+    slug: window.__adminUiTest.errorInfo({ code: '23505', message: 'duplicate key products_slug_key' }),
+    permission: window.__adminUiTest.errorInfo({ code: '42501', message: 'permission denied' }),
+    network: window.__adminUiTest.errorInfo(new Error('Failed to fetch')),
+    primary: window.__adminUiTest.errorInfo(new Error('Active products require one active primary image.')),
+    unknown: window.__adminUiTest.errorInfo(new Error('opaque database detail'))
+  }));
+  expect(errors.sku.message).toBe('Bu SKU başka bir üründe kullanılıyor.');
+  expect(errors.slug.message).toContain('slug');
+  expect(errors.permission.message).toContain('yetkiniz');
+  expect(errors.network.message).toContain('Ağ');
+  expect(errors.primary.message).toContain('ana görsel');
+  expect(errors.unknown.technical).toBe('opaque database detail');
+});
+
+test('mobil menü erişilebilir biçimde açılır, odağı tutar ve Esc ile kapanır', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#admin-menu-open')).toBeVisible();
+  await page.click('#admin-menu-open');
+  await expect(page.locator('#admin-side')).toHaveClass(/open/);
+  await expect(page.locator('#admin-menu-close')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#admin-side')).not.toHaveClass(/open/);
+  await expect(page.locator('#admin-menu-open')).toBeFocused();
+  await expect(page.locator('[data-view="dashboard"]')).toHaveAttribute('aria-current', 'page');
 });
 
 test('Türkçe karakterlerden güvenli slug üretir ve önizleme olmadan kaydetmez', async ({ page }) => {

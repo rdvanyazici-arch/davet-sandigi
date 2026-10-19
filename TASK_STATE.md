@@ -57,6 +57,7 @@
 - 2026-10-17 — Koleksiyon → kategori → ürün hiyerarşisi tamamlandı. `category_collections` RLS tablosu, yönetim panelinde çoklu koleksiyon bağlantısı, public koleksiyon/kategori sayfaları, “Tümünü Gör” akışı ve SEO/sitemap rotaları eklendi. Nişan, Kına, Baby Shower ve Düğün koleksiyonları ile Nişan'a bağlı Kolonya Tasarımları kategorisi uzak Supabase'te oluşturuldu.
 - 2026-10-17 — Advisor'daki `site_settings_public` security-definer görünüm bulgusu `security_invoker=true` ve sütun bazlı erişimle giderildi. Auth leaked-password protection ayarı Production öncesi dashboard'da yeniden kontrol edilecek.
 - 2026-10-17 — Değişiklikler `73fa79b` (`feat: add collection hierarchy and publish legal content`) commit'iyle `refactor/faz-2-yapi` branch'ine push edildi. Vercel Preview `davet-sandigi-445d22gnn-rdvanyazici.vercel.app` target=preview ve READY; Production deploy yapılmadı.
+- 2026-10-18 — Yönetim paneli güvenilirlik ve erişilebilirlik düzeltmeleri tamamlandı: görsel liste/yükleme bayrakları ayrıldı; tüm native alert/confirm kullanımları erişilebilir ortak dialog/toast katmanına taşındı; veritabanı hataları Türkçeleştirildi; ürün arşivden çıkarma ve owner-only boş taslak silme eklendi; toplam kayıt sayacı, rol bazlı düğmeler, önizleme odak yönetimi ve mobil menü düzeltildi. `media_assets.created_by` ile `file_hash` anon erişimine kapatıldı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -73,6 +74,8 @@
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
+- `20261018075733_admin_draft_delete_and_media_column_security.sql` migration'ı yalnız yerel Supabase'e uygulandı; uzak Supabase'e gönderilmesi ayrıca kullanıcı onayı gerektirir.
+- Tamamen boş, hiç yayımlanmamış ürün taslağının owner + AAL2 ile kalıcı silinmesi arşivleme kuralının dar bakım istisnasıdır. Anlamlı içeriği veya yayın geçmişi olan ürünler arşivlenmeye devam eder.
 - Kullanıcı kararı: Özel alan adı bağlanmadan site herkese açılmayacak; Vercel `Require Log In` koruması o zamana kadar açık kalacak.
 - `davet-sandigi-5ln8ek385-rdvanyazici.vercel.app`, `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9` kimlikli 2026-10-16 tarihli eski Preview dağıtımıdır; güncel yayın adresi olarak kullanılmayacak. Güncel Supabase'te aktif banner kaydı 0'dır; gerçek banner yönetim panelinden eklenip yayımlanacaktır.
 - Faz 15 yasal metinleri için hukukçu onayı kullanıcı tarafından bildirildi; sekiz `legal_*` kayıt uzak Supabase'te aktif ve yönetim panelinden düzenlenebilir.
@@ -111,6 +114,9 @@
 - Eski localStorage render/import/export kodu Faz 12'de `admin-content.js` ve eski admin akışlarından kaldırıldı; güncel panel Supabase modüllerini kullanıyor.
 
 ## Bilinen riskler
+- Kontrol listesi — `category_collections` yönetim panelinde kategori formundaki koleksiyon seçimleriyle yönetiliyor.
+- Kontrol listesi — `is_maintenance_mode` yönetim panelinden değiştirilebiliyor ancak public sitede bakım modu davranışı uygulanmıyor; ayrı görev olarak ele alınmalı.
+- Kontrol listesi — Yasal Metinler ekranı düzenlenebilir. `admin-content.js` içindeki yer tutucu, daha sonra yüklenen `admin-pages.js` tarafından gerçek `content_sections` editörüyle geçersiz kılınıyor; çift tanım teknik borç olarak kaldı.
 - 2026-10-18 — 768 px tablet header taşması, boş yorum bilgi kutusu ve mobil dokunma alanları düzeltildi. Header 900 px altında mobil düzene geçiyor; boş `#revhead-note` gizleniyor; header ikonları ve ürün filtreleri en az 44 px. Boş içerik bölümleri yönetim panelinden doldurulmak üzere görünür bırakıldı.
 - Footer bağlantıları ek dikey dokunma payı gerektiriyor; bu görev kapsamı dışında bırakıldı.
 - Yayındaki içerik eksikleri: aktif banner ve ürün yok; dört koleksiyonun kapak görselleri yok; Kına, Baby Shower ve Düğün koleksiyonlarına kategori bağlı değil; süreç, neden biz, hikâyemiz, CTA/iletişim, SSS ve müşteri yorumu içerikleri yayımlanmamış. Footer iletişim sütunu boş ve Instagram/WhatsApp eylem bağlantıları görünmüyor. Nişan altında yalnız `Kolonya Tasarımları` kategorisi var ve ürün sayısı 0.
@@ -156,6 +162,10 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-18 — Yönetim paneli hedef Playwright testleri VS Code terminalinde: ürün/görsel/dialog/mobil menü **10/10**, kategori-koleksiyon-ayarlar **3/3**, sayfa içerikleri **8/8** başarılı.
+- 2026-10-18 — Yerel Supabase: genel RLS **30/30**, ürün RLS **20/20**; `private,public` şema lint sonucu temiz. Anon kullanıcının `media_assets.created_by` ve `file_hash` sütunlarını okuyamadığı doğrulandı.
+- 2026-10-18 — Admin auth **9/9**, SEO **4/4**, değişen JavaScript sözdizimi, native `alert/confirm` taraması ve `git diff --check`: başarılı.
 
 - 2026-10-18 — Public site genel kontrolü: 320/390/430 px telefon, 768 px tablet ve 1440 px masaüstü; ana sayfa, mobil menü, arama, sepet, sekiz yasal bağlantıdan gizlilik modalı ve Nişan/Kına/Baby Shower/Düğün koleksiyon rotaları incelendi. Telefonlarda `document.scrollWidth = viewport`; konsol hatası/uyarısı yok. 768 px header taşması ve yukarıdaki boş içerik/dokunma alanı eksikleri bulundu. VS Code Playwright kabul koşusu 22. testten sonra ilerleme göstermediği için durduruldu; bu turda tam paket sonucu doğrulanmadı.
 - 2026-10-18 — Kapsamlı mobil düzeltme kontrolü: güncel kaynak yerel sunucuda 320, 390 ve 768 px ölçüldü. Yatay taşma yok (`scrollWidth = viewport`); sepet/header ekran içinde; arama, sepet ve menü düğmeleri 44×44 px; ürün filtreleri 44 px; boş yorum notu görünmüyor; konsol hatası yok. Geçici viewport sıfırlandı.
@@ -305,7 +315,7 @@
 
 ## Sonraki adım
 
-- Değişiklikleri `refactor/faz-2-yapi` branch'inde commit/push et; Vercel Preview sonucunu doğrula.
+- Değişiklikleri gözden geçirip commit et. Uzak Supabase migration push'u ve Production işlemleri ayrıca kullanıcı onayı bekliyor.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

@@ -3,7 +3,7 @@ var pagesState={client:null,promise:null,assets:[],banners:[],sections:{},faqs:[
 var PAGES_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
 
 function pagesEsc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
-function pagesError(error){return(error&&error.message)?error.message:String(error||'Bilinmeyen hata');}
+function pagesError(error){return adminErrorText(error);}
 function pagesClient(){
  return new Promise(function(resolve,reject){
   if(pagesState.client){resolve(pagesState.client);return;}
@@ -79,16 +79,11 @@ function pagesPreviewMarkup(kind,p){
  return'';
 }
 function pagesPreview(kind,payload,onApprove){
- var modal=el('div','taxonomy-preview-modal'),opener=document.activeElement;
- modal.innerHTML='<div class="taxonomy-preview-dialog" role="dialog" aria-modal="true" aria-label="İçerik önizlemesi"><button class="pm-close" type="button" aria-label="Önizlemeyi kapat">✕</button><h2>Mobil ve Masaüstü Önizleme</h2><div class="product-preview-modes"><button class="a-btn primary" data-pg-mode="desktop" type="button">Masaüstü</button><button class="a-btn" data-pg-mode="mobile" type="button">Mobil</button></div><div class="pg-canvas desktop">'+pagesPreviewMarkup(kind,payload)+'</div><button class="admin-save" data-pg-approve type="button">Önizlemeyi Onayla</button></div>';
- document.body.appendChild(modal);
+ var controller=adminOpenDialog({overlayClass:'taxonomy-preview-modal',dialogClass:'taxonomy-preview-dialog',labelledBy:'pages-preview-title',html:'<button class="pm-close" type="button" aria-label="Önizlemeyi kapat">✕</button><h2 id="pages-preview-title">Mobil ve Masaüstü Önizleme</h2><div class="product-preview-modes"><button class="a-btn primary" data-pg-mode="desktop" type="button">Masaüstü</button><button class="a-btn" data-pg-mode="mobile" type="button">Mobil</button></div><div class="pg-canvas desktop">'+pagesPreviewMarkup(kind,payload)+'</div><button class="admin-save" data-pg-approve type="button">Önizlemeyi Onayla</button>'}),modal=controller.root;
  var canvas=modal.querySelector('.pg-canvas');
  $all('[data-pg-mode]',modal).forEach(function(button){button.onclick=function(){$all('[data-pg-mode]',modal).forEach(function(item){item.classList.toggle('primary',item===button);});canvas.className='pg-canvas '+button.dataset.pgMode;};});
- function close(){document.removeEventListener('keydown',onKey);modal.remove();if(opener&&opener.focus)opener.focus();}
- function onKey(event){if(event.key==='Escape')close();}
- document.addEventListener('keydown',onKey);
- modal.querySelector('.pm-close').onclick=close;modal.onclick=function(event){if(event.target===modal)close();};
- modal.querySelector('[data-pg-approve]').onclick=function(){onApprove();close();};modal.querySelector('.pm-close').focus();
+ modal.querySelector('.pm-close').onclick=function(){controller.close(false);};
+ modal.querySelector('[data-pg-approve]').onclick=function(){onApprove();controller.close(true);};
 }
 
 /* ---- shared preview/approve/save wiring ---- */
@@ -195,12 +190,12 @@ function pagesDrawList(name){
 }
 async function pagesSetLive(name,id,value){
  var cfg=PAGES_MODULES[name];
- if(!value&&!confirm('Kayıt yayından kaldırılsın mı? Ziyaretçiler artık görmeyecek; kayıt silinmez.'))return;
+ if(!value&&!(await confirmDialog({title:'Yayından kaldır',message:'Ziyaretçiler bu kaydı artık görmeyecek; kayıt silinmeyecek.',confirmText:'Yayından Kaldır'})))return;
  try{
   var client=await pagesClient(),patch={};patch[cfg.liveField]=value;
   var result=await client.from(cfg.table).update(patch).eq('id',id).select('id').single();if(result.error)throw result.error;
   toast(value?'Kayıt yayınlandı.':'Kayıt yayından kaldırıldı.');await pagesLoad(true);pagesDrawList(name);
- }catch(error){alert('İşlem tamamlanamadı: '+pagesError(error));}
+ }catch(error){errorDialog({title:'İşlem tamamlanamadı',error:error});}
 }
 function pagesOpenForm(name,id,formBox){
  var cfg=PAGES_MODULES[name],row=id?cfg.rows().filter(function(item){return Number(item.id)===Number(id);})[0]:null,live=!!(row&&row[cfg.liveField]);
@@ -310,9 +305,9 @@ function pagesDrawSections(box,keys,intro){
  });
 }
 async function pagesSectionSetLive(row,value,done){
- if(!confirm('Bölüm yayından kaldırılsın mı? İçerik silinmez, taslak olarak kalır.'))return;
+ if(!(await confirmDialog({title:'Bölümü yayından kaldır',message:'İçerik silinmeyecek, taslak olarak kalacak.',confirmText:'Yayından Kaldır'})))return;
  try{var client=await pagesClient(),result=await client.from('content_sections').update({is_active:value}).eq('id',row.id).select('*').single();if(result.error)throw result.error;pagesState.sections[row.section_key]=result.data;toast('Bölüm yayından kaldırıldı.');done();}
- catch(error){alert('İşlem tamamlanamadı: '+pagesError(error));}
+ catch(error){errorDialog({title:'İşlem tamamlanamadı',error:error});}
 }
 
 function renderBannerAdmin(){pagesRenderList('banner');}

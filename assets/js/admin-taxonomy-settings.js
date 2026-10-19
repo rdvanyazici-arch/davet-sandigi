@@ -7,7 +7,7 @@ function taxonomyClient(){
   startSupabaseClient(function(client,error){if(error||!client)reject(new Error(error||'Supabase bağlantısı kurulamadı.'));else{taxonomySettingsState.client=client;resolve(client);}});
  });
 }
-function taxonomyError(error){return(error&&error.message)?error.message:String(error||'Bilinmeyen hata');}
+function taxonomyError(error){return adminErrorText(error);}
 function taxonomySlug(value){return String(value||'').toLocaleLowerCase('tr-TR').replace(/ı/g,'i').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,90);}
 function taxonomyAttr(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
 function taxonomySignature(payload){return JSON.stringify(payload);}
@@ -58,7 +58,7 @@ async function taxonomyRefresh(){
 }
 async function taxonomyUpdate(table,id,payload,success){
  try{var client=await taxonomyClient(),result=await client.from(table).update(payload).eq('id',id).select('id').single();if(result.error)throw result.error;toast(success);await taxonomyRefresh();}
- catch(error){alert('İşlem tamamlanamadı: '+taxonomyError(error));}
+ catch(error){errorDialog({title:'İşlem tamamlanamadı',error:error});}
 }
 
 function renderCatAdmin(){
@@ -74,7 +74,7 @@ function categoryDrawList(){
  list.innerHTML=rows.map(function(row){var count=taxonomySettingsState.categoryCounts[row.id]||0,linked=taxonomySettingsState.categoryCollections.filter(function(item){return Number(item.category_id)===Number(row.id);}).length,status=row.archived_at?'Arşiv':row.is_active?'Aktif':'Pasif';return'<article class="arow taxonomy-row"><div class="ai"><b>'+esc(row.name||'İsimsiz kategori')+'</b><small>'+esc(row.slug||'Slug yok')+' · '+linked+' koleksiyon · '+count+' bağlı ürün · Sıra '+row.sort_order+'</small><span class="badge '+(row.is_active&&!row.archived_at?'feat':'hid')+'">'+status+'</span></div><div class="taxonomy-actions"><button class="a-btn" data-category-edit="'+row.id+'" type="button">Düzenle</button>'+(row.archived_at?'<button class="a-btn" data-category-restore="'+row.id+'" type="button">Arşivden Çıkar</button>':'<button class="a-btn" data-category-toggle="'+row.id+'" type="button">'+(row.is_active?'Pasife Al':'Aktifleştir')+'</button><button class="a-btn media-danger" data-category-archive="'+row.id+'" type="button">Arşivle</button>')+'</div></article>';}).join('');
  $all('[data-category-edit]',list).forEach(function(button){button.onclick=function(){categoryOpenForm(Number(button.dataset.categoryEdit));};});
  $all('[data-category-toggle]',list).forEach(function(button){button.onclick=function(){var row=rows.find(function(item){return Number(item.id)===Number(button.dataset.categoryToggle);});taxonomyUpdate('categories',row.id,{is_active:!row.is_active},row.is_active?'Kategori pasife alındı.':'Kategori aktifleştirildi.');};});
- $all('[data-category-archive]',list).forEach(function(button){button.onclick=function(){var id=Number(button.dataset.categoryArchive),count=taxonomySettingsState.categoryCounts[id]||0;if(!confirm('Kategori arşivlensin mi? '+count+' ürün bağlı kalacak; kategori ziyaretçilere görünmeyecek.'))return;taxonomyUpdate('categories',id,{is_active:false,archived_at:new Date().toISOString()},'Kategori arşivlendi.');};});
+ $all('[data-category-archive]',list).forEach(function(button){button.onclick=async function(){var id=Number(button.dataset.categoryArchive),count=taxonomySettingsState.categoryCounts[id]||0;if(!(await confirmDialog({title:'Kategoriyi arşivle',message:count+' ürün bağlı kalacak; kategori ziyaretçilere görünmeyecek.',confirmText:'Arşivle'})))return;taxonomyUpdate('categories',id,{is_active:false,archived_at:new Date().toISOString()},'Kategori arşivlendi.');};});
  $all('[data-category-restore]',list).forEach(function(button){button.onclick=function(){taxonomyUpdate('categories',Number(button.dataset.categoryRestore),{is_active:false,archived_at:null},'Kategori arşivden çıkarıldı.');};});
 }
 function categoryOpenForm(id){
@@ -104,7 +104,7 @@ function collectionDrawList(){
  list.innerHTML=rows.map(function(row){var count=taxonomySettingsState.collectionCounts[row.id]||0,asset=taxonomyAsset(row.cover_media_id),url=taxonomyAssetUrl(asset),status=row.archived_at?'Arşiv':row.is_active?'Aktif':'Pasif';return'<article class="arow taxonomy-row">'+(url?'<img src="'+taxonomyAttr(url)+'" alt="'+taxonomyAttr(asset.alt_text||row.name)+'">':'<div class="taxonomy-image-placeholder">Kapak yok</div>')+'<div class="ai"><b>'+esc(row.name)+'</b><small>'+esc(row.slug)+' · '+count+' bağlı ürün · Sıra '+row.sort_order+'</small><span class="badge '+(row.is_active&&!row.archived_at?'feat':'hid')+'">'+status+'</span></div><div class="taxonomy-actions"><button class="a-btn" data-collection-edit="'+row.id+'" type="button">Düzenle</button>'+(row.archived_at?'<button class="a-btn" data-collection-restore="'+row.id+'" type="button">Arşivden Çıkar</button>':'<button class="a-btn" data-collection-toggle="'+row.id+'" type="button">'+(row.is_active?'Pasife Al':'Aktifleştir')+'</button><button class="a-btn media-danger" data-collection-archive="'+row.id+'" type="button">Arşivle</button>')+'</div></article>';}).join('');
  $all('[data-collection-edit]',list).forEach(function(button){button.onclick=function(){collectionOpenForm(Number(button.dataset.collectionEdit));};});
  $all('[data-collection-toggle]',list).forEach(function(button){button.onclick=function(){var row=rows.find(function(item){return Number(item.id)===Number(button.dataset.collectionToggle);});taxonomyUpdate('collections',row.id,{is_active:!row.is_active},row.is_active?'Koleksiyon pasife alındı.':'Koleksiyon aktifleştirildi.');};});
- $all('[data-collection-archive]',list).forEach(function(button){button.onclick=function(){var id=Number(button.dataset.collectionArchive),count=taxonomySettingsState.collectionCounts[id]||0;if(!confirm('Koleksiyon arşivlensin mi? '+count+' ürün bağlantısı korunacak; koleksiyon ziyaretçilere görünmeyecek.'))return;taxonomyUpdate('collections',id,{is_active:false,archived_at:new Date().toISOString()},'Koleksiyon arşivlendi.');};});
+ $all('[data-collection-archive]',list).forEach(function(button){button.onclick=async function(){var id=Number(button.dataset.collectionArchive),count=taxonomySettingsState.collectionCounts[id]||0;if(!(await confirmDialog({title:'Koleksiyonu arşivle',message:count+' ürün bağlantısı korunacak; koleksiyon ziyaretçilere görünmeyecek.',confirmText:'Arşivle'})))return;taxonomyUpdate('collections',id,{is_active:false,archived_at:new Date().toISOString()},'Koleksiyon arşivlendi.');};});
  $all('[data-collection-restore]',list).forEach(function(button){button.onclick=function(){taxonomyUpdate('collections',Number(button.dataset.collectionRestore),{is_active:false,archived_at:null},'Koleksiyon arşivden çıkarıldı.');};});
 }
 function collectionOpenForm(id){

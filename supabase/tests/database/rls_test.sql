@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(30);
 
 select is(
   (
@@ -66,6 +66,16 @@ select is(
 select ok(
   not has_table_privilege('anon', 'public.admin_profiles', 'SELECT'),
   'anon cannot read admin_profiles'
+);
+
+select ok(
+  not has_column_privilege('anon', 'public.media_assets', 'created_by', 'SELECT'),
+  'anon cannot read media_assets.created_by'
+);
+
+select ok(
+  not has_column_privilege('anon', 'public.media_assets', 'file_hash', 'SELECT'),
+  'anon cannot read media_assets.file_hash'
 );
 
 select ok(

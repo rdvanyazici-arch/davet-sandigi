@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(20);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -16,6 +16,19 @@ insert into auth.users (
 
 insert into public.admin_profiles (user_id, display_name, role, is_active)
 values ('77777777-7777-7777-7777-777777777777', 'Product Owner', 'owner', true);
+
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at
+) values (
+  '77777777-7777-7777-7777-777777777778',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'product-editor@example.test', '',
+  now(), now(), now()
+);
+
+insert into public.admin_profiles (user_id, display_name, role, is_active)
+values ('77777777-7777-7777-7777-777777777778', 'Product Editor', 'editor', true);
 
 insert into public.categories (id, slug, name, code_prefix, sort_order, is_active)
 overriding system value
@@ -113,6 +126,50 @@ select is(
   (select name from public.products where id = (select product_id from saved_draft)),
   'Taslak Ürün',
   'failed publication preserves the current live product'
+);
+
+create temporary table empty_draft as
+select * from public.save_product_draft(
+  null,
+  '{"name":"","slug":"","sku":"","category_id":"","price":"","is_price_visible":true,"is_quote_only":false,"min_quantity":1,"quantity_step":1,"is_featured":false,"sort_order":0,"collection_ids":[],"images":[]}'::jsonb
+);
+
+select lives_ok(
+  format('select public.delete_empty_product_draft(%s)', (select product_id from empty_draft)),
+  'owner can permanently delete a never-published empty draft'
+);
+
+select is(
+  (select count(*) from public.products where id = (select product_id from empty_draft)),
+  0::bigint,
+  'empty draft product row is removed'
+);
+
+select set_config('request.jwt.claims', '{"sub":"77777777-7777-7777-7777-777777777778","aal":"aal1","role":"authenticated"}', true);
+
+select throws_ok(
+  $$select public.delete_empty_product_draft(0)$$,
+  '42501',
+  null,
+  'editor cannot permanently delete an empty draft'
+);
+
+select set_config('request.jwt.claims', '{"sub":"77777777-7777-7777-7777-777777777777","aal":"aal1","role":"authenticated"}', true);
+
+select throws_ok(
+  $$select public.delete_empty_product_draft(0)$$,
+  '42501',
+  null,
+  'owner without AAL2 cannot delete an empty draft'
+);
+
+select set_config('request.jwt.claims', '{"sub":"77777777-7777-7777-7777-777777777777","aal":"aal2","role":"authenticated"}', true);
+
+select throws_ok(
+  format('select public.delete_empty_product_draft(%s)', (select product_id from saved_draft)),
+  '23514',
+  null,
+  'published or meaningful product cannot use empty-draft deletion'
 );
 
 update public.products

@@ -75,8 +75,8 @@ test('kategori ekler, bağlı ürün sayısını gösterir ve arşivler', async 
   await page.click('#category-save');
   await expect(page.locator('#category-list')).toContainText('Çiçekli Hediyeler');
 
-  page.once('dialog', dialog => dialog.accept());
   await page.click('[data-category-archive="1"]');
+  await page.click('[data-dialog-confirm]');
   await expect(page.locator('#category-list')).toContainText('Arşiv');
   await expect.poll(() => page.evaluate(() => window.__visitorCategories().length)).toBe(0);
 });

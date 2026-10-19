@@ -113,7 +113,7 @@ test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullan
   await expect(dashboard).toContainText('Henüz güncelleme yok.');
 
   await page.click('[data-view="products"]');
-  await expect(page.locator('#product-list-status')).toContainText('Kayıt bulunamadı');
+  await expect(page.locator('#product-list-status')).toContainText('0 filtreli sonuç.');
   await page.click('[data-view="categories"]');
   await expect(page.locator('#category-list')).toContainText('Henüz kategori yok.');
   await page.click('[data-view="collections"]');
@@ -137,7 +137,7 @@ test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullan
   await expect(page.locator('#settings-whatsapp')).toBeVisible();
 
   const urls=pageRequests.get(page),hosts=new Set(urls.filter(url=>/^https?:/.test(url)).map(url=>new URL(url).host));
-  expect([...hosts]).toEqual(['127.0.0.1:4175']);
+  expect([...hosts]).toEqual([new URL(page.url()).host]);
   expect(urls.some(url=>/firebase|firestore|firebasejs|googleapis|gstatic/i.test(url))).toBe(false);
   expect(pageErrors.get(page)).toEqual([]);
   expect(pageConsoleErrors.get(page)).toEqual([]);
@@ -147,14 +147,18 @@ test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister',
   await page.click('[data-view="media"]');
   await expect(page.locator('#media-library-status')).toContainText('3 görsel bulundu.');
   await expect(page.locator('[data-media-archive="2"]')).toBeVisible();
-  page.once('dialog', dialog => dialog.accept());
   await page.click('[data-media-archive="2"]');
+  await expect(page.getByRole('dialog', { name: 'Görseli arşivle' })).toBeVisible();
+  await page.click('[data-dialog-confirm]');
   await expect(page.locator('#media-library-status')).toContainText('3 görsel bulundu.');
   await expect(page.locator('[data-media-delete="2"]')).toBeVisible();
   expect(await page.evaluate(() => window.__PW_STORAGE_MOVES)).toEqual([{ from: 'story/b.webp', to: 'archive/story/b.webp' }]);
 
-  page.on('dialog', dialog => dialog.accept());
   await page.click('[data-media-delete="2"]');
+  await expect(page.getByRole('dialog', { name: 'Kalıcı silme' })).toBeVisible();
+  await page.click('[data-dialog-confirm]');
+  await expect(page.getByRole('dialog', { name: 'Son onay' })).toBeVisible();
+  await page.click('[data-dialog-confirm]');
   await expect(page.locator('#media-library-status')).toContainText('2 görsel bulundu.');
   expect(await page.evaluate(() => window.__PW_STORAGE_REMOVES)).toEqual(['archive/story/b.webp']);
   expect(await page.evaluate(() => window.__PW_DB.media_assets.some(asset => asset.id === 2))).toBe(false);
@@ -258,8 +262,9 @@ test('yorum izin teyidi olmadan yayınlanamaz', async ({ page }) => {
   await expect(page.locator('#reviews-admin [data-pg-list]')).toContainText('Yayında');
   expect(await page.evaluate(() => window.__PW_DB.testimonials[0].rating)).toBe(4);
 
-  page.once('dialog', dialog => dialog.accept());
   await page.click('#reviews-admin [data-pg-off]');
+  await expect(page.getByRole('dialog', { name: 'Yayından kaldır' })).toBeVisible();
+  await page.click('[data-dialog-confirm]');
   await expect(page.locator('#reviews-admin [data-pg-list]')).toContainText('Taslak');
 });
 
