@@ -13,13 +13,16 @@ function installFakeSupabase() {
   const session = { user: { id: '7590fe38-46b1-47dd-bd17-b83a0212e87c' }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
 
   class Query {
-    constructor(table) { this.table = table; this.action = 'select'; this.filters = []; this.payload = null; }
-    select() { return this; }
+    constructor(table) { this.table = table; this.action = 'select'; this.filters = []; this.payload = null; this.count=false; this.rangeValue=null; }
+    select(_columns, options={}) { this.count=options.count==='exact'; return this; }
     insert(payload) { this.action = 'insert'; this.payload = payload; return this; }
     delete() { this.action = 'delete'; return this; }
     update(payload) { this.action = 'update'; this.payload = payload; return this; }
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
+    in(column, values) { this.filters.push(row => values.map(String).includes(String(row[column]))); return this; }
+    or(expression) { const match=String(expression).match(/\.ilike\.%(.*?)%/); if(match){const search=match[1].toLocaleLowerCase('tr-TR');this.filters.push(row=>[row.original_name,row.alt_text].some(value=>String(value||'').toLocaleLowerCase('tr-TR').includes(search)));} return this; }
+    range(from,to) { this.rangeValue=[from,to]; return this; }
     order() { return this; }
     single() { return this.execute(true); }
     maybeSingle() { return this.execute(true); }
@@ -33,8 +36,9 @@ function installFakeSupabase() {
       });
       if (this.action === 'update') rows.filter(row => this.filters.every(filter => filter(row))).forEach(row => Object.assign(row, this.payload));
       if (this.action === 'delete') db[this.table] = rows = rows.filter(row => !this.filters.every(filter => filter(row)));
-      const result = rows.filter(row => this.filters.every(filter => filter(row)));
-      return { data: single ? (result[0] || null) : result, error: null };
+      let result = rows.filter(row => this.filters.every(filter => filter(row))),count=result.length;
+      if(this.rangeValue)result=result.slice(this.rangeValue[0],this.rangeValue[1]+1);
+      return { data: single ? (result[0] || null) : result, count:this.count?count:null, error: null };
     }
   }
 
@@ -85,7 +89,9 @@ test('koleksiyon kapak önizlemesiyle kaydeder', async ({ page }) => {
   await page.click('[data-view="collections"]');
   await page.click('#collection-new');
   await page.fill('#collection-name', 'Nişan Koleksiyonu');
-  await page.selectOption('#collection-cover', '1');
+  await page.click('[data-picker-field="collection-cover"]');
+  await page.click('[data-picker-id="1"]');
+  await page.click('[data-picker-apply]');
   await page.check('#collection-active');
   await expect(page.locator('#collection-cover-preview img')).toBeVisible();
   await page.click('#collection-preview');

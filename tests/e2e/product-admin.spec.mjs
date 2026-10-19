@@ -29,13 +29,15 @@ function installFakeSupabase() {
     delete() { this.action = 'delete'; return this; }
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
-    not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); return this; }
+    not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); if (operator === 'in') { const values=String(value).replace(/[()]/g,'').split(','); this.filters.push(row => !values.includes(String(row[column]))); } return this; }
+    ilike(column, pattern) { const search=String(pattern).replaceAll('%','').toLocaleLowerCase('tr-TR'); this.filters.push(row => String(row[column]||'').toLocaleLowerCase('tr-TR').includes(search)); return this; }
+    limit(value) { this.rangeValue=[0,Math.max(0,Number(value)-1)]; return this; }
     in(column, values) { this.filters.push(row => values.map(String).includes(String(row[column]))); return this; }
     or(expression) {
       const match = String(expression || '').match(/\.ilike\.%(.*?)%/);
       if (match) {
         const search = match[1].toLocaleLowerCase('tr-TR');
-        this.filters.push(row => [row.name, row.sku, row.slug].some(value => String(value || '').toLocaleLowerCase('tr-TR').includes(search)));
+        this.filters.push(row => [row.name, row.sku, row.slug, row.original_name, row.alt_text].some(value => String(value || '').toLocaleLowerCase('tr-TR').includes(search)));
       }
       return this;
     }
@@ -128,11 +130,12 @@ test.beforeEach(async ({ page }) => {
 test('ürün ekleme, düzenleme, yayınlama ve arşivleme akışı', async ({ page }) => {
   await page.click('[data-view="add"]');
   await page.fill('#pf-name', 'İnci Detaylı Kolonya');
-  await page.fill('#pf-sku', 'KOL-001');
   await page.selectOption('#pf-category', '1');
+  await expect(page.locator('#pf-sku')).toHaveValue('KOL-001');
   await page.fill('#pf-price', '54.90');
-  await page.selectOption('#pf-media-select', '1');
-  await page.click('#pf-media-add');
+  await page.click('#pf-media-picker');
+  await page.click('[data-picker-id="1"]');
+  await page.click('[data-picker-apply]');
   await page.click('#pf-preview');
   await page.click('[data-preview-approve]');
   await page.click('#pf-draft');
@@ -260,7 +263,7 @@ test('mobil menü erişilebilir biçimde açılır, odağı tutar ve Esc ile kap
   await expect(page.locator('#admin-side [data-view="dashboard"]')).toHaveAttribute('aria-current', 'page');
 });
 
-test('Türkçe karakterlerden güvenli slug üretir ve önizleme olmadan kaydetmez', async ({ page }) => {
+test('Türkçe karakterlerden güvenli slug üretir; taslak önizlemesiz, yayın önizlemeli çalışır', async ({ page }) => {
   await page.click('[data-view="add"]');
   await page.fill('#pf-name', 'Çiçekli Şişe & Özel Ürün');
   await expect(page.locator('#pf-slug')).toHaveValue('cicekli-sise-ozel-urun');
@@ -268,12 +271,49 @@ test('Türkçe karakterlerden güvenli slug üretir ve önizleme olmadan kaydetm
   await page.selectOption('#pf-category', '1');
   await page.fill('#pf-price', '10');
   await page.click('#pf-draft');
-  await expect(page.locator('#product-form-status')).toContainText('önce güncel önizlemeyi');
+  await expect(page.locator('#admin-rows')).toContainText('Taslak değişiklik');
+  await page.click('[data-product-edit="1"]');
+  await page.click('#pf-media-picker');
+  await page.click('[data-picker-id="1"]');
+  await page.click('[data-picker-apply]');
+  await page.click('#pf-publish');
+  await expect(page.locator('#product-form-status')).toContainText('Yayınlamadan önce');
+});
+
+test('seçilen ürünleri onayla toplu arşivler', async ({ page }) => {
+  await page.evaluate(async () => {
+    window.__PW_DB.products.push(
+      { id: 81, name: 'Toplu Bir', slug: 'toplu-bir', sku: 'TOP-001', category_id: 1, price: 10, is_active: false, archived_at: null, updated_at: new Date().toISOString() },
+      { id: 82, name: 'Toplu İki', slug: 'toplu-iki', sku: 'TOP-002', category_id: 1, price: 10, is_active: false, archived_at: null, updated_at: new Date().toISOString() }
+    );
+    await productInitialize(true);
+  });
+  await page.click('[data-view="products"]');
+  await page.click('[data-product-select="81"]');
+  await page.click('[data-product-select="82"]');
+  await page.selectOption('#product-bulk-action', 'archive');
+  await page.click('#product-bulk-apply');
+  await expect(page.getByRole('dialog')).toContainText('2 ürün');
+  await page.click('[data-dialog-confirm]');
+  await page.click('[data-product-status="archived"]');
+  await expect(page.locator('.product-admin-row')).toHaveCount(2);
+});
+
+test('kaydedilmemiş ürün değişikliğinde sekme geçişini korur', async ({ page }) => {
+  await page.click('[data-view="add"]');
+  await page.fill('#pf-name', 'Kaydedilmemiş ürün');
+  await page.click('[data-view="media"]');
+  await expect(page.getByRole('dialog')).toContainText('Kaydedilmemiş');
+  await page.click('[data-dialog-cancel]');
+  await expect(page.locator('#view-add')).toHaveClass(/show/);
+  await page.click('[data-view="media"]');
+  await page.click('[data-dialog-confirm]');
+  await expect(page.locator('#view-media')).toHaveClass(/show/);
 });
 
 test('ürün listesini sayfalar ve durum/koleksiyon filtrelerini uygular', async ({ page }) => {
   await page.evaluate(async () => {
-    for (let index = 1; index <= 9; index += 1) {
+    for (let index = 1; index <= 11; index += 1) {
       window.__PW_DB.products.push({
         id: index,
         name: `Test Ürün ${index}`,
@@ -296,12 +336,12 @@ test('ürün listesini sayfalar ve durum/koleksiyon filtrelerini uygular', async
     await productInitialize(true);
   });
   await page.click('[data-view="products"]');
-  await expect(page.locator('.product-admin-row')).toHaveCount(8);
+  await expect(page.locator('.product-admin-row')).toHaveCount(10);
   await page.click('#product-next');
   await expect(page.locator('.product-admin-row')).toHaveCount(1);
-  await page.selectOption('#admin-status-filter', 'active');
-  await expect(page.locator('.product-admin-row')).toHaveCount(5);
-  await page.selectOption('#admin-status-filter', '');
+  await page.click('[data-product-status="active"]');
+  await expect(page.locator('.product-admin-row')).toHaveCount(6);
+  await page.click('[data-product-status=""]');
   await page.selectOption('#admin-collection-filter', '1');
   await expect(page.locator('.product-admin-row')).toHaveCount(1);
 });

@@ -37,15 +37,17 @@ function installFakeSupabase(options={}) {
   }
 
   class Query {
-    constructor(table) { this.table = table; this.action = 'select'; this.filters = []; this.payload = null; }
-    select() { return this; }
+    constructor(table) { this.table = table; this.action = 'select'; this.filters = []; this.payload = null; this.count=false; this.rangeValue=null; }
+    select(_columns, options={}) { this.count=options.count==='exact'; return this; }
     insert(payload) { this.action = 'insert'; this.payload = payload; return this; }
     update(payload) { this.action = 'update'; this.payload = payload; return this; }
     delete() { this.action = 'delete'; return this; }
     eq(column, value) { this.filters.push(row => String(row[column]) === String(value)); return this; }
     is(column, value) { this.filters.push(row => row[column] === value); return this; }
     not(column, operator, value) { if (operator === 'is') this.filters.push(row => row[column] !== value); return this; }
-    range() { return this; }
+    in(column, values) { this.filters.push(row => values.map(String).includes(String(row[column]))); return this; }
+    or(expression) { const match=String(expression).match(/\.ilike\.%(.*?)%/); if(match){const search=match[1].toLocaleLowerCase('tr-TR');this.filters.push(row=>[row.original_name,row.alt_text].some(value=>String(value||'').toLocaleLowerCase('tr-TR').includes(search)));} return this; }
+    range(from,to) { this.rangeValue=[from,to]; return this; }
     order() { return this; }
     single() { return this.execute(true); }
     maybeSingle() { return this.execute(true); }
@@ -67,7 +69,8 @@ function installFakeSupabase(options={}) {
         result = matched;
       }
       result = result.map(row => decorate(this.table, row));
-      return { data: single ? (result[0] || null) : result, error: null };
+      const count=result.length;if(this.rangeValue)result=result.slice(this.rangeValue[0],this.rangeValue[1]+1);
+      return { data: single ? (result[0] || null) : result, count:this.count?count:null, error: null };
     }
   }
 
@@ -150,7 +153,9 @@ test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister',
   await page.click('[data-media-archive="2"]');
   await expect(page.getByRole('dialog', { name: 'Görseli arşivle' })).toBeVisible();
   await page.click('[data-dialog-confirm]');
-  await expect(page.locator('#media-library-status')).toContainText('3 görsel bulundu.');
+  await expect(page.locator('#media-library-status')).toContainText('2 görsel bulundu.');
+  await page.selectOption('#media-filter', 'archived');
+  await expect(page.locator('#media-library-status')).toContainText('1 görsel bulundu.');
   await expect(page.locator('[data-media-delete="2"]')).toBeVisible();
   expect(await page.evaluate(() => window.__PW_STORAGE_MOVES)).toEqual([{ from: 'story/b.webp', to: 'archive/story/b.webp' }]);
 
@@ -159,7 +164,7 @@ test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister',
   await page.click('[data-dialog-confirm]');
   await expect(page.getByRole('dialog', { name: 'Son onay' })).toBeVisible();
   await page.click('[data-dialog-confirm]');
-  await expect(page.locator('#media-library-status')).toContainText('2 görsel bulundu.');
+  await expect(page.locator('#media-library-status')).toContainText('0 görsel bulundu.');
   expect(await page.evaluate(() => window.__PW_STORAGE_REMOVES)).toEqual(['archive/story/b.webp']);
   expect(await page.evaluate(() => window.__PW_DB.media_assets.some(asset => asset.id === 2))).toBe(false);
 });
@@ -233,7 +238,9 @@ test('banner zamanlama, görsel zorunluluğu ve önizlemeyle yayınlanır', asyn
   await approvePreview(page);
   await page.click('#banner-admin [data-pg-publish]');
   await expect(page.locator('#banner-admin [data-pg-status]')).toContainText('hero görseli zorunludur');
-  await page.selectOption('#banner-admin [data-f="media_id"]', '3');
+  await page.click('#banner-admin [data-media-picker]');
+  await page.click('[data-picker-id="3"]');
+  await page.click('[data-picker-apply]');
   await page.click('#banner-admin [data-pg-preview]');
   await expect(page.locator('.pg-hero img')).toBeVisible();
   await approvePreview(page);
@@ -314,7 +321,7 @@ test('mobil görünümde yatay taşma yok', async ({ page }) => {
 
 test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taşmaz', async ({ page }) => {
   test.setTimeout(120_000);
-  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261019-prompt2$/);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261019-prompt3$/);
   await expect(page.locator('#admin-user-name')).toHaveText('Test Owner');
   await expect(page.locator('#admin-user-role')).toHaveText('Owner');
   await expect(page.locator('#admin-user-mfa')).toHaveText('MFA doğrulandı');

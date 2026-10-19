@@ -4,6 +4,17 @@ function toast(message){
  node.textContent=message;node.classList.add('show');clearTimeout(node._timer);
  node._timer=setTimeout(function(){node.classList.remove('show');},1900);
 }
+var ADMIN_DRAFT_REQUIRES_PREVIEW=false;
+var adminDirtySources={};
+function adminSetDirty(source,value){if(!source)return;if(value)adminDirtySources[source]=true;else delete adminDirtySources[source];}
+function adminHasDirty(){return Object.keys(adminDirtySources).length>0;}
+function adminClearDirty(source){if(source)delete adminDirtySources[source];else adminDirtySources={};}
+async function adminConfirmLeave(){
+ if(!adminHasDirty())return true;
+ var approved=await confirmDialog({title:'Kaydedilmemiş değişiklikler',message:'Kaydedilmemiş değişiklikler kaybolacak. Bu ekrandan ayrılmak istiyor musunuz?',confirmText:'Değişiklikleri Sil',danger:true});
+ if(approved)adminClearDirty();return approved;
+}
+window.addEventListener('beforeunload',function(event){if(!adminHasDirty())return;event.preventDefault();event.returnValue='';});
 function adminIsOwner(){return!!(window.adminAuthProfile&&window.adminAuthProfile.role==='owner');}
 function adminRawError(error){return String(error&&error.message||error&&error.details||error||'').trim();}
 function adminErrorInfo(error){
@@ -40,4 +51,14 @@ function adminInitMobileMenu(){
  document.addEventListener('keydown',function(event){if(event.key==='Escape'&&side.classList.contains('open')){event.preventDefault();setOpen(false);}else if(event.key==='Tab'&&side.classList.contains('open')&&matchMedia('(max-width:760px)').matches){var nodes=adminFocusable(side),first=nodes[0],last=nodes[nodes.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  window.adminCloseMobileMenu=function(){if(side.classList.contains('open'))setOpen(false);};
 }
-window.__adminUiTest={errorInfo:adminErrorInfo,isOwner:adminIsOwner};
+function adminEnableSortable(container,selector,onCommit){
+ if(!container)return;var dragged=null;
+ $all(selector,container).forEach(function(item){
+  item.draggable=true;
+  item.addEventListener('dragstart',function(event){dragged=item;item.classList.add('admin-dragging');event.dataTransfer.effectAllowed='move';});
+  item.addEventListener('dragend',function(){item.classList.remove('admin-dragging');dragged=null;});
+  item.addEventListener('dragover',function(event){if(!dragged||dragged===item)return;event.preventDefault();var rect=item.getBoundingClientRect(),after=event.clientY>rect.top+rect.height/2;container.insertBefore(dragged,after?item.nextSibling:item);});
+  item.addEventListener('drop',function(event){event.preventDefault();if(onCommit)onCommit($all(selector,container));});
+ });
+}
+window.__adminUiTest={errorInfo:adminErrorInfo,isOwner:adminIsOwner,hasDirty:adminHasDirty};

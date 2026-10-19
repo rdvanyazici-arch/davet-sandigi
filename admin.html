@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Davet Sandığı — Yönetim</title>
-<link rel="stylesheet" href="assets/css/admin.css?v=20261019-prompt2">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261019-prompt3">
 </head>
 <body>
 <!-- ===== ADMIN ===== -->
@@ -125,7 +125,7 @@
               <option value="testimonial">Yorum</option><option value="campaign">Kampanya</option>
               <option value="brand">Marka</option>
             </select></label>
-            <label id="media-related-wrap">Bağlı kayıt kimliği <span id="media-related-optional"></span><input type="number" min="1" step="1" id="media-related-id" placeholder="Örn. 12"></label>
+            <label id="media-related-wrap">Bağlı kayıt <span id="media-related-optional"></span><select id="media-related-id"><option value="">Kayıt seçin</option></select></label>
             <label>Alt metin<input type="text" id="media-alt" maxlength="300" placeholder="Görseli kısa ve doğal biçimde açıklayın"></label>
           </div>
           <div id="media-validation" class="media-validation" role="status" aria-live="polite"></div>
@@ -134,6 +134,7 @@
           <button class="a-btn media-hidden" id="media-replace-cancel" type="button">Değiştirmeyi İptal Et</button>
         </div>
         <div class="admin-toolbar media-toolbar">
+          <label for="media-search">Arama</label><input id="media-search" type="search" placeholder="Dosya adı veya alt metin">
           <label for="media-filter">Filtre</label>
           <select id="media-filter">
             <option value="all">Tümü</option><option value="used">Kullanılan</option>
@@ -145,6 +146,7 @@
         </div>
         <div id="media-library-status" class="admin-note" role="status" aria-live="polite"></div>
         <div id="media-library" class="media-library"></div>
+        <div id="media-pagination" class="product-pagination"></div>
       </div>
       <div class="admin-view" id="view-collections"><h1>Koleksiyonlar (Etkinlik)</h1><div id="coll-admin"></div></div>
       <div class="admin-view" id="view-categories"><h1>Kategoriler (Ürün Türü)</h1><div id="cat-admin"></div></div>
@@ -173,6 +175,7 @@
 <script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/admin-ui.js?v=20261018-1"></script>
 <script src="assets/js/admin-media.js"></script>
+<script src="assets/js/admin-media-picker.js?v=20261019-1"></script>
 <script src="assets/js/admin-auth.js?v=20261014-3"></script>
 <script src="assets/js/admin-products.js?v=20261014-1"></script>
 <script src="assets/js/admin-content.js"></script>
