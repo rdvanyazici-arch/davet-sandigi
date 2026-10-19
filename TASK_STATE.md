@@ -3,7 +3,7 @@
 ## Güncel faz
 
 - Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
-- Aktif faz: Faz 15 tamamlandı; katalog hiyerarşisi ek geliştirmesi tamamlandı.
+- Aktif faz: Faz 15 tamamlandı; yönetim paneli yenileme çalışmasının Prompt 2 adımı tamamlandı ve kullanıcı incelemesi bekleniyor.
 - Beklenen: Özel alan adı bağlanacak; kullanıcı ayrıca canlı yayın onayı verdikten sonra Vercel `Require Log In` kapatılacak ve public/admin uçları ile Firebase isteği olmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
@@ -58,6 +58,8 @@
 - 2026-10-17 — Advisor'daki `site_settings_public` security-definer görünüm bulgusu `security_invoker=true` ve sütun bazlı erişimle giderildi. Auth leaked-password protection ayarı Production öncesi dashboard'da yeniden kontrol edilecek.
 - 2026-10-17 — Değişiklikler `73fa79b` (`feat: add collection hierarchy and publish legal content`) commit'iyle `refactor/faz-2-yapi` branch'ine push edildi. Vercel Preview `davet-sandigi-445d22gnn-rdvanyazici.vercel.app` target=preview ve READY; Production deploy yapılmadı.
 - 2026-10-18 — Yönetim paneli güvenilirlik ve erişilebilirlik düzeltmeleri tamamlandı: görsel liste/yükleme bayrakları ayrıldı; tüm native alert/confirm kullanımları erişilebilir ortak dialog/toast katmanına taşındı; veritabanı hataları Türkçeleştirildi; ürün arşivden çıkarma ve owner-only boş taslak silme eklendi; toplam kayıt sayacı, rol bazlı düğmeler, önizleme odak yönetimi ve mobil menü düzeltildi. `media_assets.created_by` ile `file_hash` anon erişimine kapatıldı.
+- 2026-10-19 — Yönetim paneli Prompt 2 tamamlandı: site CSS bağımlılığı kaldırıldı; panel renkleri, yerel fontları, kart/form/düğme dili, 1240 px içerik düzeni, gruplanmış menü, arama ve yeni ürün üst çubuğu, rol/MFA kullanıcı kartı, yer tutucu ekranlar, mobil çekmece ve beş sekmeli alt çubuk eklendi. Veri akışı, RLS ve public site görünümü değiştirilmedi.
+- 2026-10-19 — Yerel tarayıcının eski `admin.css` dosyasını önbellekten kullanması nedeniyle panelin stilsiz görünmesi giderildi; stylesheet sürüm parametresi güncellendi ve güncel 376 CSS kuralının yüklendiği tarayıcıda doğrulandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -163,6 +165,8 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-19 — Yönetim paneli Prompt 2: dört genişlik ve tüm panel ekranları **2/2**, sayfa içerikleri **10/10**, ürün/görsel/mobil menü **10/10**, kategori-koleksiyon-ayarlar **3/3**, admin auth **9/9**, public görsel referans **1/1** başarılı. 1440/1024/768/390 px panel görüntüleri ile 1440/390 px public referansları `docs/admin-baseline/` altında oluşturuldu; yatay taşma, konsol/sayfa hatası ve WCAG AA metin kontrastı kontrolü geçti.
+- 2026-10-19 — Değişen JavaScript/test dosyalarında `node --check` ve `git diff --check`: **başarılı**. `index.html` ve `assets/css/site.css` değişmedi.
 - 2026-10-18 — Yönetim paneli hedef Playwright testleri VS Code terminalinde: ürün/görsel/dialog/mobil menü **10/10**, kategori-koleksiyon-ayarlar **3/3**, sayfa içerikleri **8/8** başarılı.
 - 2026-10-18 — Yerel Supabase: genel RLS **30/30**, ürün RLS **20/20**; `private,public` şema lint sonucu temiz. Anon kullanıcının `media_assets.created_by` ve `file_hash` sütunlarını okuyamadığı doğrulandı.
 - 2026-10-18 — Admin auth **9/9**, SEO **4/4**, değişen JavaScript sözdizimi, native `alert/confirm` taraması ve `git diff --check`: başarılı.
@@ -315,7 +319,7 @@
 
 ## Sonraki adım
 
-- Değişiklikleri gözden geçirip commit et. Uzak Supabase migration push'u ve Production işlemleri ayrıca kullanıcı onayı bekliyor.
+- Prompt 2 yönetim paneli ekranlarını kullanıcıyla gözden geçir; onaydan sonra commit et ve sonraki promptu bekle. Uzak Supabase migration push'u ve Production işlemleri ayrıca kullanıcı onayı bekliyor.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

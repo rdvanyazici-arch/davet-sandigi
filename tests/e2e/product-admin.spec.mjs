@@ -257,7 +257,7 @@ test('mobil menü erişilebilir biçimde açılır, odağı tutar ve Esc ile kap
   await page.keyboard.press('Escape');
   await expect(page.locator('#admin-side')).not.toHaveClass(/open/);
   await expect(page.locator('#admin-menu-open')).toBeFocused();
-  await expect(page.locator('[data-view="dashboard"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#admin-side [data-view="dashboard"]')).toHaveAttribute('aria-current', 'page');
 });
 
 test('Türkçe karakterlerden güvenli slug üretir ve önizleme olmadan kaydetmez', async ({ page }) => {

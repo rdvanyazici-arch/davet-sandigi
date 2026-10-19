@@ -1,6 +1,7 @@
 var adminAuthClient=null;
 var adminAuthProfile=null;
 var adminMfaFactorId='';
+var adminMfaLevel='aal1';
 var adminRefreshTimer=null;
 var adminAuthRun=0;
 
@@ -32,8 +33,17 @@ function showAdminPanel(profile){
  var panel=$('#admin-panel');
  if(panel)panel.classList.add('show');
  var count=$('#admin-count');
- if(count)count.textContent=(profile.display_name||profile.role)+' · '+(profile.role==='owner'?'Owner':'Editor');
+ if(count)count.textContent='0 ürün';
+ renderAdminIdentity(profile);
  if(typeof renderAdmin==='function')renderAdmin();
+}
+
+function renderAdminIdentity(profile){
+ var name=profile.display_name||'Yönetici',role=profile.role==='owner'?'Owner':'Editor';
+ var nameNode=$('#admin-user-name'),roleNode=$('#admin-user-role'),mfaNode=$('#admin-user-mfa'),avatar=$('#admin-user-avatar');
+ if(nameNode)nameNode.textContent=name;if(roleNode)roleNode.textContent=role;
+ if(mfaNode)mfaNode.textContent=adminMfaLevel==='aal2'?'MFA doğrulandı':profile.role==='owner'?'MFA gerekli':'MFA isteğe bağlı';
+ if(avatar)avatar.textContent=name.trim().charAt(0).toLocaleUpperCase('tr-TR')||'Y';
 }
 
 function openAdmin(){
@@ -95,7 +105,8 @@ function showMfaChallenge(factorId){
 async function requireOwnerMfa(){
  var level=await adminAuthClient.auth.mfa.getAuthenticatorAssuranceLevel();
  if(level.error)throw level.error;
- if(level.data.currentLevel==='aal2')return true;
+ adminMfaLevel=level.data.currentLevel||'aal1';
+ if(adminMfaLevel==='aal2')return true;
  var factors=await adminAuthClient.auth.mfa.listFactors();
  if(factors.error)throw factors.error;
  var verified=(factors.data.totp||[]).filter(function(factor){return factor.status==='verified';});
@@ -139,6 +150,7 @@ async function authorizeAdminSession(session){
   return false;
  }
  adminAuthProfile=profile;
+ adminMfaLevel='aal1';
  scheduleSessionRefresh(session);
  if(profile.role==='owner'){
   try{

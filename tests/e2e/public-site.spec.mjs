@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 const PROJECT_HOST = 'zdksvgtkeeweufuajugd.supabase.co';
 const ORIGIN = `https://${PROJECT_HOST}`;
-const LOCAL_HOST = '127.0.0.1:4175';
+const LOCAL_HOST = new URL(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4175').host;
 const PRICE_ERROR = 'Fiyat bilgisi şu an yüklenemedi';
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,OPTIONS' };
 const PNG = readFileSync('assets/images/brand/favicon-32.png');
@@ -771,4 +771,18 @@ test('Faz 9: localStorage yazılamazsa sepet bellekte çalışır', async ({ pag
   await expect(page.locator('#cart-status')).toContainText('bellekte tutulacak');
   await page.click('#open-cart');
   await expect(page.locator('#drawer-body')).toContainText('Kolonya Ürünü');
+});
+
+test('Prompt 2 public site masaüstü ve mobil görsel referansı değişmeden alınır', async ({ page }) => {
+  const log = await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, `${width}px public`).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: `docs/admin-baseline/public-${width}.png`, animations: 'disabled' });
+  }
+  expect(log.consoleErrors).toEqual([]);
+  expect(log.pageErrors).toEqual([]);
 });

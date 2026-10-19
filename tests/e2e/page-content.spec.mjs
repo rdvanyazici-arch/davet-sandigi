@@ -311,3 +311,47 @@ test('mobil görünümde yatay taşma yok', async ({ page }) => {
     expect(overflow, view).toBeLessThanOrEqual(1);
   }
 });
+
+test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taşmaz', async ({ page }) => {
+  test.setTimeout(120_000);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261019-prompt2$/);
+  await expect(page.locator('#admin-user-name')).toHaveText('Test Owner');
+  await expect(page.locator('#admin-user-role')).toHaveText('Owner');
+  await expect(page.locator('#admin-user-mfa')).toHaveText('MFA doğrulandı');
+
+  await page.fill('#admin-global-search', 'KOL-001');
+  await page.press('#admin-global-search', 'Enter');
+  await expect(page.locator('#view-products')).toHaveClass(/show/);
+  await expect(page.locator('#admin-search')).toHaveValue('KOL-001');
+
+  await page.click('[data-view="analytics"]');
+  await expect(page.locator('#view-analytics')).toContainText('Bu bölüm sonraki adımda eklenecek.');
+  await expect(page.locator('.admin-tabs [data-view="analytics"]')).toHaveAttribute('aria-current', 'page');
+
+  const views = ['dashboard','analytics','reports','products','add','media','collections','categories','banner','home','content','campaign','reviews','faq','legal','settings','admins','history'];
+  for (const width of [1440, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const view of views) {
+      await page.evaluate(name => window.adminOpenView(name), view);
+      await expect(page.locator(`#view-${view}`)).toHaveClass(/show/);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${width}px / ${view}`).toBeLessThanOrEqual(1);
+      await page.screenshot({ path: `docs/admin-baseline/${width}-${view}.png`, animations: 'disabled' });
+    }
+  }
+
+  const hasSiteStylesheet = await page.locator('link[rel="stylesheet"][href*="site.css"]').count();
+  expect(hasSiteStylesheet).toBe(0);
+  expect(pageConsoleErrors.get(page)).toEqual([]);
+  expect(pageErrors.get(page)).toEqual([]);
+});
+
+test('Prompt 2 renk çiftleri WCAG AA metin kontrastını karşılar', async ({ page }) => {
+  const ratios = await page.evaluate(() => {
+    function rgb(hex) { const value = hex.replace('#',''); return [0,2,4].map(index => parseInt(value.slice(index,index+2),16) / 255); }
+    function lum(hex) { return rgb(hex).map(value => value <= .03928 ? value / 12.92 : Math.pow((value + .055) / 1.055, 2.4)).reduce((sum,value,index) => sum + value * [.2126,.7152,.0722][index], 0); }
+    function ratio(a,b) { const values=[lum(a),lum(b)].sort((x,y)=>y-x); return (values[0]+.05)/(values[1]+.05); }
+    return { body: ratio('#14201B','#F3F4F1'), muted: ratio('#5A665F','#FFFFFF'), accent: ratio('#0F5C4D','#FFFFFF'), warning: ratio('#8A5200','#FFF3DC'), danger: ratio('#B3261E','#FDECEA'), success: ratio('#17653F','#E4F4EA') };
+  });
+  Object.entries(ratios).forEach(([name, ratio]) => expect(ratio, name).toBeGreaterThanOrEqual(4.5));
+});

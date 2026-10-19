@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Davet Sandığı — Yönetim</title>
-<link rel="stylesheet" href="assets/css/site.css">
-<link rel="stylesheet" href="assets/css/admin.css">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261019-prompt2">
 </head>
 <body>
 <!-- ===== ADMIN ===== -->
@@ -53,30 +52,56 @@
     <button class="admin-menu-overlay" id="admin-menu-overlay" type="button" aria-label="Menüyü kapat" tabindex="-1"></button>
     <aside class="admin-side" id="admin-side">
       <button class="admin-menu-close" id="admin-menu-close" type="button" aria-label="Menüyü kapat">✕</button>
-      <div class="a-head"><span class="brand-mark admin-brand-mark"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20h28v18H10z"/><path d="M8 14h32v6H8z"/><path d="M24 38V14"/><path d="M24 14s-3-6-7-5a3 3 0 000 6h7M24 14s3-6 7-5a3 3 0 010 6h-7"/><path d="M6 31c-2-2-3-6-2.5-9M42 31c2-2 3-6 2.5-9" opacity=".55"/></svg></span><span class="brand-txt"><strong>Yönetim</strong><span class="count" id="admin-count"></span></span></div>
+      <div class="a-head"><span class="admin-brand-letter" aria-hidden="true">D</span><span class="brand-txt"><strong>Davet Sandığı</strong><small>Yönetim</small><span class="count" id="admin-count"></span></span></div>
       <div class="admin-tabs">
-        <button data-view="dashboard" class="active" aria-current="page">Genel Bakış</button>
-        <button data-view="banner">Banner</button>
-        <button data-view="home">Ana Sayfa</button>
-        <button data-view="products">Ürünler</button>
-        <button data-view="add">＋ Yeni Ürün</button>
-        <button data-view="media">Görsel Kütüphanesi</button>
-        <button data-view="collections">Koleksiyonlar</button>
-        <button data-view="categories">Kategoriler</button>
-        <button data-view="reviews">Sizden Gelenler</button>
-        <button data-view="faq">S.S.S.</button>
-        <button data-view="content">Hikaye & Üst Bant</button>
-        <button data-view="campaign">Kampanya Pop-up</button>
-        <button data-view="legal">Yasal Metinler</button>
-        <button data-view="settings">Site Ayarları</button>
+        <div class="admin-nav-group"><p>Genel</p>
+          <button data-view="dashboard" class="active" aria-current="page"><span>Genel Bakış</span></button>
+          <button data-view="analytics"><span>Analiz</span><small>Yakında</small></button>
+          <button data-view="reports"><span>Raporlar</span><small>Yakında</small></button>
+        </div>
+        <div class="admin-nav-group"><p>Katalog</p>
+          <button data-view="products"><span>Ürünler</span></button>
+          <button data-view="add"><span>Yeni Ürün</span></button>
+          <button data-view="media"><span>Görsel Kütüphanesi</span></button>
+          <button data-view="collections"><span>Koleksiyonlar</span></button>
+          <button data-view="categories"><span>Kategoriler</span></button>
+        </div>
+        <div class="admin-nav-group"><p>Vitrin</p>
+          <button data-view="banner"><span>Banner</span></button>
+          <button data-view="home"><span>Ana Sayfa</span></button>
+          <button data-view="content"><span>Hikâye ve Üst Bant</span></button>
+          <button data-view="campaign"><span>Kampanya Pop-up</span></button>
+          <button data-view="reviews"><span>Yorumlar</span></button>
+          <button data-view="faq"><span>Sıkça Sorulan Sorular</span></button>
+        </div>
+        <div class="admin-nav-group"><p>Sistem</p>
+          <button data-view="legal"><span>Yasal Metinler</span></button>
+          <button data-view="settings"><span>Site Ayarları</span></button>
+          <button data-view="admins"><span>Yöneticiler</span><small>Yakında</small></button>
+          <button data-view="history"><span>Değişiklik Geçmişi</span><small>Yakında</small></button>
+        </div>
       </div>
       <div class="admin-actions">
+        <div class="admin-user-card">
+          <span class="admin-user-avatar" id="admin-user-avatar" aria-hidden="true">Y</span>
+          <div><strong id="admin-user-name">Yönetici</strong><span id="admin-user-role">Rol doğrulanıyor</span><small id="admin-user-mfa">MFA durumu doğrulanıyor</small></div>
+        </div>
         <button id="admin-exit">Siteye Dön</button>
         <button id="admin-logout">Çıkış Yap</button>
       </div>
     </aside>
     <div class="admin-main">
+      <header class="admin-topbar">
+        <form class="admin-global-search" id="admin-global-search-form" role="search">
+          <label class="admin-sr-only" for="admin-global-search">Ürün adı veya SKU ara</label>
+          <span aria-hidden="true">⌕</span>
+          <input id="admin-global-search" type="search" placeholder="Ürün adı veya SKU ara">
+        </form>
+        <button class="admin-primary-action" id="admin-new-product" type="button">＋ Yeni ürün</button>
+      </header>
       <div class="admin-view show" id="view-dashboard"><h1>Genel Bakış</h1><div id="dashboard-admin"></div></div>
+      <div class="admin-view admin-placeholder" id="view-analytics"><span>Yakında</span><h1>Analiz</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
+      <div class="admin-view admin-placeholder" id="view-reports"><span>Yakında</span><h1>Raporlar</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
       <div class="admin-view" id="view-banner"><h1>Banner (Üst Slider)</h1><div class="admin-settings" id="banner-admin"></div></div>
       <div class="admin-view" id="view-home"><h1>Ana Sayfa İçeriği</h1><div class="admin-settings" id="home-admin"></div></div>
       <div class="admin-view" id="view-products">
@@ -129,7 +154,16 @@
       <div class="admin-view" id="view-campaign"><h1>Kampanya Pop-up</h1><div class="admin-settings" id="campaign-admin"></div></div>
       <div class="admin-view" id="view-legal"><h1>Yasal Metinler</h1><div class="admin-settings" id="legal-admin"></div></div>
       <div class="admin-view" id="view-settings"><h1>Site Ayarları</h1><div class="admin-settings" id="settings-form"></div></div>
+      <div class="admin-view admin-placeholder" id="view-admins"><span>Yakında</span><h1>Yöneticiler</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
+      <div class="admin-view admin-placeholder" id="view-history"><span>Yakında</span><h1>Değişiklik Geçmişi</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
     </div>
+    <nav class="admin-bottom-nav" aria-label="Mobil yönetim menüsü">
+      <button data-view="dashboard" class="active" aria-current="page"><span aria-hidden="true">⌂</span>Genel</button>
+      <button data-view="products"><span aria-hidden="true">□</span>Ürünler</button>
+      <button data-view="media"><span aria-hidden="true">▧</span>Görseller</button>
+      <button data-view="analytics"><span aria-hidden="true">⌁</span>Analiz<small>Yakında</small></button>
+      <button data-view="reports"><span aria-hidden="true">≡</span>Raporlar<small>Yakında</small></button>
+    </nav>
   </div>
 </div>
 
