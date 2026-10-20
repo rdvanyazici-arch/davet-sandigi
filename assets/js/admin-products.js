@@ -161,7 +161,7 @@ function productDrawForm(isDuplicate){
   '<fieldset class="product-fieldset"><legend>Koleksiyonlar</legend><div class="chk-row">'+productState.collections.map(function(item){return'<label><input type="checkbox" class="pf-collection" value="'+item.id+'"'+((p.collection_ids||[]).map(Number).indexOf(Number(item.id))>-1?' checked':'')+'>'+esc(item.name)+'</label>';}).join('')+'</div></fieldset>'+
   '<fieldset class="product-fieldset"><legend>Ana görsel ve galeri</legend><p class="admin-note">İlk görsel ana görseldir. Sürükleyin veya okları kullanın; alt metinleri doldurun.</p><div id="pf-gallery" class="product-gallery-editor"></div><div class="pf-gadd"><button class="a-btn primary" id="pf-media-picker" type="button">Kütüphaneden Görsel Seç</button><button class="a-btn" id="pf-open-media" type="button">Görsel Kütüphanesi</button></div></fieldset>'+
   '<div class="admin-grid-2"><label>SEO başlığı<input id="pf-seo-title" maxlength="70" value="'+esc(p.seo_title)+'"></label><label>SEO açıklaması<textarea id="pf-seo-description" maxlength="170" rows="2">'+esc(p.seo_description)+'</textarea></label></div>'+
-  '<div class="product-form-actions"><button class="a-btn" id="pf-preview" type="button">Önizlemeyi Göster</button><button class="a-btn primary" id="pf-draft" type="button">Taslak Kaydet</button><button class="admin-save" id="pf-publish" type="button">Önizle ve Yayınla</button><button class="a-btn" id="pf-cancel" type="button">İptal</button></div>';
+  '<div class="product-form-actions"><button class="a-btn" id="pf-preview" type="button">Önizlemeyi Göster</button><button class="a-btn primary" id="pf-draft" type="button">Taslak Kaydet</button><button class="admin-save" id="pf-publish" type="button">Önizle ve Yayınla</button>'+(state.productId?'<button class="a-btn" id="pf-history" type="button">Bu Ürünün Geçmişi</button>':'')+'<button class="a-btn" id="pf-cancel" type="button">İptal</button></div>';
  renderPfGallery();productBindForm();
 }
 
@@ -173,6 +173,7 @@ function productBindForm(){
  $('#pf-media-picker').onclick=function(){adminOpenMediaPicker({usage:'product',multiple:true,selected:pfGallery.map(function(item){return Number(item.media_id);}),onSelect:function(assets){assets.forEach(function(asset){if(!productAsset(asset.id))productState.assets.push(asset);if(!pfGallery.some(function(item){return Number(item.media_id)===Number(asset.id);}))pfGallery.push({media_id:Number(asset.id),alt_text:asset.alt_text||''});});renderPfGallery();productMarkDirty();}});};
  $('#pf-open-media').onclick=function(){switchView('media');renderMediaLibrary();};
  $('#pf-preview').onclick=productPreviewCurrent;$('#pf-draft').onclick=function(){productSaveDraft(false);};$('#pf-publish').onclick=function(){productSaveDraft(true);};$('#pf-cancel').onclick=async function(){if(!(await adminConfirmLeave()))return;editingId=null;switchView('products',{force:true});renderAdminRows();};
+ var history=$('#pf-history');if(history)history.onclick=function(){adminOpenAuditForRecord('products',productState.form.productId);};
 }
 
 function productMarkDirty(){productState.previewSignature='';adminSetDirty('product',true);productSetFormStatus('Taslak kaydedilebilir; yayınlamak için önizlemeyi yeniden açın.',false);}

@@ -77,8 +77,8 @@
         <div class="admin-nav-group"><p>Sistem</p>
           <button data-view="legal"><span>Yasal Metinler</span></button>
           <button data-view="settings"><span>Site Ayarları</span></button>
-          <button data-view="admins"><span>Yöneticiler</span><small>Yakında</small></button>
-          <button data-view="history"><span>Değişiklik Geçmişi</span><small>Yakında</small></button>
+          <button data-view="admins" data-owner-only><span>Yöneticiler</span></button>
+          <button data-view="history"><span>Değişiklik Geçmişi</span></button>
         </div>
       </div>
       <div class="admin-actions">
@@ -156,8 +156,8 @@
       <div class="admin-view" id="view-campaign"><h1>Kampanya Pop-up</h1><div class="admin-settings" id="campaign-admin"></div></div>
       <div class="admin-view" id="view-legal"><h1>Yasal Metinler</h1><div class="admin-settings" id="legal-admin"></div></div>
       <div class="admin-view" id="view-settings"><h1>Site Ayarları</h1><div class="admin-settings" id="settings-form"></div></div>
-      <div class="admin-view admin-placeholder" id="view-admins"><span>Yakında</span><h1>Yöneticiler</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
-      <div class="admin-view admin-placeholder" id="view-history"><span>Yakında</span><h1>Değişiklik Geçmişi</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
+      <div class="admin-view" id="view-admins"><h1>Yöneticiler</h1><div id="admin-managers"></div></div>
+      <div class="admin-view" id="view-history"><h1>Değişiklik Geçmişi</h1><div id="audit-admin"></div></div>
     </div>
     <nav class="admin-bottom-nav" aria-label="Mobil yönetim menüsü">
       <button data-view="dashboard" class="active" aria-current="page"><span aria-hidden="true">⌂</span>Genel</button>
@@ -178,6 +178,8 @@
 <script src="assets/js/admin-media-picker.js?v=20261019-1"></script>
 <script src="assets/js/admin-auth.js?v=20261014-3"></script>
 <script src="assets/js/admin-products.js?v=20261014-1"></script>
+<script src="assets/js/admin-audit.js?v=20261020-1"></script>
+<script src="assets/js/admin-managers.js?v=20261020-1"></script>
 <script src="assets/js/admin-content.js"></script>
 <script src="assets/js/admin-taxonomy-settings.js?v=20261015-1"></script>
 <script src="assets/js/admin-pages.js?v=20261015-1"></script>

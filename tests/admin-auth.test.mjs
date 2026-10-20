@@ -9,6 +9,9 @@ const configSource=await readFile(new URL('../assets/js/config.js',import.meta.u
 const siteSource=await readFile(new URL('../assets/js/site.js',import.meta.url),'utf8');
 const contentSource=await readFile(new URL('../assets/js/admin-content.js',import.meta.url),'utf8');
 const mediaSource=await readFile(new URL('../assets/js/admin-media.js',import.meta.url),'utf8');
+const auditSource=await readFile(new URL('../assets/js/admin-audit.js',import.meta.url),'utf8');
+const managersSource=await readFile(new URL('../assets/js/admin-managers.js',import.meta.url),'utf8');
+const productsSource=await readFile(new URL('../assets/js/admin-products.js',import.meta.url),'utf8');
 const adminHtml=await readFile(new URL('../admin.html',import.meta.url),'utf8');
 
 function element(){
@@ -148,4 +151,31 @@ test('profil ve panel hataları ayrı mesajlarla güvenli biçimde durur',async(
 
 test('MFA doğrulamasından dönen güncel oturum doğrudan kullanılır',()=>{
  assert.match(source,/verified\.data&&verified\.data\.session/);
+});
+
+test('değişiklik geçmişi açık sütun listesi, filtre ve sayfalama kullanır',()=>{
+ assert.match(auditSource,/\.from\('admin_audit_log'\)/);
+ assert.match(auditSource,/\.select\('id,table_name,row_id,action,actor_id,summary,changes,created_at'/);
+ assert.match(auditSource,/\.range\(/);
+ assert.match(auditSource,/\.eq\('table_name'/);
+ assert.doesNotMatch(auditSource,/\.select\(['"]\*['"]\)/);
+ assert.match(productsSource,/Bu Ürünün Geçmişi/);
+ assert.match(productsSource,/adminOpenAuditForRecord\('products'/);
+});
+
+test('yönetici ekranı owner ve AAL2 koşulunu istemci tarafında da uygular',()=>{
+ assert.match(managersSource,/adminIsOwner\(\)/);
+ assert.match(managersSource,/adminMfaLevel==='aal2'/);
+ assert.match(managersSource,/\.rpc\('set_admin_status'/);
+ assert.match(managersSource,/\.rpc\('add_admin_profile'/);
+ assert.match(adminHtml,/data-owner-only/);
+ assert.doesNotMatch(adminHtml,/data-view="admins"[^>]*data-placeholder/);
+});
+
+test('panel gerçek değişiklik geçmişi ve yöneticiler modüllerini yükler',()=>{
+ assert.match(adminHtml,/id="audit-admin"/);
+ assert.match(adminHtml,/id="admin-managers"/);
+ assert.match(adminHtml,/assets\/js\/admin-audit\.js\?v=/);
+ assert.match(adminHtml,/assets\/js\/admin-managers\.js\?v=/);
+ assert.doesNotMatch(adminHtml,/Değişiklik Geçmişi<[^>]+>Yakında/);
 });

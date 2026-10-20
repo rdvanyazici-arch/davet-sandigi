@@ -3,7 +3,7 @@
 ## Güncel faz
 
 - Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
-- Aktif faz: Faz 15 tamamlandı; yönetim paneli yenileme çalışmasının Prompt 3 adımı tamamlandı ve kullanıcı incelemesi bekleniyor.
+- Aktif faz: Faz 15 tamamlandı; yönetim paneli değişiklik geçmişi, owner yönetici ekranı ve ilgili migration'lar yerel/uzak Supabase'te tamamlandı. Kullanıcı commit işlemini yapacak.
 - Beklenen: Özel alan adı bağlanacak; kullanıcı ayrıca canlı yayın onayı verdikten sonra Vercel `Require Log In` kapatılacak ve public/admin uçları ile Firebase isteği olmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
@@ -61,6 +61,7 @@
 - 2026-10-19 — Yönetim paneli Prompt 2 tamamlandı: site CSS bağımlılığı kaldırıldı; panel renkleri, yerel fontları, kart/form/düğme dili, 1240 px içerik düzeni, gruplanmış menü, arama ve yeni ürün üst çubuğu, rol/MFA kullanıcı kartı, yer tutucu ekranlar, mobil çekmece ve beş sekmeli alt çubuk eklendi. Veri akışı, RLS ve public site görünümü değiştirilmedi.
 - 2026-10-19 — Yerel tarayıcının eski `admin.css` dosyasını önbellekten kullanması nedeniyle panelin stilsiz görünmesi giderildi; stylesheet sürüm parametresi güncellendi ve güncel 376 CSS kuralının yüklendiği tarayıcıda doğrulandı.
 - 2026-10-19 — Yönetim paneli Prompt 3 tamamlandı: ortak görsel seçici ve yükleme sekmesi; görsel kütüphanesinde sunucu taraflı arama/filtre/sayfalama ve kayıt seçimi; ürünlerde durum çipleri, sayfa boyutu, sıralama, satır seçimi, toplu işlemler ve hızlı yayın/öne çıkarma; SKU önerisi; kaydedilmemiş değişiklik koruması ve klavye erişimli sıralama eklendi. Taslak kaydı önizlemesiz, yayınlama önizleme onaylı kalacak şekilde `ADMIN_DRAFT_REQUIRES_PREVIEW=false` tek bayrağıyla uygulandı. Veri akışı/RLS zayıflatılmadı; uzak Supabase ve Production değiştirilmedi.
+- 2026-10-20 — Yönetim paneli değişiklik geçmişi ve yöneticiler ekranı tamamlandı: güvenli alan karşılaştırmalı audit trigger'ları, 180 günlük saklama temizliği, filtreli/sayfalı geçmiş ekranı, ürün geçmişi bağlantısı, owner + MFA AAL2 yönetici profil işlemleri ve son owner koruması eklendi. Auth hesabı oluşturma panel dışında bırakıldı; dört bekleyen güvenlik/audit migration'ı kullanıcı onayıyla uzak Supabase'e uygulandı.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -77,7 +78,7 @@
 - Sayfa yapısı korunacak; tüm içerik alanları yönetim panelinden eklenebilir, düzenlenebilir, yayından kaldırılabilir ve arşivlenebilir olacaktır.
 - Kalıcı silme yerine önce pasife alma/arşivleme uygulanacaktır.
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
-- `20261018075733_admin_draft_delete_and_media_column_security.sql` migration'ı yalnız yerel Supabase'e uygulandı; uzak Supabase'e gönderilmesi ayrıca kullanıcı onayı gerektirir.
+- `20261018075733_admin_draft_delete_and_media_column_security.sql`, `20261020030526_admin_audit_log.sql`, `20261020030527_admin_management_security.sql` ve `20261020102505_admin_audit_lint_fix.sql` migration'ları kullanıcı onayıyla uzak Supabase'e uygulandı.
 - Tamamen boş, hiç yayımlanmamış ürün taslağının owner + AAL2 ile kalıcı silinmesi arşivleme kuralının dar bakım istisnasıdır. Anlamlı içeriği veya yayın geçmişi olan ürünler arşivlenmeye devam eder.
 - Kullanıcı kararı: Özel alan adı bağlanmadan site herkese açılmayacak; Vercel `Require Log In` koruması o zamana kadar açık kalacak.
 - `davet-sandigi-5ln8ek385-rdvanyazici.vercel.app`, `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9` kimlikli 2026-10-16 tarihli eski Preview dağıtımıdır; güncel yayın adresi olarak kullanılmayacak. Güncel Supabase'te aktif banner kaydı 0'dır; gerçek banner yönetim panelinden eklenip yayımlanacaktır.
@@ -117,6 +118,7 @@
 - Eski localStorage render/import/export kodu Faz 12'de `admin-content.js` ve eski admin akışlarından kaldırıldı; güncel panel Supabase modüllerini kullanıyor.
 
 ## Bilinen riskler
+- Audit kayıtlarını 180 günden sonra temizleyen fonksiyon hazırdır ancak zamanlama etkin değildir. Production öncesi `docs/audit-log.md` yönergesiyle ayrı onay sonrası zamanlanmalıdır.
 - Kontrol listesi — `category_collections` yönetim panelinde kategori formundaki koleksiyon seçimleriyle yönetiliyor.
 - Kontrol listesi — `is_maintenance_mode` yönetim panelinden değiştirilebiliyor ancak public sitede bakım modu davranışı uygulanmıyor; ayrı görev olarak ele alınmalı.
 - Kontrol listesi — Yasal Metinler ekranı düzenlenebilir. `admin-content.js` içindeki yer tutucu, daha sonra yüklenen `admin-pages.js` tarafından gerçek `content_sections` editörüyle geçersiz kılınıyor; çift tanım teknik borç olarak kaldı.
@@ -165,6 +167,11 @@
 - Git yedek branch'i: `backup-pre-supabase-20261013`
 
 ## Son çalıştırılan testler ve sonuçları
+
+- 2026-10-20 — Yerel Supabase RLS/audit/yönetici testleri: temel **30/30**, audit **14/14**, yönetici güvenliği **13/13** başarılı. `supabase db lint --local --fail-on warning`: **No schema errors found**.
+- 2026-10-20 — Yönetim auth/statik entegrasyon testleri **12/12**; değişen JavaScript dosyalarında `node --check` ve `package.json` ayrıştırması başarılı.
+- 2026-10-20 — Ürün Playwright paketi çalıştırılmak istendi; Chromium macOS çalışma alanı izni (`MachPortRendezvousServer: Permission denied`) nedeniyle test gövdesi başlamadan 12 senaryo engellendi. Bu bir uygulama testi hatası değil, tarayıcı başlatma kısıtıdır.
+- 2026-10-20 — Uzak Supabase push sonrası dry-run: **Remote database is up to date**. `supabase db lint --linked --fail-on warning`: **No schema errors found**.
 
 - 2026-10-19 — Yönetim paneli Prompt 3 hedef Playwright paketi: ürün/görsel/seçici/toplu işlem/SKU/kaydedilmemiş değişiklik, kategori-koleksiyon-ayarlar ve sayfa içerikleri dahil **25/25 başarılı**. Değişen JavaScript dosyalarında `node --check` ve `git diff --check`: **başarılı**.
 - 2026-10-19 — Yönetim paneli Prompt 2: dört genişlik ve tüm panel ekranları **2/2**, sayfa içerikleri **10/10**, ürün/görsel/mobil menü **10/10**, kategori-koleksiyon-ayarlar **3/3**, admin auth **9/9**, public görsel referans **1/1** başarılı. 1440/1024/768/390 px panel görüntüleri ile 1440/390 px public referansları `docs/admin-baseline/` altında oluşturuldu; yatay taşma, konsol/sayfa hatası ve WCAG AA metin kontrastı kontrolü geçti.
@@ -321,7 +328,7 @@
 
 ## Sonraki adım
 
-- Prompt 2 yönetim paneli ekranlarını kullanıcıyla gözden geçir; onaydan sonra commit et ve sonraki promptu bekle. Uzak Supabase migration push'u ve Production işlemleri ayrıca kullanıcı onayı bekliyor.
+- Kullanıcı değişiklikleri commit edecek. Sonraki prompt gelene kadar yeni faza geçme; Production işlemleri ayrıca kullanıcı onayı bekliyor.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

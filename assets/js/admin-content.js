@@ -5,11 +5,14 @@ function renderLegalAdmin(){
 }
 async function switchView(view,options){
  if(!(options&&options.force)&&!(await adminConfirmLeave()))return false;
+ if(view==='admins'&&(!adminIsOwner()||adminMfaLevel!=='aal2')){errorDialog({title:'Yönetici yetkisi gerekli',message:'Bu bölüm yalnız MFA doğrulaması yapılmış owner tarafından açılabilir.'});return false;}
  $all('[data-view]',document.querySelector('.admin-panel')).forEach(function(button){var selected=button.getAttribute('data-view')===view;button.classList.toggle('active',selected);if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
  $all('.admin-view').forEach(function(node){node.classList.remove('show');});
  var selected=$('#view-'+view);if(selected)selected.classList.add('show');
  if(view==='media'&&typeof renderMediaLibrary==='function')renderMediaLibrary();
  if(view==='dashboard'&&typeof pagesRenderDashboard==='function')pagesRenderDashboard();
+ if(view==='history'&&typeof adminAuditRender==='function')adminAuditRender();
+ if(view==='admins'&&typeof adminManagersRender==='function')adminManagersRender();
  if(typeof window.adminCloseMobileMenu==='function')window.adminCloseMobileMenu();
  return true;
 }

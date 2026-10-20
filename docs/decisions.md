@@ -62,3 +62,14 @@ Bu dosyada gizli anahtar veya veritabanı parolası tutulmaz.
 - Faz 3 sırasında production yapılandırması değiştirilmedi.
 - Supabase veritabanı şeması, RLS, Storage ve Auth ayarları değiştirilmedi.
 - Firebase bağlantısı kaldırılmadı.
+
+## Yönetim değişiklik geçmişi ve yöneticiler
+
+- Değişiklik geçmişi 180 gün saklanır; temizleme fonksiyonu hazırdır ancak zamanlama bilinçli olarak etkinleştirilmemiştir.
+- Ürün taslağı her kayıtta değil, yalnızca yayınlama anında geçmişe yazılır.
+- Açıklama/gövde/JSON gibi büyük alanlar ile e-posta/telefon/WhatsApp değerlerinin eski ve yeni içerikleri geçmişte saklanmaz; yalnızca değişti bilgisi tutulur.
+- Audit kayıtlarını aktif yöneticiler okuyabilir. İstemci rollerine audit ekleme, güncelleme veya silme yetkisi verilmez.
+- Yönetici rolü ve aktiflik değişiklikleri yalnızca owner + MFA AAL2 oturumuyla SECURITY INVOKER RPC üzerinden yapılır.
+- Panel Auth hesabı oluşturmaz ve `service_role` kullanmaz. Mevcut Auth kullanıcısı UUID ile profile bağlanır.
+- Güvenli davet akışı gerekirse ileride ayrı bir Edge Function olarak değerlendirilecektir; bu adımda uygulanmamıştır.
+- `20261018075733_admin_draft_delete_and_media_column_security.sql`, `20261020030526_admin_audit_log.sql`, `20261020030527_admin_management_security.sql` ve `20261020102505_admin_audit_lint_fix.sql` 2026-10-20 tarihinde kullanıcı onayıyla uzak Supabase'e uygulanmıştır.

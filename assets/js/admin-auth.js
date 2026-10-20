@@ -44,6 +44,7 @@ function renderAdminIdentity(profile){
  if(nameNode)nameNode.textContent=name;if(roleNode)roleNode.textContent=role;
  if(mfaNode)mfaNode.textContent=adminMfaLevel==='aal2'?'MFA doğrulandı':profile.role==='owner'?'MFA gerekli':'MFA isteğe bağlı';
  if(avatar)avatar.textContent=name.trim().charAt(0).toLocaleUpperCase('tr-TR')||'Y';
+ if(typeof adminApplyRoleVisibility==='function')adminApplyRoleVisibility();
 }
 
 function openAdmin(){
