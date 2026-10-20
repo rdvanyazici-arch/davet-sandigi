@@ -15,17 +15,27 @@ function installFakeSupabase(options={}) {
     categories: [{ id: 1, name: 'Kolonya', is_active: true, archived_at: null, updated_at: now }],
     collections: [{ id: 1, name: 'Nişan', is_active: true, archived_at: null, updated_at: now }],
     products: [
-      { id: 1, name: 'Görselli Ürün', is_active: true, archived_at: null, updated_at: now },
-      { id: 2, name: 'Görselsiz Ürün', is_active: false, archived_at: null, updated_at: now }
+      { id: 1, name: 'Görselli Ürün', category_id: 1, is_active: true, archived_at: null, updated_at: now },
+      { id: 2, name: 'Görselsiz Ürün', category_id: 1, is_active: true, archived_at: null, updated_at: now }
     ],
     product_images: [{ id: 1, product_id: 1, media_id: 1, is_primary: true, sort_order: 0 }],
-    product_drafts: [{ id: 1, product_id: 2, updated_at: now }],
+    product_drafts: [{
+      id: 1,
+      product_id: 2,
+      updated_at: now,
+      payload: {
+        name: 'Görselsiz Ürün', slug: 'gorselsiz-urun', sku: 'KOL-002', category_id: 1,
+        short_description: '', description: '', price: 100, is_price_visible: true,
+        is_quote_only: false, min_quantity: 25, quantity_step: 25, is_featured: false,
+        sort_order: 2, seo_title: '', seo_description: '', collection_ids: [1], images: []
+      }
+    }],
     media_assets: [
       { id: 1, storage_path: 'products/1/a.webp', original_name: 'urun.webp', alt_text: 'Ürün', usage_type: 'product', status: 'active', archived_at: null, created_at: now },
       { id: 2, storage_path: 'story/b.webp', original_name: 'altsiz.webp', alt_text: '', usage_type: 'story', status: 'active', archived_at: null, created_at: now },
       { id: 3, storage_path: 'banners/c.webp', original_name: 'hero.webp', alt_text: 'Hero görseli', usage_type: 'banner', status: 'active', archived_at: null, created_at: now }
     ],
-    banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: []
+    banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: [{ product_id: 1, collection_id: 1 }, { product_id: 2, collection_id: 1 }]
   };
   const sequences = {};
   const session = { user: { id: '7590fe38-46b1-47dd-bd17-b83a0212e87c' }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
@@ -88,7 +98,30 @@ function installFakeSupabase(options={}) {
       move: async (from, to) => { window.__PW_STORAGE_MOVES.push({ from, to }); return { data: { path: to }, error: null }; },
       remove: async paths => { window.__PW_STORAGE_REMOVES.push(...paths); return { data: paths, error: null }; }
     }) },
-    rpc: () => ({ single: async () => ({ data: null, error: null }) })
+    rpc: name => {
+      const run = async () => {
+        if (name !== 'admin_dashboard_summary') return { data: null, error: null };
+        if (options.empty) return { data: {
+          products: { published: 0, drafts: 0, unpublished: 0, archived: 0, total: 0 },
+          health: { percentage: 100, healthy_active: 0, total_active: 0, issues: {} },
+          recent_changes: [], categories: { total: 0, top: [] }, collections: { total: 0, top: [] }, scheduled_banners: []
+        }, error: null };
+        return { data: {
+          products: { published: 2, drafts: 1, unpublished: 0, archived: 0, total: 2 },
+          health: { percentage: 50, healthy_active: 1, total_active: 2, issues: {
+            missing_primary: { count: 1, records: [{ id: 2, name: 'Görselsiz Ürün' }] },
+            missing_alt: { count: 1, records: [{ id: 2, name: 'altsiz.webp' }] },
+            pending_drafts: { count: 1, records: [{ id: 2, name: 'Görselsiz Ürün' }] },
+            unused_media: { count: 2, records: [{ id: 2, name: 'altsiz.webp' }, { id: 3, name: 'hero.webp' }] },
+            categoryless: { count: 0, records: [] }, missing_price: { count: 0, records: [] }, no_collection: { count: 0, records: [] }
+          } },
+          recent_changes: [{ id: 1, table_name: 'products', row_id: '2', action: 'update', summary: 'Ürün: Görselsiz Ürün', created_at: now, actor_name: 'Test Owner' }],
+          categories: { total: 1, top: [{ id: 1, name: 'Kolonya', product_count: 2 }] },
+          collections: { total: 1, top: [{ id: 1, name: 'Nişan', product_count: 2 }] }, scheduled_banners: []
+        }, error: null };
+      };
+      return { single: run, then: (resolve, reject) => run().then(resolve, reject) };
+    }
   };
   window.__PW_DB = db;
   window.__PW_STORAGE_MOVES = [];
@@ -208,15 +241,20 @@ async function approvePreview(page) {
 
 test('genel bakış sayıları ve eksikleri gösterir', async ({ page }) => {
   const dashboard = page.locator('#dashboard-admin');
-  await expect(dashboard).toContainText('Aktif ürün');
-  await expect(dashboard.locator('.pg-stat').first()).toContainText('1');
-  await expect(dashboard).toContainText('Ana görseli eksik ürünler (1)');
+  await expect(dashboard).toContainText('Yayındaki ürün');
+  await expect(dashboard.locator('.pg-stat').first()).toContainText('2');
+  await expect(dashboard).toContainText('Katalog sağlığı');
+  await expect(dashboard.locator('[role="progressbar"]')).toHaveAttribute('aria-valuenow','50');
+  await expect(dashboard).toContainText('Ana görseli eksik ürünler');
   await expect(dashboard).toContainText('Görselsiz Ürün');
-  await expect(dashboard).toContainText('Alt metni eksik görseller (1)');
+  await expect(dashboard).toContainText('Alt metni eksik görseller');
   await expect(dashboard).toContainText('altsiz.webp');
-  await expect(dashboard).toContainText('Kullanılmayan görseller (2)');
-  await expect(dashboard).toContainText('1 ürün taslağı');
-  await expect(dashboard).toContainText('Son güncellemeler');
+  await expect(dashboard).toContainText('Kullanılmayan görseller');
+  await expect(dashboard).toContainText('Taslak');
+  await expect(dashboard).toContainText('Son değişiklikler');
+  await dashboard.locator('[data-dash-product="2"]').first().click();
+  await expect(page.locator('#view-add')).toHaveClass(/show/);
+  await expect(page.locator('#pf-name')).toHaveValue('Görselsiz Ürün');
 });
 
 test('banner zamanlama, görsel zorunluluğu ve önizlemeyle yayınlanır', async ({ page }) => {
@@ -321,7 +359,7 @@ test('mobil görünümde yatay taşma yok', async ({ page }) => {
 
 test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taşmaz', async ({ page }) => {
   test.setTimeout(120_000);
-  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261019-prompt3$/);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261020-prompt5$/);
   await expect(page.locator('#admin-user-name')).toHaveText('Test Owner');
   await expect(page.locator('#admin-user-role')).toHaveText('Owner');
   await expect(page.locator('#admin-user-mfa')).toHaveText('MFA doğrulandı');

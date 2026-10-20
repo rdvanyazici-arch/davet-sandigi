@@ -73,3 +73,13 @@ Bu dosyada gizli anahtar veya veritabanı parolası tutulmaz.
 - Panel Auth hesabı oluşturmaz ve `service_role` kullanmaz. Mevcut Auth kullanıcısı UUID ile profile bağlanır.
 - Güvenli davet akışı gerekirse ileride ayrı bir Edge Function olarak değerlendirilecektir; bu adımda uygulanmamıştır.
 - `20261018075733_admin_draft_delete_and_media_column_security.sql`, `20261020030526_admin_audit_log.sql`, `20261020030527_admin_management_security.sql` ve `20261020102505_admin_audit_lint_fix.sql` 2026-10-20 tarihinde kullanıcı onayıyla uzak Supabase'e uygulanmıştır.
+
+## Yönetim paneli katalog sağlık puanı
+
+- Genel Bakış verileri tek bir `public.admin_dashboard_summary()` RPC çağrısıyla alınır. RPC `SECURITY INVOKER` çalışır; yalnız aktif yönetici çağırabilir.
+- Sağlık yüzdesi: `sağlıklı aktif ürün / toplam aktif ürün × 100`. Aktif ürün yoksa yüzde 100 gösterilir.
+- Sağlıklı aktif ürün; aktif ve arşivlenmemiş, aktif ana görseli ve etkili alt metni bulunan, kategoriye ve en az bir koleksiyona bağlı, görünür fiyatı boş olmayan ve bekleyen ürün taslağı bulunmayan üründür.
+- Kullanılmayan görseller ürün bazlı bir sorun olmadığı için sağlık yüzdesini düşürmez; ayrı uyarı olarak gösterilir.
+- Taslak sayısı, `product_drafts` kayıt sayısıdır. Yayındaki bir ürünün bekleyen taslağı olabileceği için durum kartlarının toplamı ürün toplamına eşit olmak zorunda değildir.
+- Yaklaşan banner bildirimi, başlangıç veya bitiş zamanı sonraki yedi gün içinde olan aktif banner'ları gösterir.
+- Trafik, ziyaret, sepet ve WhatsApp ölçümleri bu RPC'ye veya sağlık formülüne dahil değildir.
