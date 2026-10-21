@@ -13,6 +13,7 @@ async function switchView(view,options){
  if(view==='dashboard'&&typeof pagesRenderDashboard==='function')pagesRenderDashboard();
  if(view==='history'&&typeof adminAuditRender==='function')adminAuditRender();
  if(view==='admins'&&typeof adminManagersRender==='function')adminManagersRender();
+ if(view==='reports'&&typeof adminReportsRender==='function')adminReportsRender();
  if(typeof window.adminCloseMobileMenu==='function')window.adminCloseMobileMenu();
  return true;
 }

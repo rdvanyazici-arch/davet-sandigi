@@ -205,6 +205,25 @@
 .settings-preview-card{padding:18px;border:1px solid var(--line);border-radius:13px;background:var(--ivory)}.settings-preview-card h3{margin:14px 0}.settings-preview-card dl{display:grid;gap:8px;margin:0}.settings-preview-card dl div{display:grid;grid-template-columns:110px 1fr;gap:12px}.settings-preview-card dt{color:var(--moss);font-size:10px;font-weight:700;text-transform:uppercase}.settings-preview-card dd{margin:0;font-size:12px;overflow-wrap:anywhere}
 @media(max-width:760px){.taxonomy-row{align-items:stretch;flex-direction:column}.taxonomy-row>img,.taxonomy-row>.taxonomy-image-placeholder{width:72px;height:88px}.taxonomy-actions{max-width:none;justify-content:flex-start}.taxonomy-preview-modes{grid-template-columns:1fr}.taxonomy-form-actions button{width:100%;justify-content:center}.settings-preview-card dl div{grid-template-columns:1fr;gap:2px}}
 
+/* Catalogue reports */
+.report-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:18px 0}
+.report-card{display:grid;min-height:132px;align-content:start;gap:9px;padding:18px;text-align:left;border:1px solid var(--adm-line,#e1e5df);border-radius:14px;background:var(--adm-card,#fff);color:var(--adm-text,#14201b);cursor:pointer}
+.report-card:hover,.report-card.selected{border-color:var(--adm-accent,#0f5c4d);background:color-mix(in srgb,var(--adm-accent,#0f5c4d) 9%,#fff)}
+.report-card span{font-family:var(--adm-heading,"Bricolage Grotesque",system-ui,sans-serif);font-size:18px;font-weight:650}.report-card small{color:var(--adm-muted,#5a665f);font-size:13px;line-height:1.45}
+.report-workspace{margin-top:16px}.report-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}.report-toolbar h2{margin:3px 0 0;font-size:24px}.report-toolbar>div>span{color:var(--adm-muted,#5a665f);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.report-toolbar-actions{display:flex;align-items:flex-end;justify-content:flex-end;gap:8px;flex-wrap:wrap}.report-toolbar-actions label{display:grid;gap:4px;color:var(--adm-muted,#5a665f);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}.report-toolbar-actions input,.report-toolbar-actions select{min-height:44px;padding:8px 11px;border:1px solid var(--adm-line,#e1e5df);border-radius:10px;background:#fff;color:var(--adm-text,#14201b);font:inherit;letter-spacing:0;text-transform:none}
+.report-toolbar-actions [hidden]{display:none!important}
+.reports-table-wrap{max-height:58vh}.reports-table{font-variant-numeric:tabular-nums}.reports-table caption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.reports-table td{max-width:330px;overflow-wrap:anywhere}
+@media(max-width:760px){.report-cards{grid-template-columns:1fr}.report-toolbar{align-items:stretch;flex-direction:column}.report-toolbar-actions{justify-content:flex-start}.report-toolbar-actions label{width:100%}.report-toolbar-actions input,.report-toolbar-actions select,.report-toolbar-actions .a-btn{width:100%}.reports-table-wrap{max-height:none}}
+
+html[data-report-orientation="portrait"] .report-workspace{page:report-portrait}html[data-report-orientation="landscape"] .report-workspace{page:report-landscape}
+@page report-portrait{size:A4 portrait;margin:12mm}@page report-landscape{size:A4 landscape;margin:10mm}
+@media print{
+ .admin-side,.admin-topbar,.admin-bottom-nav,.admin-menu-open,.admin-menu-overlay,.report-cards,.report-toolbar-actions,#reports-status,.toast{display:none!important}
+ body,.admin,.admin-panel,.admin-main{display:block!important;width:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important;color:#000!important}
+ .admin-view{display:none!important}#view-reports{display:block!important}#view-reports>h1{margin:0 0 7mm!important}.report-workspace{padding:0!important;border:0!important}.report-toolbar{margin:0 0 5mm}.report-toolbar>div>span{display:none}.reports-table-wrap{max-height:none!important;overflow:visible!important}.reports-table{width:100%;border-collapse:collapse;font-size:9pt}.reports-table thead{display:table-header-group}.reports-table tr{break-inside:avoid}.reports-table th,.reports-table td{padding:5px;border:1px solid #bbb;color:#000;background:#fff}
+}
+
 /* Phase 7c page content and overview */
 .pg-canvas{margin:0 auto;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--ivory);transition:max-width .2s}.pg-canvas.desktop{max-width:780px}.pg-canvas.mobile{max-width:375px}
 .pg-canvas img{display:block;width:100%;object-fit:cover}.pg-noimg{display:grid;min-height:140px;place-items:center;background:#ece6da;color:var(--moss);font-size:11px}

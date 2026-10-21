@@ -3,7 +3,7 @@
 ## Güncel faz
 
 - Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
-- Aktif faz: Faz 15 tamamlandı; yönetim paneli Prompt 5 Genel Bakış yenilemesi yerelde tamamlandı. Yeni özet RPC migration'ı uzak Supabase'e gönderilmedi.
+- Aktif faz: Faz 15 tamamlandı; yönetim paneli Prompt 6 katalog raporları yerelde tamamlandı. Prompt 5 özet RPC migration'ı uzak Supabase'e gönderilmedi.
 - Beklenen: Özel alan adı bağlanacak; kullanıcı ayrıca canlı yayın onayı verdikten sonra Vercel `Require Log In` kapatılacak ve public/admin uçları ile Firebase isteği olmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
@@ -63,6 +63,7 @@
 - 2026-10-19 — Yönetim paneli Prompt 3 tamamlandı: ortak görsel seçici ve yükleme sekmesi; görsel kütüphanesinde sunucu taraflı arama/filtre/sayfalama ve kayıt seçimi; ürünlerde durum çipleri, sayfa boyutu, sıralama, satır seçimi, toplu işlemler ve hızlı yayın/öne çıkarma; SKU önerisi; kaydedilmemiş değişiklik koruması ve klavye erişimli sıralama eklendi. Taslak kaydı önizlemesiz, yayınlama önizleme onaylı kalacak şekilde `ADMIN_DRAFT_REQUIRES_PREVIEW=false` tek bayrağıyla uygulandı. Veri akışı/RLS zayıflatılmadı; uzak Supabase ve Production değiştirilmedi.
 - 2026-10-20 — Yönetim paneli değişiklik geçmişi ve yöneticiler ekranı tamamlandı: güvenli alan karşılaştırmalı audit trigger'ları, 180 günlük saklama temizliği, filtreli/sayfalı geçmiş ekranı, ürün geçmişi bağlantısı, owner + MFA AAL2 yönetici profil işlemleri ve son owner koruması eklendi. Auth hesabı oluşturma panel dışında bırakıldı; dört bekleyen güvenlik/audit migration'ı kullanıcı onayıyla uzak Supabase'e uygulandı.
 - 2026-10-20 — Yönetim paneli Prompt 5 tamamlandı: tek `admin_dashboard_summary()` RPC'siyle ürün durumları, katalog sağlığı, sorun kayıtları, son değişiklikler, kategori/koleksiyon dağılımı ve yaklaşan banner bilgisi sağlandı. Genel Bakış ekranı bu özet, düzeltme bağlantıları, hızlı işlemler ve trafik analizi yer tutucusuyla yenilendi. Sağlık formülü ve performans ölçümü belgelendi.
+- 2026-10-21 — Yönetim paneli Prompt 6 tamamlandı: fiyat listesi, eksik içerik, görsel kullanımı, değişiklik geçmişi, katalog JSON yedeği ve aylık katalog özeti raporları eklendi. 1000 kayıtlık sayfalı veri çekme, ilerleme/iptal, UTF-8 BOM ve formül enjeksiyonu korumalı CSV, A4 dikey/yatay yazdırma görünümü ve güncel Supabase yedekleme rehberi hazırlandı. Müşteri ve trafik verisi eklenmedi; uzak Supabase ve Production değiştirilmedi.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -170,6 +171,11 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-21 — Prompt 6 CSV birim testleri: BOM, `;` ayraç, Türkçe ondalık ve formül enjeksiyonu koruması **3/3 başarılı**.
+- 2026-10-21 — Prompt 6 Playwright: fiyat raporu önizleme, CSV indirme, BOM/ayraç/Türkçe/formül koruması ve erişilebilir durum alanı **1/1 başarılı**. Test macOS kısıtlı süreçte Chromium açılamadığı için aynı komut VS Code terminalinde çalıştırıldı.
+- 2026-10-21 — Yönetici kimlik doğrulama regresyon testleri **12/12 başarılı**.
+- 2026-10-21 — Prompt 6 yerel gerçek panel kontrolü: 6 rapor kartı, boş fiyat raporu durumu, tarih filtrelerinin yalnız audit raporunda görünmesi, iptal düğmesinin yalnız yükleme sırasında görünmesi ve konsol hatası olmaması doğrulandı.
+- 2026-10-21 — Prompt 6 JavaScript sözdizimi ve `git diff --check`: **başarılı**.
 - 2026-10-20 — Prompt 5 yerel Supabase testleri: temel RLS **30/30**, audit **14/14**, yönetici güvenliği **13/13**, dashboard özeti **16/16**; toplam **73/73 başarılı**. Yerel DB lint temiz.
 - 2026-10-20 — Dashboard özet sorgusu 300 ürün + 1000 görsel fixture'ında **38,526 ms** yürütme süresi verdi. İndeksler ve EXPLAIN özeti `docs/admin-dashboard-performance.md` içinde.
 - 2026-10-20 — İlgili Playwright sayfa içeriği/Genel Bakış paketi VS Code terminalinde **10/10 başarılı**; JavaScript sözdizimi ve `git diff --check` başarılı.
@@ -333,7 +339,7 @@
 
 ## Sonraki adım
 
-- Kullanıcı Prompt 5 değişikliklerini inceleyip commit edecek. Dashboard RPC migration'ı ayrı onay olmadan uzak Supabase'e gönderilmeyecek; sonraki prompt gelene kadar yeni adıma geçme.
+- Kullanıcı Prompt 6 değişikliklerini inceleyip commit edecek. Prompt 5 dashboard RPC migration'ı ayrı onay olmadan uzak Supabase'e gönderilmeyecek; uygulanana kadar Genel Bakış ve aylık özet canlı Supabase'te çalışmaz. Sonraki prompt gelene kadar yeni adıma geçme.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 const pageRequests=new WeakMap();
 const pageErrors=new WeakMap();
@@ -200,6 +201,27 @@ test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister',
   await expect(page.locator('#media-library-status')).toContainText('0 görsel bulundu.');
   expect(await page.evaluate(() => window.__PW_STORAGE_REMOVES)).toEqual(['archive/story/b.webp']);
   expect(await page.evaluate(() => window.__PW_DB.media_assets.some(asset => asset.id === 2))).toBe(false);
+});
+
+test('Raporlar CSV dosyasını BOM, ayraç ve formül korumasıyla indirir', async ({ page }) => {
+  await page.evaluate(() => {
+    Object.assign(window.__PW_DB.products[0], { name: '=FORMÜL', sku: '+KOL-001', price: 38, is_price_visible: true, is_quote_only: false, min_quantity: 25, quantity_step: 25 });
+    Object.assign(window.__PW_DB.products[1], { sku: 'KOL-002', price: null, is_price_visible: true, is_quote_only: true, min_quantity: 50, quantity_step: 25 });
+  });
+  await page.click('[data-view="reports"]');
+  await expect(page.locator('#reports-admin')).toContainText('Fiyat listesi');
+  await page.click('[data-report="price"]');
+  await expect(page.locator('#reports-status')).toContainText('2 satır hazır.');
+  await expect(page.locator('.reports-table')).toHaveAttribute('class', /reports-table/);
+  await expect(page.locator('.reports-table caption')).toHaveText('Fiyat listesi');
+  const downloadPromise=page.waitForEvent('download');
+  await page.click('#reports-csv');
+  const download=await downloadPromise,path=await download.path(),content=await readFile(path,'utf8');
+  expect(content.charCodeAt(0)).toBe(0xFEFF);
+  expect(content).toContain('Ürün;SKU;Kategori;Fiyat;Minimum adet;Adet artışı');
+  expect(content).toContain("'=FORMÜL;'+KOL-001;Kolonya;38,00;25;25");
+  expect(content).toContain('Teklif');
+  await expect(page.locator('#reports-status')).toHaveAttribute('aria-live','polite');
 });
 
 test('yasal content_sections taslak kalır ve hukukçu onayı olmadan yayımlanamaz', async ({ page }) => {

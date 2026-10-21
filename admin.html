@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Davet Sandığı — Yönetim</title>
-<link rel="stylesheet" href="assets/css/admin.css?v=20261020-prompt5">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261021-prompt6">
 </head>
 <body>
 <!-- ===== ADMIN ===== -->
@@ -57,7 +57,7 @@
         <div class="admin-nav-group"><p>Genel</p>
           <button data-view="dashboard" class="active" aria-current="page"><span>Genel Bakış</span></button>
           <button data-view="analytics"><span>Analiz</span><small>Yakında</small></button>
-          <button data-view="reports"><span>Raporlar</span><small>Yakında</small></button>
+          <button data-view="reports"><span>Raporlar</span></button>
         </div>
         <div class="admin-nav-group"><p>Katalog</p>
           <button data-view="products"><span>Ürünler</span></button>
@@ -101,7 +101,7 @@
       </header>
       <div class="admin-view show" id="view-dashboard"><h1>Genel Bakış</h1><div id="dashboard-admin"></div></div>
       <div class="admin-view admin-placeholder" id="view-analytics"><span>Yakında</span><h1>Analiz</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
-      <div class="admin-view admin-placeholder" id="view-reports"><span>Yakında</span><h1>Raporlar</h1><p>Bu bölüm sonraki adımda eklenecek.</p></div>
+      <div class="admin-view" id="view-reports"><h1>Raporlar</h1><div id="reports-admin"></div></div>
       <div class="admin-view" id="view-banner"><h1>Banner (Üst Slider)</h1><div class="admin-settings" id="banner-admin"></div></div>
       <div class="admin-view" id="view-home"><h1>Ana Sayfa İçeriği</h1><div class="admin-settings" id="home-admin"></div></div>
       <div class="admin-view" id="view-products">
@@ -164,7 +164,7 @@
       <button data-view="products"><span aria-hidden="true">□</span>Ürünler</button>
       <button data-view="media"><span aria-hidden="true">▧</span>Görseller</button>
       <button data-view="analytics"><span aria-hidden="true">⌁</span>Analiz<small>Yakında</small></button>
-      <button data-view="reports"><span aria-hidden="true">≡</span>Raporlar<small>Yakında</small></button>
+      <button data-view="reports"><span aria-hidden="true">≡</span>Raporlar</button>
     </nav>
   </div>
 </div>
@@ -180,7 +180,9 @@
 <script src="assets/js/admin-products.js?v=20261014-1"></script>
 <script src="assets/js/admin-audit.js?v=20261020-1"></script>
 <script src="assets/js/admin-managers.js?v=20261020-1"></script>
-<script src="assets/js/admin-content.js"></script>
+<script src="assets/js/admin-report-utils.js?v=20261021-1"></script>
+<script src="assets/js/admin-reports.js?v=20261021-1"></script>
+<script src="assets/js/admin-content.js?v=20261021-prompt6"></script>
 <script src="assets/js/admin-taxonomy-settings.js?v=20261015-1"></script>
 <script src="assets/js/admin-pages.js?v=20261015-1"></script>
 </body>
