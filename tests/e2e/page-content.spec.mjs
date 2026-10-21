@@ -10,7 +10,7 @@ function installFakeSupabase(options={}) {
   const db = options.empty ? {
     categories: [], collections: [], products: [], product_images: [], product_drafts: [], media_assets: [],
     banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: [],
-    site_settings: [{ id: 1, brand_name: 'Davet Sandığı', whatsapp_number: '905399999999', instagram_url: null, phone: null, email: null, delivery_text: null, currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: null, is_maintenance_mode: false }]
+    site_settings: [{ id: 1, brand_name: 'Davet Sandığı', whatsapp_number: '905399999999', instagram_url: null, phone: null, email: null, delivery_text: null, currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: null, is_maintenance_mode: false, analytics_enabled: false }]
   } : {
     admin_profiles: [],
     categories: [{ id: 1, name: 'Kolonya', is_active: true, archived_at: null, updated_at: now }],
@@ -36,7 +36,8 @@ function installFakeSupabase(options={}) {
       { id: 2, storage_path: 'story/b.webp', original_name: 'altsiz.webp', alt_text: '', usage_type: 'story', status: 'active', archived_at: null, created_at: now },
       { id: 3, storage_path: 'banners/c.webp', original_name: 'hero.webp', alt_text: 'Hero görseli', usage_type: 'banner', status: 'active', archived_at: null, created_at: now }
     ],
-    banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: [{ product_id: 1, collection_id: 1 }, { product_id: 2, collection_id: 1 }]
+    banners: [], content_sections: [], faqs: [], testimonials: [], product_collections: [{ product_id: 1, collection_id: 1 }, { product_id: 2, collection_id: 1 }],
+    site_settings: [{ id: 1, analytics_enabled: true, whatsapp_number: '905399999999', default_min_quantity: 25, default_quantity_step: 25 }]
   };
   const sequences = {};
   const session = { user: { id: '7590fe38-46b1-47dd-bd17-b83a0212e87c' }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
@@ -101,6 +102,14 @@ function installFakeSupabase(options={}) {
     }) },
     rpc: name => {
       const run = async () => {
+        if (name === 'admin_analytics_summary') return { data: {
+          days: 30, total_events: 94,
+          totals: { page_view: 50, product_view: 25, add_to_cart: 12, whatsapp_request: 5, instagram_click: 2 },
+          daily: [], sources: [{ source: 'instagram', count: 30 }, { source: 'direct', count: 20 }],
+          devices: [{ device: 'mobile', count: 40 }, { device: 'desktop', count: 10 }],
+          products: [{ id: 1, name: 'Görselli Ürün', sku: 'KOL-001', views: 25, adds: 12 }],
+          collections: [{ id: 1, name: 'Nişan', views: 25, adds: 12 }]
+        }, error: null };
         if (name !== 'admin_dashboard_summary') return { data: null, error: null };
         if (options.empty) return { data: {
           products: { published: 0, drafts: 0, unpublished: 0, archived: 0, total: 0 },
@@ -178,6 +187,17 @@ test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullan
   expect(urls.some(url=>/firebase|firestore|firebasejs|googleapis|gstatic/i.test(url))).toBe(false);
   expect(pageErrors.get(page)).toEqual([]);
   expect(pageConsoleErrors.get(page)).toEqual([]);
+});
+
+test('Analiz ekranı anonim toplamları ve talep hunisini gösterir', async ({ page }) => {
+  await page.click('[data-view="analytics"]');
+  await expect(page.locator('#analytics-admin .analytics-stats')).toContainText('50');
+  await expect(page.locator('#analytics-admin')).toContainText('Sayfa görüntüleme');
+  await expect(page.locator('#analytics-admin')).toContainText('WhatsApp talebi');
+  await expect(page.locator('#analytics-admin')).toContainText('Instagram');
+  await expect(page.locator('#analytics-admin')).toContainText('Mobil');
+  await expect(page.locator('#analytics-admin')).toContainText('Görselli Ürün');
+  await expect(page.locator('#analytics-admin')).not.toContainText('Ziyaretçi');
 });
 
 test('görsel arşivleme önce dosyayı taşır, kalıcı silme iki onay ister', async ({ page }) => {

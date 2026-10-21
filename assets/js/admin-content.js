@@ -14,6 +14,7 @@ async function switchView(view,options){
  if(view==='history'&&typeof adminAuditRender==='function')adminAuditRender();
  if(view==='admins'&&typeof adminManagersRender==='function')adminManagersRender();
  if(view==='reports'&&typeof adminReportsRender==='function')adminReportsRender();
+ if(view==='analytics'&&typeof adminAnalyticsRender==='function')adminAnalyticsRender();
  if(typeof window.adminCloseMobileMenu==='function')window.adminCloseMobileMenu();
  return true;
 }

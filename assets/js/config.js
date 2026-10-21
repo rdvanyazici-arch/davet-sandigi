@@ -15,7 +15,7 @@ var ICON={
 /* ============ DATA ============ */
 var LS={cart:'ds_cart_v6'};
 var products=[],categories=[],occasions=[];
-var settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',legal:{},campaign:{enabled:false}};
+var settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',analyticsEnabled:false,legal:{},campaign:{enabled:false}};
 function load(k,def){try{var v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}
 var cart=load(LS.cart,[]);

@@ -83,3 +83,13 @@ Bu dosyada gizli anahtar veya veritabanı parolası tutulmaz.
 - Taslak sayısı, `product_drafts` kayıt sayısıdır. Yayındaki bir ürünün bekleyen taslağı olabileceği için durum kartlarının toplamı ürün toplamına eşit olmak zorunda değildir.
 - Yaklaşan banner bildirimi, başlangıç veya bitiş zamanı sonraki yedi gün içinde olan aktif banner'ları gösterir.
 - Trafik, ziyaret, sepet ve WhatsApp ölçümleri bu RPC'ye veya sağlık formülüne dahil değildir.
+# Anonim analitik kararı — 2026-10-21
+
+- Geliştirme ve Vercel Preview aşamasında analiz kapalıdır; test trafiği gerçek veriye karışmaz.
+- Canlıda Vercel/Cloudflare analitiği yerine Supabase Edge Function ve günlük toplamlardan oluşan kendi anonim sayaçlarımız kullanılacaktır.
+- `analytics_daily.product_id` genel olaylarda boş kalabildiği için ayrı identity primary key ve beş boyutta `UNIQUE NULLS NOT DISTINCT` kullanılır.
+- Sağlam hız sınırı için ham IP saklanmaz; 10 dakikalık pencereye bağlı HMAC anahtarı `private` şemada geçici tutulur.
+- WhatsApp talebi sepet başına tek olaydır. Sepet içeriği, ürün listesi, mesaj ve müşteri bilgisi analitiğe gönderilmez.
+- Tekil ziyaretçi ölçülmez; arayüzde “Ziyaretçi” yerine “Sayfa görüntüleme” kullanılır.
+- Analitik yalnız özel Production alan adında ve `site_settings.analytics_enabled` bayrağı açıkken çalışır.
+- Yasal metinler yeni veri akışı için tekrar incelenmeden canlı bayrak açılmaz.

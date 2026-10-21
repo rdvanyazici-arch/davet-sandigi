@@ -43,6 +43,7 @@ function addToCart(id,qty){
  var it=cart.filter(function(x){return cartId(x)===String(id);})[0],amount=qty===undefined?productMin(p):normalizeQuantity(p,qty);
  if(it)it.quantity=normalizeQuantity(p,cartQuantity(it)+amount);else cart.push({product_id:String(id),quantity:amount,note:''});
  persistAndAnnounce(p.name+' sepete eklendi.');
+ if(window.dsAnalytics)window.dsAnalytics.track('add_to_cart',id);
 }
 function toast(m){var t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2500);}
 function setQty(id,dir){

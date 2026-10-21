@@ -3,8 +3,8 @@
 ## Güncel faz
 
 - Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
-- Aktif faz: Faz 15 tamamlandı; yönetim paneli Prompt 6 katalog raporları yerelde tamamlandı. Prompt 5 özet RPC migration'ı uzak Supabase'e gönderilmedi.
-- Beklenen: Özel alan adı bağlanacak; kullanıcı ayrıca canlı yayın onayı verdikten sonra Vercel `Require Log In` kapatılacak ve public/admin uçları ile Firebase isteği olmadığı doğrulanacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
+- Aktif faz: Faz 15 tamamlandı; yönetim paneli Prompt 7 gizlilik odaklı anonim analiz sistemi yerelde tamamlandı. Prompt 5 ve Prompt 7 migration'ları uzak Supabase'e gönderilmedi.
+- Beklenen: Özel alan adı bağlanacak; analitik Edge Function sırları gerçek alan adıyla tanımlanacak, güncellenen yasal metinler yeniden onaylanacak ve ayrıca uzak uygulama onayı verildikten sonra analiz bayrağı açılacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
 
@@ -64,6 +64,7 @@
 - 2026-10-20 — Yönetim paneli değişiklik geçmişi ve yöneticiler ekranı tamamlandı: güvenli alan karşılaştırmalı audit trigger'ları, 180 günlük saklama temizliği, filtreli/sayfalı geçmiş ekranı, ürün geçmişi bağlantısı, owner + MFA AAL2 yönetici profil işlemleri ve son owner koruması eklendi. Auth hesabı oluşturma panel dışında bırakıldı; dört bekleyen güvenlik/audit migration'ı kullanıcı onayıyla uzak Supabase'e uygulandı.
 - 2026-10-20 — Yönetim paneli Prompt 5 tamamlandı: tek `admin_dashboard_summary()` RPC'siyle ürün durumları, katalog sağlığı, sorun kayıtları, son değişiklikler, kategori/koleksiyon dağılımı ve yaklaşan banner bilgisi sağlandı. Genel Bakış ekranı bu özet, düzeltme bağlantıları, hızlı işlemler ve trafik analizi yer tutucusuyla yenilendi. Sağlık formülü ve performans ölçümü belgelendi.
 - 2026-10-21 — Yönetim paneli Prompt 6 tamamlandı: fiyat listesi, eksik içerik, görsel kullanımı, değişiklik geçmişi, katalog JSON yedeği ve aylık katalog özeti raporları eklendi. 1000 kayıtlık sayfalı veri çekme, ilerleme/iptal, UTF-8 BOM ve formül enjeksiyonu korumalı CSV, A4 dikey/yatay yazdırma görünümü ve güncel Supabase yedekleme rehberi hazırlandı. Müşteri ve trafik verisi eklenmedi; uzak Supabase ve Production değiştirilmedi.
+- 2026-10-21 — Yönetim paneli Prompt 7 yerelde tamamlandı: Production'a hazır ancak varsayılan olarak kapalı anonim olay analizi eklendi. Edge Function yalnız izinli özel alan adından gelen allowlist olaylarını günlük toplamlara yazıyor; DNT/GPC, local/Preview devre dışı bırakma, ham IP saklamayan 10 dakikalık hız sınırı, 400 günlük saklama temizliği ve yöneticiye özel 7/30/90 günlük analiz ekranı hazırlandı. Müşteri, mesaj, sepet, çerez, cihaz kimliği, ham referrer veya ham IP saklanmıyor; uzak Supabase, Vercel ve Production değiştirilmedi.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -82,6 +83,8 @@
 - Production deploy, kalıcı silme ve Firebase kapatma işlemleri ayrıca onay gerektirir.
 - `20261018075733_admin_draft_delete_and_media_column_security.sql`, `20261020030526_admin_audit_log.sql`, `20261020030527_admin_management_security.sql` ve `20261020102505_admin_audit_lint_fix.sql` migration'ları kullanıcı onayıyla uzak Supabase'e uygulandı.
 - `20261020143000_admin_dashboard_summary.sql` yalnız yerel Supabase'e uygulandı; uzak projeye gönderilmesi ayrıca kullanıcı onayı bekliyor.
+- `20261021151427_add_privacy_safe_analytics.sql` yalnız yerel Supabase'e uygulandı; Edge Function deploy'u ve uzak DB push ayrıca kullanıcı onayı bekliyor.
+- Canlı analizi açmadan önce özel HTTPS alan adı `ANALYTICS_ALLOWED_ORIGINS` sırrına yazılmalı, en az 32 karakterli `ANALYTICS_HMAC_SECRET` oluşturulmalı ve `docs/analytics.md` içindeki yasal metin ekleri yeniden onaylanmalıdır. Bu hazırlıklar tamamlanana kadar `site_settings.analytics_enabled=false` kalır.
 - Tamamen boş, hiç yayımlanmamış ürün taslağının owner + AAL2 ile kalıcı silinmesi arşivleme kuralının dar bakım istisnasıdır. Anlamlı içeriği veya yayın geçmişi olan ürünler arşivlenmeye devam eder.
 - Kullanıcı kararı: Özel alan adı bağlanmadan site herkese açılmayacak; Vercel `Require Log In` koruması o zamana kadar açık kalacak.
 - `davet-sandigi-5ln8ek385-rdvanyazici.vercel.app`, `dpl_3GpcCkx6CVLKWnzjZne967Ta1Cm9` kimlikli 2026-10-16 tarihli eski Preview dağıtımıdır; güncel yayın adresi olarak kullanılmayacak. Güncel Supabase'te aktif banner kaydı 0'dır; gerçek banner yönetim panelinden eklenip yayımlanacaktır.
@@ -171,6 +174,10 @@
 
 ## Son çalıştırılan testler ve sonuçları
 
+- 2026-10-21 — Prompt 7 yerel Supabase analitik pgTAP testleri **13/13 başarılı**; anon okuma/yazma reddi, yönetici okuması, service-role-only kayıt, aktif ürün doğrulaması, hız sınırı ve özet RPC sayıları geçti. `supabase db lint --local --fail-on warning`: **No schema errors found**.
+- 2026-10-21 — Prompt 7 birim testleri **4/4 başarılı**: DNT/GPC, yalnız canlı özel alan adı, kişisel verisiz payload ve sendBeacon hatasının kullanıcı akışını engellememesi doğrulandı.
+- 2026-10-21 — Prompt 7 Playwright hedef testleri **2/2 başarılı**: Analiz ekranı/talep hunisi ve analiz hatasında sepet akışının sürmesi geçti.
+- 2026-10-21 — Prompt 7 Edge Function gerçek yerel HTTP testi: izinli origin'den gönderilen geçerli `page_view` olayı **HTTP 202** ile kaydedildi; geçersiz olay **HTTP 400 / invalid_event** ile reddedildi. JavaScript sözdizimi, gizli istemci anahtarı taraması ve `git diff --check` başarılı.
 - 2026-10-21 — Prompt 6 CSV birim testleri: BOM, `;` ayraç, Türkçe ondalık ve formül enjeksiyonu koruması **3/3 başarılı**.
 - 2026-10-21 — Prompt 6 Playwright: fiyat raporu önizleme, CSV indirme, BOM/ayraç/Türkçe/formül koruması ve erişilebilir durum alanı **1/1 başarılı**. Test macOS kısıtlı süreçte Chromium açılamadığı için aynı komut VS Code terminalinde çalıştırıldı.
 - 2026-10-21 — Yönetici kimlik doğrulama regresyon testleri **12/12 başarılı**.
@@ -339,7 +346,7 @@
 
 ## Sonraki adım
 
-- Kullanıcı Prompt 6 değişikliklerini inceleyip commit edecek. Prompt 5 dashboard RPC migration'ı ayrı onay olmadan uzak Supabase'e gönderilmeyecek; uygulanana kadar Genel Bakış ve aylık özet canlı Supabase'te çalışmaz. Sonraki prompt gelene kadar yeni adıma geçme.
+- Kullanıcı Prompt 7 değişikliklerini inceleyip commit edecek. Prompt 5/7 migration'ları ve Edge Function ayrı onay olmadan uzak Supabase'e gönderilmeyecek; analiz bayrağı kapalı kalacak. Sonraki prompt gelene kadar yeni adıma geçme.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

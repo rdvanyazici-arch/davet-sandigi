@@ -333,6 +333,10 @@ $('#search-input').addEventListener('input',runSearch);
 $('#legal-close').addEventListener('click',closeLegal);
 $('#kvkk-link').addEventListener('click',function(e){e.preventDefault();openLegal('kvkk',e.currentTarget);});
 document.addEventListener('click',function(e){var t=e.target.closest('[data-legal]');if(t){e.preventDefault();openLegal(t.getAttribute('data-legal'),t);}});
+document.addEventListener('click',function(e){
+ var link=e.target.closest('a[href]');if(!link||!window.dsAnalytics)return;
+ try{var url=new URL(link.href,location.href);if(/(^|\.)instagram\.com$/i.test(url.hostname))window.dsAnalytics.track('instagram_click');}catch(error){}
+});
 document.addEventListener('keydown',function(e){
  if(e.key==='Enter'||e.key===' '){var legal=e.target.closest('[data-legal][role="button"]');if(legal){e.preventDefault();openLegal(legal.dataset.legal,legal);}}
 });

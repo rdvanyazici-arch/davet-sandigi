@@ -169,6 +169,16 @@ test('aktif ürün görünür; pasif/arşivli ürün liste, arama, doğrudan ba�
   await expect(page.locator('#pm-name')).toHaveText('Kolonya Ürünü');
 });
 
+test('analitik gönderimi başarısız olsa bile sepete ekleme çalışır', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.evaluate(() => { window.dsAnalytics.track = () => false; });
+  await page.locator('[data-add="1"]').first().click();
+  await expect(page.locator('#cart-count')).toHaveText('25');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6')))).toEqual([{ product_id: '1', quantity: 25, note: '' }]);
+});
+
 test('katalog hata durumunda sepet silinmez ve fiyat hata metni görünür; tekrar dene toparlar', async ({ page }) => {
   const log = await setup(page, { fail: { products: true }, cart: [{ id: '1', qty: 25 }] });
   await page.goto('/index.html');

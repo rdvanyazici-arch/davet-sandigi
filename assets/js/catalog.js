@@ -4,7 +4,7 @@ var PUBLIC_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
 var PUBLIC_TIMEOUT_MS=12000;
 var MEDIA_COLS='storage_path,alt_text,width,height';
 var PUBLIC_QUERIES={
- settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note',params:{id:'eq.1',limit:'1'}},
+ settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,analytics_enabled',params:{id:'eq.1',limit:'1'}},
  categories:{table:'categories',select:'id,slug,name,description,sort_order,category_collections(collection_id,sort_order)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  collections:{table:'collections',select:'id,slug,name,short_description,icon_key,sort_order,media_assets!cover_media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  products:{table:'products',select:'id,category_id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,is_featured,sort_order,product_images(alt_text,sort_order,is_primary,media_assets('+MEDIA_COLS+')),product_collections(collection_id)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc',limit:'500'}},
@@ -96,7 +96,7 @@ function stateBox(kind,msg,retry){return'<div class="sec-state '+kind+'" role="s
 
 /* Public sayfa yerel örnek verilerle değil yalnızca Supabase verisiyle çalışır. */
 (function resetPublicDefaults(){
- settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',legal:{},campaign:{enabled:false}};
+ settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',analyticsEnabled:false,legal:{},campaign:{enabled:false}};
  products=[];categories=[];occasions=[];
 })();
 
@@ -113,6 +113,8 @@ function applyPublicSettings(rows){
  settings.stepQty=Number.isInteger(step)&&step>0?step:1;
  settings.quoteThreshold=Number.isInteger(threshold)&&threshold>0?threshold:0;
  settings.shippingNote=publicSetting('shipping_note',r.shipping_note);
+ settings.analyticsEnabled=r.analytics_enabled===true;
+ if(window.dsAnalytics)window.dsAnalytics.configure(settings.analyticsEnabled);
 }
 function pruneStoredSelections(){
  var known={};products.forEach(function(p){known[p.id]=1;});
@@ -384,6 +386,7 @@ function openProduct(id,opener){
  $('#pm-note').textContent='Minimum '+productMin(p)+' adet, '+productStep(p)+'’er artışlarla.';
  renderPmGallery();pmUpdateQuote();
  $('#product-modal').classList.add('open');document.body.style.overflow='hidden';activateFocusLayer($('#product-modal'),closeProduct,opener);
+ if(window.dsAnalytics)window.dsAnalytics.track('product_view',id);
 }
 function pmUpdateQuote(){
  var p=prodById(pmState.id);if(!p)return;var q=isQuote(pmQty);
