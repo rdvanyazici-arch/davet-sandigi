@@ -236,6 +236,7 @@ test('kategori ve koleksiyon filtreleri', async ({ page }) => {
 
   await page.locator('#cookie-reject').click();
   await expect(page.locator('#coll-grid .coll-card')).toHaveCount(2);
+  await expect(page.locator('#coll-grid .coll-card', { hasText: 'Nişan' })).toHaveAccessibleName(/Nişan.*Nişan hatıraları.*Koleksiyonu Gör/i);
   await page.locator('#coll-grid .coll-card', { hasText: 'Nişan' }).click();
   await expect(page.locator('#collview')).toHaveClass(/open/);
   await expect(page.locator('#cv-grid .cv-category-card')).toHaveCount(2);

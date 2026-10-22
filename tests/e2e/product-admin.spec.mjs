@@ -345,3 +345,37 @@ test('ürün listesini sayfalar ve durum/koleksiyon filtrelerini uygular', async
   await page.selectOption('#admin-collection-filter', '1');
   await expect(page.locator('.product-admin-row')).toHaveCount(1);
 });
+
+test('Prompt 8 500 ürün ve 500 görseli sayfalayarak makul sürede açar', async ({ page }) => {
+  const durations = await page.evaluate(async () => {
+    const now = new Date().toISOString();
+    for (let index = 1; index <= 500; index += 1) {
+      window.__PW_DB.products.push({
+        id: index, name: `Yük Testi Ürün ${index}`, slug: `yuk-testi-${index}`, sku: `PERF-${String(index).padStart(4, '0')}`,
+        category_id: 1, price: 10, is_price_visible: true, is_quote_only: false, min_quantity: 1, quantity_step: 1,
+        is_featured: false, is_active: true, sort_order: index, archived_at: null, updated_at: now
+      });
+      window.__PW_DB.media_assets.push({
+        id: index + 1000, storage_path: `products/perf/${index}.webp`, alt_text: `Yük testi görsel ${index}`,
+        original_name: `${index}.webp`, status: 'active', archived_at: null, usage_type: 'product', width: 800, height: 1000,
+        file_size: 12000, mime_type: 'image/webp', created_at: now
+      });
+    }
+    const productStart = performance.now();
+    await productInitialize(true);
+    const products = performance.now() - productStart;
+    mediaState.page = 1;
+    const mediaStart = performance.now();
+    await renderMediaLibrary();
+    const media = performance.now() - mediaStart;
+    return { products, media };
+  });
+  await page.click('[data-view="products"]');
+  await expect(page.locator('.product-admin-row')).toHaveCount(10);
+  await expect(page.locator('#product-pagination')).toContainText('Sayfa 1 / 50');
+  await page.click('[data-view="media"]');
+  await expect(page.locator('.media-card')).toHaveCount(24);
+  await expect(page.locator('#media-pagination')).toContainText('Sayfa 1 / 21');
+  expect(durations.products).toBeLessThan(3000);
+  expect(durations.media).toBeLessThan(3000);
+});

@@ -3,7 +3,7 @@
 ## Güncel faz
 
 - Güncel durum: Tek kaynak klasör `Davet-Sandigi-Guncel`, Vercel projesi `davet-sandigi-guncel` ve tek uzak Supabase projesi `zdksvgtkeeweufuajugd` olarak doğrulandı. `main` güncel commit'e taşındı ve Production deployment READY. Kısa alias `davet-sandigi-guncel.vercel.app` bağlandı; özel alan adı bağlanana kadar Vercel `Require Log In` koruması açık tutulacak.
-- Aktif faz: Faz 15 tamamlandı; yönetim paneli Prompt 7 gizlilik odaklı anonim analiz sistemi yerelde tamamlandı. Prompt 5 ve Prompt 7 migration'ları uzak Supabase'e gönderilmedi.
+- Aktif faz: Faz 15 ve yönetim paneli Prompt 8 kabul/regresyon testi tamamlandı. Prompt 5 ve Prompt 7 migration'ları uzak Supabase'e gönderilmedi.
 - Beklenen: Özel alan adı bağlanacak; analitik Edge Function sırları gerçek alan adıyla tanımlanacak, güncellenen yasal metinler yeniden onaylanacak ve ayrıca uzak uygulama onayı verildikten sonra analiz bayrağı açılacak. Gerçek ürün/fiyat/görseller daha sonra yönetim panelinden girilecek.
 
 ### Faz 0–15 durumları
@@ -65,6 +65,7 @@
 - 2026-10-20 — Yönetim paneli Prompt 5 tamamlandı: tek `admin_dashboard_summary()` RPC'siyle ürün durumları, katalog sağlığı, sorun kayıtları, son değişiklikler, kategori/koleksiyon dağılımı ve yaklaşan banner bilgisi sağlandı. Genel Bakış ekranı bu özet, düzeltme bağlantıları, hızlı işlemler ve trafik analizi yer tutucusuyla yenilendi. Sağlık formülü ve performans ölçümü belgelendi.
 - 2026-10-21 — Yönetim paneli Prompt 6 tamamlandı: fiyat listesi, eksik içerik, görsel kullanımı, değişiklik geçmişi, katalog JSON yedeği ve aylık katalog özeti raporları eklendi. 1000 kayıtlık sayfalı veri çekme, ilerleme/iptal, UTF-8 BOM ve formül enjeksiyonu korumalı CSV, A4 dikey/yatay yazdırma görünümü ve güncel Supabase yedekleme rehberi hazırlandı. Müşteri ve trafik verisi eklenmedi; uzak Supabase ve Production değiştirilmedi.
 - 2026-10-21 — Yönetim paneli Prompt 7 yerelde tamamlandı: Production'a hazır ancak varsayılan olarak kapalı anonim olay analizi eklendi. Edge Function yalnız izinli özel alan adından gelen allowlist olaylarını günlük toplamlara yazıyor; DNT/GPC, local/Preview devre dışı bırakma, ham IP saklamayan 10 dakikalık hız sınırı, 400 günlük saklama temizliği ve yöneticiye özel 7/30/90 günlük analiz ekranı hazırlandı. Müşteri, mesaj, sepet, çerez, cihaz kimliği, ham referrer veya ham IP saklanmıyor; uzak Supabase, Vercel ve Production değiştirilmedi.
+- 2026-10-22 — Yönetim paneli Prompt 8 tamamlandı: yönetici/public uçtan uca akışları, RLS ve anon REST güvenlik matrisi, rol/MFA sınırları, erişilebilirlik, dört responsive genişlik, 500 ürün + 500 görsel performansı ve Lighthouse regresyonu doğrulandı. Editörde owner menüsünün görünmesine yol açan `hidden` CSS çakışması ve henüz uzakta olmayan `analytics_enabled` sütununun public sorguda HTTP 400 üretmesi düzeltildi. Ayrıntılı sonuçlar `docs/admin-test-report.md` içindedir; uzak Supabase, Production, deploy, commit ve push değiştirilmedi.
 - 2026-10-13 — Proje yol haritası ve çalışma kuralları hazırlandı; bu çalışma uygulama fazı olarak sayılmadı.
 
 ## Açık kararlar / bekleyen onaylar
@@ -346,7 +347,7 @@
 
 ## Sonraki adım
 
-- Kullanıcı Prompt 7 değişikliklerini inceleyip commit edecek. Prompt 5/7 migration'ları ve Edge Function ayrı onay olmadan uzak Supabase'e gönderilmeyecek; analiz bayrağı kapalı kalacak. Sonraki prompt gelene kadar yeni adıma geçme.
+- Kullanıcı Prompt 8 değişikliklerini ve `docs/admin-test-report.md` raporunu inceleyip commit edecek. Prompt 5/7 migration'ları ve Edge Function ayrı onay olmadan uzak Supabase'e gönderilmeyecek; analiz bayrağı kapalı kalacak. Sonraki prompt gelene kadar yeni adıma geçme.
 - Yönetim panelinden gerçek kategori, ürün, fiyat ve görselleri gir. Koleksiyon/kategori kapak görsellerini ekle.
 - Production öncesi kalan Advisor bulgusunu değerlendir: Auth leaked-password protection.
 - Vercel Production env değerleri ve açık Production onayı olmadan main merge/Production deploy yapma.

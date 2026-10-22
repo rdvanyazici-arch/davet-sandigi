@@ -65,7 +65,10 @@ function installFakeSupabase(options={}) {
     maybeSingle() { return this.execute(true); }
     then(resolve, reject) { return this.execute(false).then(resolve, reject); }
     async execute(single) {
-      if (this.table === 'admin_profiles') return { data: { user_id: session.user.id, display_name: 'Test Owner', role: 'owner', is_active: true }, error: null };
+      if (this.table === 'admin_profiles') {
+        const profile = { user_id: session.user.id, display_name: 'Test Owner', role: 'owner', is_active: true };
+        return { data: single ? profile : [profile], count: this.count ? 1 : null, error: null };
+      }
       const rows = db[this.table] || (db[this.table] = []);
       let result;
       if (this.action === 'insert') {
@@ -134,6 +137,7 @@ function installFakeSupabase(options={}) {
     }
   };
   window.__PW_DB = db;
+  window.__PW_CLIENT = client;
   window.__PW_STORAGE_MOVES = [];
   window.__PW_STORAGE_REMOVES = [];
   window.supabase = { createClient: () => client };
@@ -149,6 +153,73 @@ test.beforeEach(async ({ page }, testInfo) => {
   await page.addInitScript(installFakeSupabase,{empty:testInfo.title.includes('boş Supabase')});
   await page.goto('/admin.html');
   await expect(page.locator('#admin-panel')).toHaveClass(/show/);
+});
+
+test('Prompt 8 giriş ve owner MFA doğrulaması tamamlanmadan paneli açmaz', async ({ page }) => {
+  await page.evaluate(() => {
+    let aal = 'aal1';
+    const session = { user: { id: '7590fe38-46b1-47dd-bd17-b83a0212e87c' }, expires_at: Math.floor(Date.now() / 1000) + 3600 };
+    window.__PW_CLIENT.auth.signInWithPassword = async () => ({ data: { session }, error: null });
+    window.__PW_CLIENT.auth.mfa.getAuthenticatorAssuranceLevel = async () => ({ data: { currentLevel: aal }, error: null });
+    window.__PW_CLIENT.auth.mfa.listFactors = async () => ({ data: { totp: [{ id: 'factor-1', status: 'verified' }] }, error: null });
+    window.__PW_CLIENT.auth.mfa.challenge = async () => ({ data: { id: 'challenge-1' }, error: null });
+    window.__PW_CLIENT.auth.mfa.verify = async ({ code }) => {
+      if (code !== '123456') return { data: null, error: { message: 'invalid code' } };
+      aal = 'aal2';
+      return { data: { session }, error: null };
+    };
+    showAdminLogin('');
+  });
+  await page.fill('#admin-email', 'owner@example.test');
+  await page.fill('#admin-pw', 'test-password-not-a-secret');
+  await page.click('#admin-login-btn');
+  await expect(page.locator('#admin-panel')).not.toHaveClass(/show/);
+  await expect(page.locator('#admin-mfa-challenge')).not.toHaveClass(/admin-auth-hidden/);
+  await page.fill('#admin-mfa-code', '123456');
+  await page.click('#admin-mfa-verify');
+  await expect(page.locator('#admin-panel')).toHaveClass(/show/);
+  await expect(page.locator('#admin-user-mfa')).toHaveText('MFA doğrulandı');
+});
+
+test('Prompt 8 editör owner ekranını göremez ve değişiklik geçmişi güvenli ayrıntıyı gösterir', async ({ page }) => {
+  await page.evaluate(() => {
+    window.__PW_DB.admin_audit_log = [{
+      id: 1, table_name: 'products', row_id: '7', action: 'update', actor_id: '7590fe38-46b1-47dd-bd17-b83a0212e87c',
+      summary: 'Ürün: Test Kolonyası', changes: { price: { old: 30, new: 38 }, description: { changed: true } }, created_at: new Date().toISOString()
+    }];
+  });
+  await page.click('[data-view="history"]');
+  await expect(page.locator('#audit-list')).toContainText('Ürün: Test Kolonyası');
+  await page.click('[data-audit-id="1"]');
+  await expect(page.getByRole('dialog')).toContainText('30 → 38');
+  await expect(page.getByRole('dialog')).toContainText('Değişti (gizli veya büyük alan)');
+  await page.click('[data-audit-close]');
+
+  await page.evaluate(() => {
+    adminAuthProfile = { user_id: 'editor-1', display_name: 'Test Editor', role: 'editor', is_active: true };
+    adminMfaLevel = 'aal1';
+    renderAdminIdentity(adminAuthProfile);
+  });
+  await expect(page.locator('[data-view="admins"]')).toBeHidden();
+  await page.evaluate(() => adminOpenView('admins'));
+  await expect(page.locator('#view-admins')).not.toHaveClass(/show/);
+  await expect(page.getByRole('dialog', { name: 'Yönetici yetkisi gerekli' })).toBeVisible();
+});
+
+test('Prompt 8 görünür yönetim kontrollerinin erişilebilir adı vardır', async ({ page }) => {
+  for (const view of ['dashboard', 'products', 'media', 'collections', 'categories', 'banner', 'settings', 'reports', 'history']) {
+    await page.evaluate(name => window.adminOpenView(name), view);
+    const missing = await page.locator(`#view-${view} button:visible, #view-${view} input:visible, #view-${view} select:visible, #view-${view} textarea:visible`).evaluateAll(nodes => nodes.filter(node => {
+      const label = node.id && document.querySelector(`label[for="${CSS.escape(node.id)}"]`);
+      const wrapped = node.closest('label');
+      return !String(node.getAttribute('aria-label') || node.getAttribute('aria-labelledby') || node.textContent || node.getAttribute('placeholder') || label?.textContent || wrapped?.textContent || '').trim();
+    }).map(node => node.outerHTML.slice(0, 180)));
+    expect(missing, view).toEqual([]);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.adminOpenView('dashboard'));
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
 });
 
 test('boş Supabase durumunda yönetim paneli açılır ve Firebase ağı kullanılmaz', async ({ page }) => {
@@ -401,7 +472,7 @@ test('mobil görünümde yatay taşma yok', async ({ page }) => {
 
 test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taşmaz', async ({ page }) => {
   test.setTimeout(120_000);
-  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /admin\.css\?v=20261020-prompt5$/);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute('href', /assets\/css\/admin\.css\?v=\d{8}-prompt\d+$/);
   await expect(page.locator('#admin-user-name')).toHaveText('Test Owner');
   await expect(page.locator('#admin-user-role')).toHaveText('Owner');
   await expect(page.locator('#admin-user-mfa')).toHaveText('MFA doğrulandı');
@@ -412,7 +483,7 @@ test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taş
   await expect(page.locator('#admin-search')).toHaveValue('KOL-001');
 
   await page.click('[data-view="analytics"]');
-  await expect(page.locator('#view-analytics')).toContainText('Bu bölüm sonraki adımda eklenecek.');
+  await expect(page.locator('#view-analytics')).toContainText(/Analiz|Analitik kapalı|Henüz veri yok/);
   await expect(page.locator('.admin-tabs [data-view="analytics"]')).toHaveAttribute('aria-current', 'page');
 
   const views = ['dashboard','analytics','reports','products','add','media','collections','categories','banner','home','content','campaign','reviews','faq','legal','settings','admins','history'];

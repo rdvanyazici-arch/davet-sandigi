@@ -4,7 +4,7 @@ var PUBLIC_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
 var PUBLIC_TIMEOUT_MS=12000;
 var MEDIA_COLS='storage_path,alt_text,width,height';
 var PUBLIC_QUERIES={
- settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,analytics_enabled',params:{id:'eq.1',limit:'1'}},
+ settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note',params:{id:'eq.1',limit:'1'}},
  categories:{table:'categories',select:'id,slug,name,description,sort_order,category_collections(collection_id,sort_order)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  collections:{table:'collections',select:'id,slug,name,short_description,icon_key,sort_order,media_assets!cover_media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  products:{table:'products',select:'id,category_id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,is_featured,sort_order,product_images(alt_text,sort_order,is_primary,media_assets('+MEDIA_COLS+')),product_collections(collection_id)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc',limit:'500'}},
@@ -24,8 +24,8 @@ var PUBLIC_SAMPLE_SETTINGS={
 };
 var PUBLIC_SAMPLE_REVIEW_NAMES=['Elif & Burak','Zeynep Y.','Merve & Can','Ayşe & Mert','Selin & Kaan','Deniz & Ece'];
 
-function publicQuery(key){
- var q=PUBLIC_QUERIES[key],cfg=SUPABASE_CONFIG;
+function publicRequest(q){
+ var cfg=SUPABASE_CONFIG;
  if(!cfg||!cfg.url||!cfg.publishableKey)return Promise.reject(new Error('Supabase yapılandırması eksik.'));
  if(q.select.indexOf('*')>-1)return Promise.reject(new Error('Açık sütun listesi gerekli.'));
  var params=new URLSearchParams(q.params);params.set('select',q.select);
@@ -35,6 +35,7 @@ function publicQuery(key){
   .then(function(rows){if(!Array.isArray(rows))throw new Error('Beklenmeyen yanıt');return rows;})
   .finally(function(){clearTimeout(timer);});
 }
+function publicQuery(key){return publicRequest(PUBLIC_QUERIES[key]);}
 function qesc(s){return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function safeUrl(u){u=String(u||'').trim();return PUBLIC_URL_PATTERN.test(u)?u:'';}
 function publicSetting(key,value){
@@ -214,7 +215,6 @@ function renderCollections(){
  occasions.forEach(function(o){
   var card=el('button','coll-card reveal');
   card.type='button';
-  card.setAttribute('aria-label',o.label+' koleksiyonunu görüntüle');
   card.innerHTML='<div class="coll-thumb"><span class="coll-ic">'+glyphSvg(o.glyph)+'</span>'+(o.cover?mediaImg(o.cover,{alt:o.label,sizes:'(max-width: 760px) 100vw, 25vw'}):'')+'</div>'+
    '<div class="coll-body"><h3>'+esc(o.label)+'</h3><p>'+esc(o.sub||'')+'</p><span class="coll-more">Koleksiyonu Gör '+ICON.arr+'</span></div>';
   card.addEventListener('click',function(event){openCollection(o.id,event.currentTarget);});

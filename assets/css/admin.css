@@ -354,3 +354,4 @@ html[data-report-orientation="portrait"] .report-workspace{page:report-portrait}
 @media(prefers-reduced-motion:reduce){
   .admin *,.admin *::before,.admin *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+.admin [hidden]{display:none!important}
