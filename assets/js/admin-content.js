@@ -34,5 +34,4 @@ var globalSearchForm=$('#admin-global-search-form');
 if(globalSearchForm)globalSearchForm.addEventListener('submit',function(event){event.preventDefault();adminRunProductSearch($('#admin-global-search').value);});
 var globalSearch=$('#admin-global-search');
 if(globalSearch)globalSearch.addEventListener('search',function(){adminRunProductSearch(globalSearch.value);});
-var newProduct=$('#admin-new-product');if(newProduct)newProduct.addEventListener('click',function(){adminOpenView('add');});
 adminInitMobileMenu();

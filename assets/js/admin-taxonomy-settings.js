@@ -43,7 +43,7 @@ async function taxonomyLoad(force){
 function taxonomyPreview(title,body,onApprove){
  var modal=el('div','taxonomy-preview-modal');
  modal.innerHTML='<div class="taxonomy-preview-dialog" role="dialog" aria-modal="true"><button class="pm-close" type="button" aria-label="Önizlemeyi kapat">✕</button><h2>'+esc(title)+'</h2>'+body+'<button class="admin-save" data-taxonomy-approve type="button">Önizlemeyi Onayla</button></div>';
- document.body.appendChild(modal);
+ adminLayerRoot().appendChild(modal);
  function close(){modal.remove();}
  modal.querySelector('.pm-close').onclick=close;modal.onclick=function(event){if(event.target===modal)close();};
  modal.querySelector('[data-taxonomy-approve]').onclick=function(){onApprove();close();};modal.querySelector('.pm-close').focus();

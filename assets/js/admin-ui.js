@@ -32,10 +32,11 @@ function adminErrorText(error){return adminErrorInfo(error).message;}
 function adminErrorHtml(error){var info=adminErrorInfo(error);return esc(info.message)+(info.technical?'<details class="admin-technical-details"><summary>Teknik ayrıntı</summary><code>'+esc(info.technical)+'</code></details>':'');}
 function adminShowInlineError(node,prefix,error){if(!node)return;node.innerHTML=esc(prefix||'')+adminErrorHtml(error);node.classList.add('media-error');}
 function adminFocusable(root){return $all('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',root).filter(function(node){return !node.hidden;});}
+function adminLayerRoot(){return document.querySelector('.admin')||document.body;}
 function adminOpenDialog(options){
  var opener=options.opener||document.activeElement,overlay=el('div',options.overlayClass||'admin-dialog-overlay');
  overlay.innerHTML='<div class="'+(options.dialogClass||'admin-dialog')+'" role="dialog" aria-modal="true"'+(options.labelledBy?' aria-labelledby="'+esc(options.labelledBy)+'"':' aria-label="'+esc(options.label||'İletişim penceresi')+'"')+'>'+options.html+'</div>';
- document.body.appendChild(overlay);var dialog=overlay.firstElementChild,closed=false;
+ adminLayerRoot().appendChild(overlay);var dialog=overlay.firstElementChild,closed=false;
  function close(value){if(closed)return;closed=true;document.removeEventListener('keydown',onKey,true);overlay.remove();if(opener&&opener.focus)opener.focus();if(options.onClose)options.onClose(value);}
  function onKey(event){if(event.key==='Escape'){event.preventDefault();close(false);return;}if(event.key!=='Tab')return;var nodes=adminFocusable(dialog);if(!nodes.length){event.preventDefault();dialog.focus();return;}var first=nodes[0],last=nodes[nodes.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
  document.addEventListener('keydown',onKey,true);overlay.addEventListener('click',function(event){if(event.target===overlay&&options.closeOnBackdrop!==false)close(false);});
