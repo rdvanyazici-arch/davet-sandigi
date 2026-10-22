@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+/* Ekran goruntuleri varsayilan olarak gitignore'lu test-results/ altina yazilir;
+   boylece her test kosusu depoyu kirletmez. Referans gorselleri bilerek tazelemek
+   icin: UPDATE_ADMIN_BASELINE=1 npx playwright test */
+const SHOT_DIR = process.env.UPDATE_ADMIN_BASELINE ? 'docs/admin-baseline' : 'test-results/admin-screens';
+
 const pageRequests=new WeakMap();
 const pageErrors=new WeakMap();
 const pageConsoleErrors=new WeakMap();
@@ -494,7 +499,7 @@ test('Prompt 2 yönetim kabuğu, gezinme ve tüm ekranlar dört genişlikte taş
       await expect(page.locator(`#view-${view}`)).toHaveClass(/show/);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `${width}px / ${view}`).toBeLessThanOrEqual(1);
-      await page.screenshot({ path: `docs/admin-baseline/${width}-${view}.png`, animations: 'disabled' });
+      await page.screenshot({ path: `${SHOT_DIR}/${width}-${view}.png`, animations: 'disabled' });
     }
   }
 

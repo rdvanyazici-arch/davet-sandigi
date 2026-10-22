@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
+/* Ekran goruntuleri varsayilan olarak gitignore'lu test-results/ altina yazilir;
+   boylece her test kosusu depoyu kirletmez. Referans gorselleri bilerek tazelemek
+   icin: UPDATE_ADMIN_BASELINE=1 npx playwright test */
+const SHOT_DIR = process.env.UPDATE_ADMIN_BASELINE ? 'docs/admin-baseline' : 'test-results/admin-screens';
+
 const PROJECT_HOST = 'zdksvgtkeeweufuajugd.supabase.co';
 const ORIGIN = `https://${PROJECT_HOST}`;
 const LOCAL_HOST = new URL(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4175').host;
@@ -792,8 +797,38 @@ test('Prompt 2 public site masaüstü ve mobil görsel referansı değişmeden a
     await page.setViewportSize({ width, height: 900 });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, `${width}px public`).toBeLessThanOrEqual(1);
-    await page.screenshot({ path: `docs/admin-baseline/public-${width}.png`, animations: 'disabled' });
+    await page.screenshot({ path: `${SHOT_DIR}/public-${width}.png`, animations: 'disabled' });
   }
+  expect(log.consoleErrors).toEqual([]);
+  expect(log.pageErrors).toEqual([]);
+});
+
+test('bakım modu açıkken vitrin kapanır, yalnız bilgilendirme ekranı görünür', async ({ page }) => {
+  const db = makeDb();
+  db.site_settings_public = [{ ...db.site_settings_public[0], is_maintenance_mode: true }];
+  const log = await setup(page, { db });
+  await page.goto('/index.html');
+  await expect(page.locator('#maintenance')).toBeVisible();
+  await expect(page.locator('#maint-title')).toHaveText('Kısa bir ara veriyoruz');
+  await expect(page.locator('.topbar')).toBeHidden();
+  await expect(page.locator('header.header')).toBeHidden();
+  await expect(page.locator('main')).toBeHidden();
+  await expect(page.locator('footer.footer')).toBeHidden();
+  await expect(page.locator('#maint-ig')).toBeVisible();
+  await expect(page.locator('#maint-wa')).toBeVisible();
+  await expect(page.locator('#maint-wa')).toHaveAttribute('href', /^https:\/\/wa\.me\/905301112233\?text=/);
+  await expect(page.locator('h1')).toHaveCount(1);
+  expect(log.consoleErrors).toEqual([]);
+  expect(log.pageErrors).toEqual([]);
+});
+
+test('bakım modu kapalıyken vitrin normal açılır', async ({ page }) => {
+  const log = await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect(page.locator('#maintenance')).toBeHidden();
+  await expect(page.locator('main')).toBeVisible();
+  await expect(page.locator('header.header')).toBeVisible();
   expect(log.consoleErrors).toEqual([]);
   expect(log.pageErrors).toEqual([]);
 });

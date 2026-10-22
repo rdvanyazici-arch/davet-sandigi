@@ -93,6 +93,19 @@ function setPublicLink(id,url,label){
  else link.removeAttribute('href');
  if(label){var text=link.querySelector('span');if(text)text.textContent=label;else link.textContent=label;}
 }
+/* Bakim modu: site_settings.is_maintenance_mode true iken vitrin tamamen kapatilir.
+   Ayar okunamazsa varsayilan kapalidir; showroom erisilebilir kalir. */
+function applyMaintenance(){
+ var node=$('#maintenance');if(!node)return;
+ var on=settings.maintenance===true;
+ document.body.classList.toggle('maint-on',on);
+ node.hidden=!on;
+ if(!on)return;
+ if(typeof setPublicLink==='function')setPublicLink('maint-ig',settings.instagram,'Instagram\u2019da \u0130nceleyin');
+ var wa=$('#maint-wa'),reachable=!!waNumber();
+ if(wa){wa.hidden=!reachable;if(reachable)wa.href=waLink('Merhaba, Davet Sand\u0131\u011f\u0131 hakk\u0131nda bilgi almak istiyorum.');}
+ if(typeof closeCart==='function')closeCart();
+}
 function applyContact(){
  var ok=!!waNumber(),wl=ok?waLink('Davet Sandığı için sipariş talebi oluşturmak istiyorum.'):'';
  ['hdr-wa','cta-wa','ft-wa','channel-wa'].forEach(function(id){

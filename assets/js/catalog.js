@@ -4,7 +4,7 @@ var PUBLIC_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
 var PUBLIC_TIMEOUT_MS=12000;
 var MEDIA_COLS='storage_path,alt_text,width,height';
 var PUBLIC_QUERIES={
- settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note',params:{id:'eq.1',limit:'1'}},
+ settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,is_maintenance_mode',params:{id:'eq.1',limit:'1'}},
  categories:{table:'categories',select:'id,slug,name,description,sort_order,category_collections(collection_id,sort_order)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  collections:{table:'collections',select:'id,slug,name,short_description,icon_key,sort_order,media_assets!cover_media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  products:{table:'products',select:'id,category_id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,is_featured,sort_order,product_images(alt_text,sort_order,is_primary,media_assets('+MEDIA_COLS+')),product_collections(collection_id)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc',limit:'500'}},
@@ -36,6 +36,15 @@ function publicRequest(q){
   .finally(function(){clearTimeout(timer);});
 }
 function publicQuery(key){return publicRequest(PUBLIC_QUERIES[key]);}
+/* analytics_enabled sutunu 20261021151427 migration'i uzak projeye uygulanmadan once yoktur.
+   Once bayrakli sorgu denenir; sutun yoksa istek 400 doner ve bayraksiz sorguya dusulur,
+   bu durumda analiz kapali kalir. Migration uygulandiginda ek bir kod degisikligi gerekmez. */
+var PUBLIC_SETTINGS_OPTIONAL='analytics_enabled';
+function publicSettingsRequest(){
+ var base=PUBLIC_QUERIES.settings;
+ return publicRequest({table:base.table,select:base.select+','+PUBLIC_SETTINGS_OPTIONAL,params:base.params})
+  .catch(function(){return publicRequest(base);});
+}
 function qesc(s){return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function safeUrl(u){u=String(u||'').trim();return PUBLIC_URL_PATTERN.test(u)?u:'';}
 function publicSetting(key,value){
@@ -97,7 +106,7 @@ function stateBox(kind,msg,retry){return'<div class="sec-state '+kind+'" role="s
 
 /* Public sayfa yerel örnek verilerle değil yalnızca Supabase verisiyle çalışır. */
 (function resetPublicDefaults(){
- settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',analyticsEnabled:false,legal:{},campaign:{enabled:false}};
+ settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',analyticsEnabled:false,maintenance:false,legal:{},campaign:{enabled:false}};
  products=[];categories=[];occasions=[];
 })();
 
@@ -115,7 +124,9 @@ function applyPublicSettings(rows){
  settings.quoteThreshold=Number.isInteger(threshold)&&threshold>0?threshold:0;
  settings.shippingNote=publicSetting('shipping_note',r.shipping_note);
  settings.analyticsEnabled=r.analytics_enabled===true;
- if(window.dsAnalytics)window.dsAnalytics.configure(settings.analyticsEnabled);
+ settings.maintenance=r.is_maintenance_mode===true;
+ /* Bakim modunda vitrin kapali oldugu icin olay sayaci da calismaz. */
+ if(window.dsAnalytics)window.dsAnalytics.configure(settings.analyticsEnabled&&!settings.maintenance);
 }
 function pruneStoredSelections(){
  var known={};products.forEach(function(p){known[p.id]=1;});
@@ -184,7 +195,7 @@ function loadPublicSite(){
   });
  }
  run('catalog',Promise.all([publicQuery('categories'),publicQuery('collections'),publicQuery('products')]),applyPublicCatalog);
- run('settings',publicQuery('settings'),function(rows){applyPublicSettings(rows);if(typeof applyContact==='function')applyContact();if(typeof renderFaq==='function')renderFaq();if(typeof syncCart==='function')syncCart();});
+ run('settings',publicSettingsRequest(),function(rows){applyPublicSettings(rows);if(typeof applyMaintenance==='function')applyMaintenance();if(typeof applyContact==='function')applyContact();if(typeof renderFaq==='function')renderFaq();if(typeof syncCart==='function')syncCart();});
  run('banners',publicQuery('banners'),function(rows){
   var now=Date.now();
   publicBanners=rows.filter(function(b){return(!b.starts_at||new Date(b.starts_at).getTime()<=now)&&(!b.ends_at||new Date(b.ends_at).getTime()>now);}).map(function(b){return{eyebrow:b.eyebrow||'',title:b.title||'',lead:b.description||'',b1t:b.primary_button_text||'',b1l:safeUrl(b.primary_button_url),b2t:b.secondary_button_text||'',b2l:safeUrl(b.secondary_button_url),media:mediaFrom(b.media_assets,'',b.title)};});

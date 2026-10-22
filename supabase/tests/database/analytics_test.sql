@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(15);
 
 -- Test, daha önce yerel Edge Function ile oluşturulmuş satırlardan bağımsız
 -- çalışmalı. Silmeler transaction sonunda geri alınır.
@@ -60,6 +60,28 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"a7000000-0000-4000-8000-000000000001","aal":"aal1","role":"authenticated"}',true);
 select is((public.admin_analytics_summary(30)->'totals'->>'page_view')::bigint,121::bigint,'summary returns aggregate page views');
 select throws_ok($$select public.admin_analytics_summary(8)$$,'22023',null,'unsupported date range is rejected');
+
+-- Ürün silinince analiz satırları cascade ile gider; check kısıtı silmeyi engellemez.
+reset role;
+insert into public.categories(slug,name,is_active)
+  values('analytics-cascade-kategori','Analytics Cascade Kategori',false);
+insert into public.products(category_id,slug,sku,name,min_quantity,quantity_step,is_active)
+  values((select id from public.categories where slug='analytics-cascade-kategori'),
+         'analytics-cascade-urun','ANL-CASCADE-1','Analytics Cascade Ürün',1,1,false);
+insert into public.analytics_daily(day,event_type,product_id,source,device,count)
+  values(current_date,'product_view',
+         (select id from public.products where slug='analytics-cascade-urun'),
+         'direct','desktop',5);
+
+select lives_ok(
+  $$delete from public.products where slug='analytics-cascade-urun'$$,
+  'deleting a product cascades its analytics rows instead of failing the check constraint'
+);
+select is(
+  (select count(*) from public.analytics_daily where event_type='product_view'),
+  0::bigint,
+  'cascade removed the product analytics rows'
+);
 
 select * from finish();
 rollback;
