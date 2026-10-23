@@ -5,6 +5,17 @@ import { absoluteUrl, categoryPath, collectionPath, contactPath, homePath, produ
 import { resolveFaq } from './faq-resolve.mjs';
 import { breadcrumb, esc, image, jsonLd, mediaUrl, money, productCard, publicPlace, whatsappLink } from './page-templates.mjs';
 
+/* Instagram adresini okunur bir kullanıcı adına indirger; adres bozuksa
+   olduğu gibi gösterir, böylece bilgi kaybolmaz. */
+function instagramHandle(url) {
+  try {
+    const name = new URL(url).pathname.split('/').filter(Boolean)[0];
+    return name ? '@' + name : url;
+  } catch {
+    return url;
+  }
+}
+
 /* Ürün görsellerini ana görsel önce olacak şekilde sıralar ve koleksiyon kimliklerini düzleştirir. */
 export function normalizeProducts(products) {
   return (products || []).map(product => {
@@ -130,13 +141,16 @@ export function buildPages(data, supabaseUrl) {
   }
 
   const contactCrumb = breadcrumb([{ name: 'Ana sayfa', path: homePath }, { name: 'İletişim', path: contactPath }]);
-  const contactRows = [];
-  if (settings.whatsapp_number) contactRows.push(['WhatsApp', '+' + esc(settings.whatsapp_number)]);
-  if (settings.phone) contactRows.push(['Telefon', esc(settings.phone)]);
-  if (settings.email) contactRows.push(['E-posta', esc(settings.email)]);
-  if (settings.instagram_url) contactRows.push(['Instagram', '<a href="' + esc(settings.instagram_url) + '" rel="noopener noreferrer me">' + esc(settings.instagram_url) + '</a>']);
+  /* İletişim bilgileri sitenin kart diliyle gösterilir: her biri tıklanabilir,
+     ham adres yerine ne yapacağını söyleyen bir etiket taşır. */
+  const contactCards = [];
+  const contactWa = whatsappLink(settings, 'Merhaba, sipariş talebimi iletmek istiyorum.');
+  if (contactWa) contactCards.push({ label: 'WhatsApp', value: 'Sipariş talebi gönderin', href: contactWa, external: true });
+  if (settings.phone) contactCards.push({ label: 'Telefon', value: settings.phone, href: 'tel:' + String(settings.phone).replace(/[^+0-9]/g, '') });
+  if (settings.email) contactCards.push({ label: 'E-posta', value: settings.email, href: 'mailto:' + settings.email });
+  if (settings.instagram_url) contactCards.push({ label: 'Instagram', value: instagramHandle(settings.instagram_url), href: settings.instagram_url, external: true });
   const contactPlace = publicPlace(settings);
-  if (contactPlace) contactRows.push(['Konum', esc(contactPlace.locality) + ' / ' + esc(contactPlace.region)]);
+  if (contactPlace) contactCards.push({ label: 'Konum', value: contactPlace.locality + ' / ' + contactPlace.region });
   pages.push({
     path: contactPath,
     title: 'İletişim | Davet Sandığı',
@@ -153,10 +167,20 @@ export function buildPages(data, supabaseUrl) {
     }],
     body: contactCrumb.html + '<h1>İletişim</h1>'
       + '<p class="pg-lead">Sipariş talebinizi WhatsApp üzerinden iletebilir, ürünleri Instagram hesabımızdan takip edebilirsiniz. Sitede çevrimiçi ödeme alınmaz.</p>'
-      + (contactRows.length ? '<dl class="pg-contact-list">' + contactRows.map(([key, value]) => '<dt>' + esc(key) + '</dt><dd>' + value + '</dd>').join('') + '</dl>'
+      + (contactCards.length
+        ? '<div class="pg-contact-grid">' + contactCards.map(card => {
+          const inner = '<span class="pg-contact-k">' + esc(card.label) + '</span><span class="pg-contact-v">' + esc(card.value) + '</span>';
+          if (!card.href) return '<div class="pg-contact-card">' + inner + '</div>';
+          const rel = card.external ? ' rel="noopener noreferrer me"' : '';
+          return '<a class="pg-contact-card" href="' + esc(card.href) + '"' + rel + '>' + inner + '</a>';
+        }).join('') + '</div>'
         : '<p class="pg-empty">İletişim bilgileri yönetim panelinden girilmedi.</p>')
-      + (settings.delivery_text ? '<h2>Teslimat</h2><p>' + esc(settings.delivery_text) + '</p>' : '')
-      + (settings.shipping_note ? '<h2>Kargo</h2><p>' + esc(settings.shipping_note) + '</p>' : '')
+      + (settings.delivery_text || settings.shipping_note
+        ? '<div class="pg-info">'
+          + (settings.delivery_text ? '<section><h2>Teslimat</h2><p>' + esc(settings.delivery_text) + '</p></section>' : '')
+          + (settings.shipping_note ? '<section><h2>Kargo</h2><p>' + esc(settings.shipping_note) + '</p></section>' : '')
+          + '</div>'
+        : '')
   });
 
   const siteLinks = {

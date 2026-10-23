@@ -46,14 +46,14 @@ em{color:var(--gold);font-style:italic;}
 .topbar .tb-right{display:inline-flex;align-items:center;gap:7px;color:var(--forest);font-weight:700;letter-spacing:.03em;white-space:nowrap;}
 
 /* header */
-.header{position:sticky;top:0;z-index:80;background:color-mix(in srgb,var(--ivory) 94%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
+.header{position:sticky;top:0;z-index:80;background:color-mix(in srgb,var(--ivory) 97%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
 .header .wrap{display:flex;align-items:center;gap:24px;height:78px;}
-.brand{display:flex;align-items:center;gap:12px;}
+.brand{display:flex;align-items:center;gap:12px;flex-shrink:0;}
 .brand-mark{width:44px;height:44px;flex-shrink:0;color:var(--forest);}
-.brand-txt strong{display:block;font-family:var(--serif);font-size:21px;letter-spacing:.02em;color:var(--espresso);line-height:1;}
-.brand-txt small{display:block;margin-top:4px;color:var(--gold);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;}
-.mainnav{display:flex;gap:clamp(14px,2vw,30px);margin-left:auto;}
-.mainnav a{position:relative;font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);padding:6px 0;}
+.brand-txt strong{display:block;font-family:var(--serif);font-size:21px;letter-spacing:.02em;color:var(--espresso);line-height:1;white-space:nowrap;}
+.brand-txt small{display:block;margin-top:4px;color:var(--gold);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;}
+.mainnav{display:flex;gap:clamp(14px,2vw,30px);margin-left:auto;flex-shrink:0;}
+.mainnav a{position:relative;white-space:nowrap;font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);padding:6px 0;}
 .mainnav a::after{content:"";position:absolute;left:0;bottom:-2px;width:0;height:1.5px;background:var(--gold);transition:width .25s;}
 .mainnav a:hover::after,.mainnav a.active::after{width:100%;}
 .header-actions{display:flex;align-items:center;gap:12px;margin-left:auto;}
@@ -439,13 +439,6 @@ em{color:var(--gold);font-style:italic;}
    Yapı sırasında üretilen koleksiyon, kategori, ürün ve iletişim sayfaları.
    Ayrı bir stil dosyası yok: sitenin bileşenlerini kullanırlar, burada yalnızca
    JavaScript olmadığı için gereken farklar var. */
-.pg .mainnav{display:flex;flex-wrap:wrap;gap:14px 20px;margin-left:auto;}
-/* Sitenin başlığı 78px sabit yükseklikte ve gezinmeyi mobilde menü düğmesine
-   saklıyor. Burada menü düğmesi yok, o yüzden başlık büyüyebilmeli; dar ekranda
-   gezinme kendi satırına iner, yoksa marka adı kırılıp üst üste biniyor. */
-.pg .header{position:static;}
-.pg .header .wrap{flex-wrap:wrap;height:auto;min-height:78px;padding-top:14px;padding-bottom:14px;row-gap:12px;}
-.pg .brand-txt small{white-space:nowrap;}
 .pg main.section{padding:48px 0 88px;}
 .pg .section-head{margin-bottom:40px;}
 .pg .section-head h1{font-family:var(--serif);font-size:clamp(30px,4vw,46px);line-height:1.15;color:var(--espresso);margin:14px 0 12px;}
@@ -464,14 +457,15 @@ em{color:var(--gold);font-style:italic;}
 .pg-price{font-size:22px;font-weight:700;color:var(--espresso);margin-bottom:16px;}
 .pg-rule{font-size:13.5px;color:var(--moss);margin-bottom:8px;}
 .pg-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;}
-.pg-contact-list{display:grid;grid-template-columns:max-content 1fr;gap:12px 26px;margin:0 0 28px;}
-.pg-contact-list dt{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);}
-.pg-contact-list dd{margin:0;}
+.pg-contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:0 0 36px;}
+.pg-contact-card{display:flex;flex-direction:column;gap:7px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--cream);transition:transform .25s,box-shadow .25s,border-color .25s;}
+a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--gold-soft);}
+.pg-contact-k{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);}
+.pg-contact-v{font-size:16px;color:var(--espresso);overflow-wrap:anywhere;}
+.pg-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px;padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--cream);}
+.pg-info h2{font-family:var(--serif);font-size:22px;color:var(--espresso);margin:0 0 10px;}
+.pg-info p{margin:0;color:var(--moss);line-height:1.7;}
 .pg .footer-bottom span+span{color:rgba(250,247,240,.6);}
-@media (max-width:1000px){
-  .pg .mainnav{order:3;width:100%;margin-left:0;justify-content:center;gap:12px 18px;padding-top:12px;border-top:1px solid var(--line);}
-  .pg .header-actions{margin-left:auto;}
-}
 @media (max-width:860px){
   .pg-product{grid-template-columns:1fr;gap:26px;}
 }
@@ -479,7 +473,10 @@ em{color:var(--gold);font-style:italic;}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s,transform .7s;}
 .reveal.in{opacity:1;transform:none;}
 
-@media(max-width:1050px){
+/* Başlık artık hiçbir genişlikte satır kırmıyor; onun yerine sığmayan ögeler
+   sırayla sadeleşiyor: önce WhatsApp yazısı, sonra Instagram yazısı, en son
+   gezinme menü düğmesine iniyor. Eşikler ögelerin gerçek genişliğine göre. */
+@media(max-width:1540px){
   .header-actions .btn-wa span{display:none;}
   .header-actions .btn-wa{padding:12px 14px;}
 }
@@ -493,22 +490,25 @@ em{color:var(--gold);font-style:italic;}
   .story-grid{grid-template-columns:1fr;gap:34px;}
   .story-media{order:-1;}
 }
-@media(max-width:900px){
-  .mainnav,.topbar ul,.hero-proof,.header-actions .btn-wa span{display:none;}
+@media(max-width:1320px){
+  .mainnav{display:none;}
   .menu-toggle{display:block;}
-  .icon-btn,.menu-toggle{width:44px;height:44px;}
-  .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;}
+  .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;z-index:81;}
   .mainnav.mob a{padding:10px 0;}
+}
+@media(max-width:900px){
+  .topbar ul,.hero-proof{display:none;}
+  .icon-btn,.menu-toggle{width:44px;height:44px;}
   .section{padding:64px 0;}
   .filterbar button{min-height:44px;padding:10px 18px;}
 }
 @media(max-width:520px){
-  .header .wrap{padding:0 12px;gap:8px;}
+  .header .wrap{padding:0 10px;gap:6px;}
   .brand{gap:8px;}
   .brand-mark{width:36px;height:36px;}
-  .brand-txt strong{font-size:18px;}
+  .brand-txt strong{font-size:16px;}
   .brand-txt small{display:none;}
-  .header-actions{gap:6px;}
+  .header-actions{gap:4px;}
   .header-actions .btn-wa{display:none;}
   .icon-btn,.menu-toggle{width:44px;height:44px;}
   .coll-grid,.prod-grid,.why-grid,.steps,.review-grid{grid-template-columns:1fr;}
@@ -547,7 +547,7 @@ em{color:var(--gold);font-style:italic;}
 .footer .contact a{color:inherit;overflow-wrap:anywhere}
 .hero[data-state="empty"] .wrap{grid-template-columns:1fr}
 .hero-media[hidden],.story-media[hidden],.ctaband .media[hidden]{display:none!important}
-@media(max-width:900px){.header-actions .btn-instagram span{display:none}.header-actions .btn-instagram{padding:10px 12px}}
+@media(max-width:1400px){.header-actions .btn-instagram span{display:none}.header-actions .btn-instagram{padding:10px 12px}}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
 .sec-state{grid-column:1/-1;text-align:center;color:var(--moss);padding:40px 20px;border:1px dashed var(--line);border-radius:16px;background:var(--cream);font-size:15px}
 .sec-state.error{color:var(--espresso)}
