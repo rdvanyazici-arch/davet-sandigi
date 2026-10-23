@@ -81,7 +81,7 @@ var ADMIN_BACKUP_TABLES={
  banners:'id,eyebrow,title,description,primary_button_text,primary_button_url,secondary_button_text,secondary_button_url,media_id,sort_order,is_active,starts_at,ends_at,created_at,updated_at',
  content_sections:'id,section_key,eyebrow,title,body,button_text,button_url,media_id,content_json,is_active,updated_at',
  faqs:'id,question,answer,sort_order,is_active,created_at,updated_at',testimonials:'id,customer_display_name,event_name,review_text,rating,media_id,consent_confirmed,is_published,sort_order,created_at',
- site_settings:'id,brand_name,whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,is_maintenance_mode,updated_at',
+ site_settings:'id,brand_name,whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,address_locality,address_region,is_maintenance_mode,updated_at',
  media_assets:'id,storage_path,original_name,mime_type,file_size,width,height,alt_text,usage_type,status,created_at,updated_at,archived_at'
 };
 async function adminReportsBackup(run){

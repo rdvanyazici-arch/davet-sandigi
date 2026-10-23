@@ -2,8 +2,9 @@
   "name": "davet-sandigi",
   "private": true,
   "scripts": {
-    "build": "npm run build:config && npm run build:sitemap",
+    "build": "npm run build:config && npm run build:pages && npm run build:sitemap",
     "build:config": "node scripts/generate-supabase-config.mjs",
+    "build:pages": "node scripts/generate-pages.mjs",
     "build:sitemap": "node scripts/generate-sitemap.mjs",
     "test:rls": "npx supabase test db supabase/tests/database/rls_test.sql && npx supabase test db supabase/tests/database/admin_audit_test.sql && npx supabase test db supabase/tests/database/admin_management_test.sql && npx supabase test db supabase/tests/database/admin_dashboard_test.sql && npx supabase test db supabase/tests/database/analytics_test.sql",
     "test:storage": "npx supabase test db supabase/tests/database/storage_rls_test.sql",

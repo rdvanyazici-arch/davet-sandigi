@@ -4,7 +4,7 @@ var PUBLIC_URL_PATTERN=/^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
 var PUBLIC_TIMEOUT_MS=12000;
 var MEDIA_COLS='storage_path,alt_text,width,height';
 var PUBLIC_QUERIES={
- settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,is_maintenance_mode',params:{id:'eq.1',limit:'1'}},
+ settings:{table:'site_settings_public',select:'whatsapp_number,instagram_url,phone,email,delivery_text,currency_code,default_min_quantity,default_quantity_step,quote_threshold,shipping_note,address_locality,address_region,is_maintenance_mode,analytics_enabled',params:{id:'eq.1',limit:'1'}},
  categories:{table:'categories',select:'id,slug,name,description,sort_order,category_collections(collection_id,sort_order)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  collections:{table:'collections',select:'id,slug,name,short_description,icon_key,sort_order,media_assets!cover_media_id('+MEDIA_COLS+')',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc'}},
  products:{table:'products',select:'id,category_id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,is_featured,sort_order,product_images(alt_text,sort_order,is_primary,media_assets('+MEDIA_COLS+')),product_collections(collection_id)',params:{is_active:'eq.true',archived_at:'is.null',order:'sort_order.asc,id.asc',limit:'500'}},
@@ -15,13 +15,6 @@ var PUBLIC_QUERIES={
 };
 var catalogState={settings:'loading',catalog:'loading',banners:'loading',sections:'loading',faqs:'loading',testimonials:'loading'};
 var publicBanners=[],publicSections={},publicFaqs=[],publicTestimonials=[],publicLoadToken=0;
-var PUBLIC_SAMPLE_SETTINGS={
- whatsapp_number:['905399413902'],
- instagram_url:['https://www.instagram.com/davetsandigi'],
- phone:['+905399413902','905399413902'],
- email:['info@davetsandigi.com'],
- delivery_text:["türkiye'nin her yerine teslimat",'türkiye geneli teslimat']
-};
 var PUBLIC_SAMPLE_REVIEW_NAMES=['Elif & Burak','Zeynep Y.','Merve & Can','Ayşe & Mert','Selin & Kaan','Deniz & Ece'];
 
 function publicRequest(q){
@@ -36,30 +29,26 @@ function publicRequest(q){
   .finally(function(){clearTimeout(timer);});
 }
 function publicQuery(key){return publicRequest(PUBLIC_QUERIES[key]);}
-/* analytics_enabled sutunu 20261021151427 migration'i uzak projeye uygulanmadan once yoktur.
-   Once bayrakli sorgu denenir; sutun yoksa istek 400 doner ve bayraksiz sorguya dusulur,
-   bu durumda analiz kapali kalir. Migration uygulandiginda ek bir kod degisikligi gerekmez. */
-var PUBLIC_SETTINGS_OPTIONAL='analytics_enabled';
-function publicSettingsRequest(){
- var base=PUBLIC_QUERIES.settings;
- return publicRequest({table:base.table,select:base.select+','+PUBLIC_SETTINGS_OPTIONAL,params:base.params})
-  .catch(function(){return publicRequest(base);});
-}
+/* Ayarlar tek sorguyla okunur. Daha once burada, sutun yoksa sessizce ikinci bir
+   sorguya dusen bir geri dusus vardi; sutun eklendikten sonra o satir yalnizca
+   gercek bir ayar hatasini gizlemeye yarardi. Hata artik yukari cikiyor ve
+   vitrin "ayarlar yuklenemedi" durumunu gosteriyor. */
+function publicSettingsRequest(){return publicQuery('settings');}
 function qesc(s){return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function safeUrl(u){u=String(u||'').trim();return PUBLIC_URL_PATTERN.test(u)?u:'';}
+function publicPlace(value){var v=String(value==null?'':value).trim();return v.length>=2&&v.length<=60&&!/\d/.test(v)?v:'';}
+/* Yalnizca BICIM dogrulamasi yapar. Daha once burada "ornek veriyi yayina
+   cikarma" amacli bir deger suzgeci vardi; icindeki ornekler isletmenin gercek
+   numarasi, telefonu ve Instagram adresiydi. Sonuc olarak dogru bilgi girildikce
+   site onu demo sanip gizliyor, tum WhatsApp dugmeleri kapali kaliyordu. Deger
+   bazli eleme kaldirildi: panel zaten her kaydi onizleme onayiyla aliyor. */
 function publicSetting(key,value){
  var v=String(value==null?'':value).trim();if(!v)return'';
- var normalized=v.toLocaleLowerCase('tr-TR').replace(/\/$/,'').replace(/[’‘]/g,"'");
- if(key==='phone'||key==='whatsapp_number')normalized=v.replace(/\D/g,'');
- if(key==='email')normalized=v.toLowerCase();
- if((PUBLIC_SAMPLE_SETTINGS[key]||[]).indexOf(normalized)>-1)return'';
- if(key==='delivery_text'&&/5\s*[-–]\s*7\s*is gunu|turkiye.?nin her yerine|turkiye geneli teslimat/.test(normalized.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')))return'';
- if(key==='shipping_note'&&/(?:^|\D)(?:150|2[.,]?500)\s*tl|ucretsiz kargo/.test(normalized.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i')))return'';
  if(key==='whatsapp_number')return/^[1-9][0-9]{9,14}$/.test(v)?v:'';
  if(key==='phone')return/^[+0-9 ()-]{7,24}$/.test(v)?v:'';
  if(key==='email')return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)?v:'';
  if(key==='instagram_url'){
-  try{var url=new URL(v);if(url.protocol!=='https:'||!/(^|\.)instagram\.com$/i.test(url.hostname))return'';if(url.pathname.replace(/\/$/,'').toLocaleLowerCase('tr-TR')==='/davetsandigi')return'';return url.href;}
+  try{var url=new URL(v);if(url.protocol!=='https:'||!/(^|\.)instagram\.com$/i.test(url.hostname))return'';return url.href;}
   catch(e){return'';}
  }
  return v;
@@ -70,10 +59,12 @@ function mediaFrom(raw,altOverride,fallbackAlt){
  var alt=String(altOverride||m.alt_text||fallbackAlt||'').trim();
  var path=String(m.storage_path).split('/').map(encodeURIComponent).join('/'),width=Number(m.width)||0,height=Number(m.height)||0;
  var src=SUPABASE_CONFIG.url+'/storage/v1/object/public/site-media/'+path;
- var candidates=[480,960].filter(function(candidate){return width>candidate;}).map(function(candidate){return SUPABASE_CONFIG.url+'/storage/v1/render/image/public/site-media/'+path+'?width='+candidate+'&quality=82 '+candidate+'w';});
- if(width)candidates.push(src+' '+width+'w');
- candidates.sort(function(a,b){return Number(a.match(/ (\d+)w$/)[1])-Number(b.match(/ (\d+)w$/)[1]);});
- return{src:src,srcset:candidates.join(', '),sizes:'(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 33vw',alt:alt||'Davet Sandığı görseli',width:width,height:height};
+ /* Supabase'in gorsel donusturme ozelligi ucretli bir eklenti ve bu projede
+    kapali: /render/image/ adresleri "FeatureNotEnabled" ile 403 donuyor. O
+    adresleri srcset'e koymak, tarayici onlardan birini sectiginde gorselin hic
+    yuklenmemesine yol aciyordu. Depodaki dosya sunuluyor; gorseller panelde
+    yuklenirken zaten kucultulup webp'e cevriliyor. */
+ return{src:src,srcset:'',sizes:'',alt:alt||'Davet Sandığı görseli',width:width,height:height};
 }
 function mediaImg(m,opts){
  var o=opts||{};
@@ -106,7 +97,7 @@ function stateBox(kind,msg,retry){return'<div class="sec-state '+kind+'" role="s
 
 /* Public sayfa yerel örnek verilerle değil yalnızca Supabase verisiyle çalışır. */
 (function resetPublicDefaults(){
- settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',analyticsEnabled:false,maintenance:false,legal:{},campaign:{enabled:false}};
+ settings={whatsapp:'',instagram:'',phone:'',mail:'',deliveryText:'',currencyCode:'TRY',minQty:1,stepQty:1,quoteThreshold:0,shippingNote:'',locality:'',region:'',analyticsEnabled:false,maintenance:false,legal:{},campaign:{enabled:false}};
  products=[];categories=[];occasions=[];
 })();
 
@@ -123,6 +114,10 @@ function applyPublicSettings(rows){
  settings.stepQty=Number.isInteger(step)&&step>0?step:1;
  settings.quoteThreshold=Number.isInteger(threshold)&&threshold>0?threshold:0;
  settings.shippingNote=publicSetting('shipping_note',r.shipping_note);
+ /* Sokak adresi hic saklanmaz; yalniz ilce ve il gosterilir. Rakam iceren
+    deger yanlislikla girilmis tam adres sayilip yayina alinmaz. */
+ settings.locality=publicPlace(r.address_locality);
+ settings.region=publicPlace(r.address_region);
  settings.analyticsEnabled=r.analytics_enabled===true;
  settings.maintenance=r.is_maintenance_mode===true;
  /* Bakim modunda vitrin kapali oldugu icin olay sayaci da calismaz. */
@@ -157,14 +152,22 @@ function openProductFromLocation(){
  return true;
 }
 function openCategoryFromLocation(){
- var slug=new URLSearchParams(location.search).get('kategori');if(!slug||catalogState.catalog!=='ready')return false;
+ var slug=collectionRoute().category;if(!slug||catalogState.catalog!=='ready')return false;
  var category=categories.filter(function(item){return item.slug===slug;})[0];
  if(!category){if(typeof toast==='function')toast('Bu kategori şu an yayında değil.');return true;}
  activeFilter=String(category.id);renderFilter();renderProducts();
  if(typeof updateSeoRoute==='function')updateSeoRoute('category',category);
  return true;
 }
-function collectionRoute(){var q=new URLSearchParams(location.search),collection=q.get('koleksiyon')||'',category=q.get('kategori')||'';return{collection:collection,category:category};}
+/* Adres hem sorgu parametresinden hem yoldan okunur: /kina-hediyelikleri/
+   adresine doğrudan girildiğinde de aynı koleksiyon görünümü açılır. */
+function collectionRoute(){
+ var q=new URLSearchParams(location.search),collection=q.get('koleksiyon')||'',category=q.get('kategori')||'';
+ var routes=window.DS_ROUTES,parsed=routes&&routes.parsePath?routes.parsePath(location.pathname):null;
+ if(parsed&&parsed.kind==='collection'&&!collection)collection=parsed.slug;
+ if(parsed&&parsed.kind==='category'&&!category)category=parsed.slug;
+ return{collection:collection,category:category};
+}
 function openCollectionFromLocation(){
  var route=collectionRoute();if(!route.collection||catalogState.catalog!=='ready')return false;
  var collection=occasions.filter(function(item){return item.slug===route.collection;})[0];
@@ -215,30 +218,31 @@ function loadPublicSite(){
 /* ============ RENDER: COLLECTIONS ============ */
 function renderCollections(){
  var g=$('#coll-grid'),fc=$('#footer-coll'),st=catalogState.catalog;
- fc.innerHTML='';
+ if(!g||!fc)return;
  if(st!=='ready'||!occasions.length){
   var kind=st==='loading'?'loading':st==='error'?'error':'empty';
   g.innerHTML=stateBox(kind,st==='loading'?'Koleksiyonlar yükleniyor…':st==='error'?'Koleksiyonlar şu an yüklenemedi.':'Şu anda yayında koleksiyon bulunmuyor.',st==='error');
   setSectionState('koleksiyonlar',st==='ready'?'empty':st);
   return;
  }
- g.innerHTML='';setSectionState('koleksiyonlar','ready');
+ g.innerHTML='';fc.innerHTML='';setSectionState('koleksiyonlar','ready');
  occasions.forEach(function(o){
-  var card=el('button','coll-card reveal');
-  card.type='button';
+  var href=routeHref('collectionPath',o.slug);
+  var card=el(href?'a':'button','coll-card reveal');
+  if(href)card.setAttribute('href',href);else card.type='button';
   card.innerHTML='<div class="coll-thumb"><span class="coll-ic">'+glyphSvg(o.glyph)+'</span>'+(o.cover?mediaImg(o.cover,{alt:o.label,sizes:'(max-width: 760px) 100vw, 25vw'}):'')+'</div>'+
    '<div class="coll-body"><h3>'+esc(o.label)+'</h3><p>'+esc(o.sub||'')+'</p><span class="coll-more">Koleksiyonu Gör '+ICON.arr+'</span></div>';
-  card.addEventListener('click',function(event){openCollection(o.id,event.currentTarget);});
+  card.addEventListener('click',function(event){event.preventDefault();openCollection(o.id,event.currentTarget);});
   g.appendChild(card);
  });
- occasions.forEach(function(o){var li=el('li');li.innerHTML='<a href="#koleksiyonlar" data-occ="'+qesc(o.id)+'">'+esc(o.label)+'</a>';li.firstChild.addEventListener('click',function(e){e.preventDefault();openCollection(o.id,e.currentTarget);});fc.appendChild(li);});
+ occasions.forEach(function(o){var li=el('li');var fh=routeHref('collectionPath',o.slug)||'#koleksiyonlar';li.innerHTML='<a href="'+qesc(fh)+'" data-occ="'+qesc(o.id)+'">'+esc(o.label)+'</a>';li.firstChild.addEventListener('click',function(e){e.preventDefault();openCollection(o.id,e.currentTarget);});fc.appendChild(li);});
  observeReveal();
 }
 
 /* ============ RENDER: PRODUCTS ============ */
 var activeFilter='featured';
 function renderFilter(){
- var f=$('#filterbar');f.innerHTML='';
+ var f=$('#filterbar');if(!f)return;f.innerHTML='';
  var tabs=catalogState.catalog!=='ready'?[]:[{id:'featured',label:'Öne Çıkanlar'},{id:'all',label:'Tümü'}].concat(categories.map(function(c){return{id:c.id,label:c.label};}));
  tabs.forEach(function(t){
   var b=el('button',t.id==activeFilter?'active':'',t.label);b.type='button';b.setAttribute('aria-pressed',t.id==activeFilter?'true':'false');
@@ -246,8 +250,8 @@ function renderFilter(){
    activeFilter=t.id;renderFilter();renderProducts();
    if(t.id!=='featured'&&t.id!=='all'){
     var category=categories.filter(function(c){return c.id===t.id;})[0];
-    if(category&&category.slug){var url=new URL(location.href);url.search='';url.searchParams.set('kategori',category.slug);history.replaceState(null,'',url.pathname+url.search);updateSeoRoute('category',category);}
-   }else{history.replaceState(null,'',location.pathname);updateSeoRoute('home');}
+    if(category&&category.slug){var path=routeHref('categoryPath',category.slug);if(!path){var url=new URL(location.href);url.search='';url.searchParams.set('kategori',category.slug);path=url.pathname+url.search;}history.replaceState(null,'',path);updateSeoRoute('category',category);}
+   }else{history.replaceState(null,'','/');updateSeoRoute('home');}
   });
   f.appendChild(b);
  });
@@ -255,7 +259,8 @@ function renderFilter(){
 function visibleProducts(){return catalogState.catalog==='ready'?products:[];}
 var PG_PAGE=8,pgList=[],pgShown=0;
 function renderProducts(){
- var grid=$('#prod-grid'),st=catalogState.catalog,cta=$('#prod-more')?$('#prod-more').parentNode:null;grid.innerHTML='';
+ var grid=$('#prod-grid');if(!grid)return;
+ var st=catalogState.catalog,cta=$('#prod-more')?$('#prod-more').parentNode:null;grid.innerHTML='';
  if(st!=='ready'){
   pgList=[];pgShown=0;if(cta)cta.style.display='none';if($('#prod-more'))$('#prod-more').hidden=true;
   grid.innerHTML=stateBox(st==='loading'?'loading':'error',st==='loading'?'Ürünler yükleniyor…':'Ürünler şu an yüklenemedi.',st==='error');
@@ -273,7 +278,8 @@ function renderProducts(){
  renderMoreMain();
 }
 function renderMoreMain(){
- var grid=$('#prod-grid'),next=pgList.slice(pgShown,pgShown+PG_PAGE);
+ var grid=$('#prod-grid');if(!grid)return;
+ var next=pgList.slice(pgShown,pgShown+PG_PAGE);
  next.forEach(function(p){grid.appendChild(productCard(p));});
  pgShown+=next.length;
  var more=pgShown<pgList.length,btn=$('#prod-more');
@@ -296,7 +302,12 @@ function productCard(p){
 /* ============ COLLECTION VIEW ============ */
 function setCollectionRoute(collection,category){
  if(!window.history||!history.replaceState)return;
- var url=new URL(location.href);url.hash='';url.search='';url.searchParams.set('koleksiyon',collection.slug);if(category&&category.slug)url.searchParams.set('kategori',category.slug);history.replaceState(null,'',url.pathname+url.search);
+ /* Adres çubuğunda gerçek sayfa adresi kalsın: paylaşıldığında aynı görünümü
+    açan, site haritasında da bulunan adres bu. Yol üretilemezse eski sorgu
+    biçimine düşülür. */
+ var target=category&&category.slug?routeHref('categoryPath',category.slug):routeHref('collectionPath',collection.slug);
+ if(!target){var url=new URL(location.href);url.hash='';url.search='';url.searchParams.set('koleksiyon',collection.slug);if(category&&category.slug)url.searchParams.set('kategori',category.slug);target=url.pathname+url.search;}
+ history.replaceState(null,'',target);
 }
 function openCollection(occId,opener,categorySlug){
  var o=occasions.filter(function(x){return x.id==occId;})[0];if(!o)return;
@@ -328,7 +339,7 @@ function cvOpenCollection(collection,list,categorySlug){
  if(chosen){cvShowCategory(chosen);return;}
  cvCat='index';var bar=$('#cv-filter');bar.hidden=true;bar.innerHTML='';$('#cv-more-wrap').hidden=true;
  var grid=$('#cv-grid');grid.innerHTML='';
- var all=el('button','cv-category-card cv-category-all');all.type='button';all.innerHTML='<small>Koleksiyon</small><strong>Tümünü Gör</strong><span>Bu koleksiyondaki tüm ürünleri inceleyin '+ICON.arr+'</span>';all.onclick=function(){cvShowCategory(null);};grid.appendChild(all);
+ var all=el('button','cv-category-card cv-category-all');all.type='button';all.innerHTML='<small>Koleksiyon</small><strong>Tümünü Gör</strong><span>Bu koleksiyondaki tüm ürünleri inceleyin</span><b>Tüm ürünler '+ICON.arr+'</b>';all.onclick=function(){cvShowCategory(null);};grid.appendChild(all);
  linked.forEach(function(category){var count=cvBase.filter(function(p){return p.cat===category.id;}).length,card=el('button','cv-category-card');card.type='button';card.innerHTML='<small>Kategori</small><strong>'+esc(category.label)+'</strong><span>'+esc(category.desc||'Ürünleri inceleyin')+'</span><b>'+count+' ürün '+ICON.arr+'</b>';card.onclick=function(){cvShowCategory(category);};grid.appendChild(card);});
  if(!linked.length)grid.appendChild(el('div','prod-empty','Bu koleksiyona henüz kategori bağlanmadı.'));
 }

@@ -17,20 +17,32 @@ async function loadConfig() {
   return { endpoint: endpoint.origin, key: value.SUPABASE_PUBLISHABLE_KEY };
 }
 
-let productSlugs = [];
-let categorySlugs = [];
-let collectionSlugs = [];
+let catalog = null;
 try {
   const config = await loadConfig();
-  [productSlugs, categorySlugs, collectionSlugs] = await Promise.all([
+  const [productSlugs, categorySlugs, collectionSlugs] = await Promise.all([
     fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'products' }),
     fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'categories' }),
     fetchActiveSlugs({ endpoint: config.endpoint, publishableKey: config.key, table: 'collections' })
   ]);
+  catalog = { productSlugs, categorySlugs, collectionSlugs };
 } catch (error) {
-  console.warn('[sitemap] Public catalog could not be fetched; writing homepage-only sitemap:', error.message);
+  console.warn('[sitemap] Katalog çekilemedi: ' + error.message);
 }
 
-const urls = buildSitemapUrls(productSlugs, categorySlugs, collectionSlugs);
+/* Supabase'e ulaşılamadığında site haritasını küçültmek, arama motorlarına
+   sayfaların kaldırıldığını bildirir. Bu yüzden mevcut dosyaya dokunmuyoruz;
+   üretilen sayfalarda da aynı kural geçerli. */
+if (!catalog) {
+  const existing = await readFile(outputPath, 'utf8').catch(() => null);
+  if (existing) {
+    console.warn('[sitemap] Mevcut site haritası korundu, hiçbir adres silinmedi.');
+    process.exit(0);
+  }
+  catalog = { productSlugs: [], categorySlugs: [], collectionSlugs: [] };
+  console.warn('[sitemap] Site haritası bulunmadığı için yalnızca sabit sayfalar yazıldı.');
+}
+
+const urls = buildSitemapUrls(catalog.productSlugs, catalog.categorySlugs, catalog.collectionSlugs);
 await writeFile(outputPath, buildSitemapXml(urls), 'utf8');
-console.log('[sitemap] Wrote ' + urls.length + ' public URLs (' + productSlugs.length + ' products, ' + categorySlugs.length + ' categories, ' + collectionSlugs.length + ' collections).');
+console.log('[sitemap] Wrote ' + urls.length + ' public URLs (' + catalog.productSlugs.length + ' products, ' + catalog.categorySlugs.length + ' categories, ' + catalog.collectionSlugs.length + ' collections).');

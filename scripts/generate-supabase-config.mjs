@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveSiteOrigin } from './site-config.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const localEnvPath = resolve(rootDir, '.env.local');
@@ -41,7 +42,8 @@ if (!publishableKey.startsWith('sb_publishable_')) {
 
 const browserConfig = {
   SUPABASE_URL: supabaseUrl,
-  SUPABASE_PUBLISHABLE_KEY: publishableKey
+  SUPABASE_PUBLISHABLE_KEY: publishableKey,
+  SITE_ORIGIN: resolveSiteOrigin()
 };
 const output = `/* Build sırasında üretilir; Git'e eklenmez. */\nwindow.__DAVET_SANDIGI_ENV__=Object.freeze(${JSON.stringify(browserConfig)});\n`;
 

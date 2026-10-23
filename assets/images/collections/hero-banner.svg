@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1280" viewBox="0 0 1600 1280">
+  <defs>
+    <radialGradient id="hg" cx="50%" cy="46%" r="66%">
+      <stop offset="0%" stop-color="#FAF7F0"/>
+      <stop offset="100%" stop-color="#F4EFE5"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1280" fill="url(#hg)"/>
+  <g fill="none" stroke="#CBB68C" opacity=".5">
+    <circle cx="800" cy="640" r="384" stroke-width="2"/>
+    <circle cx="800" cy="640" r="364" stroke-width="1"/>
+  </g>
+  <g fill="none" stroke="#80652F" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="722" cy="660" r="124"/>
+    <circle cx="878" cy="660" r="124"/>
+  </g>
+  <path d="M722 512l26 28-26 28-26-28z" fill="#80652F"/>
+  <path d="M878 512l26 28-26 28-26-28z" fill="#80652F"/>
+  <g fill="none" stroke="#80652F" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".55">
+    <g transform="translate(336,566) scale(0.52)">
+    <path d="M0 150V-6"/>
+    <path d="M0 0c-70 0-118-47-118-112 66 0 118 47 118 112z"/>
+    <path d="M0 0c70 0 118-47 118-112-66 0-118 47-118 112z"/></g>
+    <g transform="translate(1264,566) scale(-0.52,0.52)">
+    <path d="M0 150V-6"/>
+    <path d="M0 0c-70 0-118-47-118-112 66 0 118 47 118 112z"/>
+    <path d="M0 0c70 0 118-47 118-112-66 0-118 47-118 112z"/></g>
+  </g>
+  <g fill="#CBB68C" opacity=".6">
+    <circle cx="800" cy="196" r="7"/><circle cx="800" cy="1084" r="7"/>
+  </g>
+</svg>

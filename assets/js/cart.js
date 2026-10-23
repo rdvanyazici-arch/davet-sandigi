@@ -86,5 +86,5 @@ function renderCart(){
  });
  syncCart();
 }
-function openCart(event){var drawer=$('#drawer'),opener=event&&event.currentTarget;renderCart();drawer.removeAttribute('aria-hidden');drawer.removeAttribute('inert');$('#overlay').classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';activateFocusLayer(drawer,closeCart,opener);announceCart('Sepet açıldı.');}
-function closeCart(){var drawer=$('#drawer');$('#overlay').classList.remove('open');drawer.classList.remove('open');deactivateFocusLayer(drawer);drawer.setAttribute('aria-hidden','true');drawer.setAttribute('inert','');document.body.style.overflow='';$('#checkout-fields').classList.remove('show');}
+function openCart(event){var drawer=$('#drawer'),opener=event&&event.currentTarget;if(!drawer)return;renderCart();drawer.removeAttribute('aria-hidden');drawer.removeAttribute('inert');var overlay=$('#overlay');if(overlay)overlay.classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';activateFocusLayer(drawer,closeCart,opener);announceCart('Sepet açıldı.');}
+function closeCart(){var drawer=$('#drawer'),overlay=$('#overlay');if(!drawer)return;if(overlay)overlay.classList.remove('open');drawer.classList.remove('open');deactivateFocusLayer(drawer);drawer.setAttribute('aria-hidden','true');drawer.setAttribute('inert','');document.body.style.overflow='';var fields=$('#checkout-fields');if(fields)fields.classList.remove('show');}

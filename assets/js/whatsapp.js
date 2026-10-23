@@ -38,6 +38,7 @@ function renderReceipt(reference,eventDate,generalNote,text){
  var total='<div class="receipt-line"><span>Ara toplam</span><span>'+fmt(subtotal())+'</span></div><div class="receipt-line"><span>Kargo</span><span>'+esc(shipLabel())+'</span></div><div class="receipt-total"><span>Talep toplamı</span><span>'+(hasQuote()||hasUnpriced()?'Özel fiyat teklifi':fmt(subtotal()))+'</span></div>';
  var meta=(eventDate?'Etkinlik tarihi: '+esc(eventDate)+'<br>':'')+(generalNote?'Genel not: '+esc(generalNote)+'<br>':'')+'Oluşturulma: '+new Date().toLocaleString('tr-TR');
  r.innerHTML='<div class="receipt-head"><b>Davet Sandığı</b><span>Sipariş talebi önizlemesi</span><div class="receipt-no">Talep referansı: '+esc(reference)+'</div></div><p class="receipt-disc">Aşağıdaki metni kontrol edin. Devam ettiğinizde WhatsApp açılır ve bu bilgiler WhatsApp’a aktarılır.</p>'+rows+total+'<p class="receipt-meta">'+meta+'</p><pre class="wa-message-preview" id="wa-message-preview">'+esc(text)+'</pre><p class="receipt-meta receipt-legal-note">Müşteri bilgileri Supabase’e kaydedilmez. Talep, WhatsApp görüşmesindeki karşılıklı onaydan sonra kesinleşir.</p>';
- $('#rc-wa').onclick=function(){if(window.dsAnalytics)window.dsAnalytics.track('whatsapp_request');window.open(waLink(text),'_blank','noopener,noreferrer');};
+ var waButton=$('#rc-wa');if(!waButton)return;
+ waButton.onclick=function(){if(window.dsAnalytics)window.dsAnalytics.track('whatsapp_request');window.open(waLink(text),'_blank','noopener,noreferrer');};
 }
-function closeOrder(){$('#order-modal').classList.remove('open');deactivateFocusLayer($('#order-modal'));}
+function closeOrder(){var modal=$('#order-modal');if(!modal)return;modal.classList.remove('open');deactivateFocusLayer(modal);}

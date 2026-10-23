@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(26);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -103,6 +103,38 @@ select isnt(
 );
 select is((select count(*) from public.products where category_id = 9801), 1::bigint, 'category usage count finds linked products');
 select is((select count(*) from public.product_collections where collection_id = 9801), 1::bigint, 'collection usage count finds linked products');
+
+-- İl/ilçe: anonim ziyaretçi görmeli, sokak adresi diye tam adres girilememeli.
+select has_column('public', 'site_settings_public', 'address_locality',
+  'public settings view exposes the district');
+select has_column('public', 'site_settings_public', 'address_region',
+  'public settings view exposes the province');
+
+update public.site_settings set address_locality = 'Nilüfer', address_region = 'Bursa' where id = 1;
+select is((select address_locality || ' / ' || address_region from public.site_settings_public),
+  'Nilüfer / Bursa', 'public view returns the stored district and province');
+
+select throws_ok(
+  $$update public.site_settings set address_locality = 'A' where id = 1$$,
+  '23514',
+  null,
+  'district shorter than two characters is rejected'
+);
+
+-- Ziyaretçi görünümü gerçekten okuyabilmeli. Sütun yetkisi verilmeden
+-- görünüme sütun eklenirse buradan patlar: yetkisiz tek sütun görünümün
+-- tamamını okunamaz yapar ve site tüm ayarlarını kaybeder.
+set local role anon;
+select lives_ok(
+  $$select * from public.site_settings_public$$,
+  'anonymous visitor can read every column of the public settings view'
+);
+select is(
+  (select address_locality from public.site_settings_public),
+  'Nilüfer',
+  'anonymous visitor reads the district'
+);
+reset role;
 
 select * from finish();
 rollback;

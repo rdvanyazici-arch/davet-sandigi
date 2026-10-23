@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { buildHomeBlocks, buildPages, derivePage, injectHome, normalizeProducts } from '../../scripts/page-builder.mjs';
 import { expect, test } from '@playwright/test';
+import { canonicalOrigin } from '../../scripts/sitemap-core.mjs';
 
 /* Ekran goruntuleri varsayilan olarak gitignore'lu test-results/ altina yazilir;
    boylece her test kosusu depoyu kirletmez. Referans gorselleri bilerek tazelemek
@@ -24,7 +26,7 @@ function makeDb(extraProducts = []) {
   });
   const live = rows => rows.map(row => ({ is_active: true, ...row }));
   return {
-    site_settings_public: [{ id: 1, whatsapp_number: '905301112233', instagram_url: 'https://www.instagram.com/brand-channel-check', phone: '+90 212 000 00 00', email: 'info@example.test', delivery_text: 'Teslimat bilgisi panelde yönetilir.', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo bilgisi panelde yönetilir.' }],
+    site_settings_public: [{ id: 1, whatsapp_number: '905301112233', instagram_url: 'https://www.instagram.com/brand-channel-check', phone: '+90 212 000 00 00', email: 'info@example.test', delivery_text: 'Teslimat bilgisi panelde yönetilir.', currency_code: 'TRY', default_min_quantity: 25, default_quantity_step: 25, quote_threshold: 100, shipping_note: 'Kargo bilgisi panelde yönetilir.', address_locality: 'Nilüfer', address_region: 'Bursa' }],
     categories: [
       { id: 1, slug: 'kolonya', name: 'Kolonya', description: '', sort_order: 1, is_active: true, archived_at: null, category_collections: [{ collection_id: 1, sort_order: 1 }] },
       { id: 2, slug: 'mum', name: 'Mum', description: '', sort_order: 2, is_active: true, archived_at: null, category_collections: [{ collection_id: 2, sort_order: 1 }] },
@@ -78,6 +80,27 @@ function applyFilters(rows, params) {
   return result;
 }
 
+
+/* Yapı sırasında çalışan kodun ta kendisiyle sayfayı üretir. Böylece testler
+   üretilen gerçek HTML üzerinde çalışır ve şablon değişikliği testten kaçamaz. */
+function generatePage(db, pathname) {
+  const data = {
+    settings: (db.site_settings_public || [])[0] || {},
+    collections: (db.collections || []).filter(row => row.is_active !== false && !row.archived_at),
+    categories: (db.categories || []).filter(row => row.is_active !== false && !row.archived_at),
+    products: normalizeProducts((db.products || []).filter(row => row.is_active !== false && !row.archived_at)),
+    banners: db.banners || [],
+    faqs: db.faqs || [],
+    sections: {}
+  };
+  let built;
+  try { built = buildPages(data, ORIGIN); } catch { return null; }
+  const page = built.pages.find(item => item.path === pathname);
+  if (!page) return null;
+  const shell = injectHome(readFileSync(new URL('../../index.html', import.meta.url), 'utf8'), buildHomeBlocks(data, built.siteLinks));
+  return derivePage(shell, page, data.settings);
+}
+
 async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, wish = null, csp = '' } = {}) {
   const log = { requests: [], rest: [], consoleErrors: [], pageErrors: [], db, fail, delay };
   page.on('request', request => log.requests.push(request.url()));
@@ -91,13 +114,22 @@ async function setup(page, { db = makeDb(), fail = {}, delay = {}, cart = null, 
         return route.fulfill({ response, headers });
       });
     }
+    /* Üretilen sayfalar gerçek veriyle yapıldığı için testte diskte olmayabilir.
+       Sahte veriyle, yapının kendi kodundan üretip sunuyoruz: test gerçek
+       çıktıyı sınamış oluyor, elle yazılmış bir taklidi değil. */
+    if (url.host === LOCAL_HOST && /^\/(?:[a-z0-9-]+-hediyelikleri|[a-z0-9-]+)\/$/.test(url.pathname) && url.pathname !== '/') {
+      const generated = generatePage(log.db, url.pathname);
+      if (generated) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: generated });
+    }
     if (url.host === LOCAL_HOST) return route.continue();
     return route.abort();
   });
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }));
   await page.route('**/assets/js/supabase-config.generated.js', route => route.fulfill({ contentType: 'text/javascript', body: `window.__DAVET_SANDIGI_ENV__=Object.freeze({SUPABASE_URL:'${ORIGIN}',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_testkey'});` }));
   await page.route(`${ORIGIN}/storage/v1/object/public/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
-  await page.route(`${ORIGIN}/storage/v1/render/image/public/**`, route => route.fulfill({ status: 200, contentType: 'image/png', headers: CORS, body: PNG }));
+  /* Gorsel donusturme bu projede kapali ve gercekte 403 donuyor. Mock onu 200
+     gosterdigi icin bozuk srcset testlerden kacmisti; gercegi taklit ediyoruz. */
+  await page.route(`${ORIGIN}/storage/v1/render/image/public/**`, route => route.fulfill({ status: 403, contentType: 'application/json', headers: CORS, body: '{"error":"FeatureNotEnabled"}' }));
   await page.route(`${ORIGIN}/rest/v1/**`, async route => {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS, body: '' });
@@ -242,8 +274,18 @@ test('kategori ve koleksiyon filtreleri', async ({ page }) => {
   await page.locator('#cookie-reject').click();
   await expect(page.locator('#coll-grid .coll-card')).toHaveCount(2);
   await expect(page.locator('#coll-grid .coll-card', { hasText: 'Nişan' })).toHaveAccessibleName(/Nişan.*Nişan hatıraları.*Koleksiyonu Gör/i);
+  /* Kartlar gerçek bağlantı olmalı: JavaScript çalıştırmayan botlar üretilen
+     koleksiyon sayfalarını ana sayfadan ancak böyle bulabilir. */
+  await expect(page.locator('#coll-grid .coll-card', { hasText: 'Nişan' })).toHaveAttribute('href', '/nisan-hediyelikleri/');
+  await expect(page.locator('#coll-grid a.coll-card')).toHaveCount(2);
   await page.locator('#coll-grid .coll-card', { hasText: 'Nişan' }).click();
   await expect(page.locator('#collview')).toHaveClass(/open/);
+  /* Kapak görseli bandın içinde kalmalı. img[srcset]{height:auto} kuralı tek
+     sınıflı object-fit kurallarını eziyordu ve görsel bandın altına taşıyordu. */
+  const bannerBox = await page.locator('#cv-banner').boundingBox();
+  const coverBox = await page.locator('#cv-banner-image').boundingBox();
+  expect(Math.round(coverBox.height), 'kapak görseli bandı taşıyor').toBe(Math.round(bannerBox.height));
+  expect(Math.round(coverBox.width)).toBe(Math.round(bannerBox.width));
   await expect(page.locator('#cv-grid .cv-category-card')).toHaveCount(2);
   await page.locator('#cv-grid .cv-category-card', { hasText: 'Kolonya' }).press('Enter');
   await expect(page.locator('#cv-grid .prod-card')).toHaveCount(1);
@@ -254,6 +296,7 @@ test('kategori ve koleksiyon filtreleri', async ({ page }) => {
   await expect(page.locator('#cv-grid .prod-card')).toHaveCount(1);
   await expect(page.locator('#cv-grid')).toContainText('Mum Ürünü');
   await expect(page.locator('#footer-coll li')).toHaveCount(2);
+  await expect(page.locator('#footer-coll li a').first()).toHaveAttribute('href', '/nisan-hediyelikleri/');
 });
 
 test('yükleniyor durumu', async ({ page }) => {
@@ -328,11 +371,14 @@ test('görsellerde alt/width/height; yalnızca hero eager ve fetchpriority high;
   const hero = images.find(image => image.id === 'hero-img');
   expect(hero).toMatchObject({ loading: 'eager', priority: 'high', width: '1600', height: '700', alt: 'Hero görseli' });
   expect(hero.src).toContain(`${ORIGIN}/storage/v1/object/public/site-media/banners/1/h.webp`);
-  expect(hero.srcset).toContain('render/image/public/site-media/banners/1/h.webp');
-  expect(hero.sizes).toContain('55vw');
+  /* Gorsel donusturme bu projede kapali; o adresler srcset'e girerse tarayici
+     onlardan birini secip gorseli hic yukleyemiyor. Nitelik ya hic olmamali ya
+     da donusturme adresi icermemeli. */
+  expect(hero.srcset || '', 'calismayan donusturme adresi srcset\'e girmemeli').not.toContain('render/image');
   const others = images.filter(image => image.id !== 'hero-img' && image.src);
   expect(others.length).toBeGreaterThan(6);
   for (const image of others) {
+    expect(image.srcset || '', image.src).not.toContain('render/image');
     expect(image.loading, image.src).toBe('lazy');
     expect(image.priority, image.src).toBeNull();
     expect(image.alt && image.alt.trim(), image.src).toBeTruthy();
@@ -341,13 +387,12 @@ test('görsellerde alt/width/height; yalnızca hero eager ve fetchpriority high;
   }
   const bySrc = part => others.find(image => image.src.includes(part));
   expect(bySrc('products/1/a.webp')).toMatchObject({ alt: 'Kolonya ana görsel', width: '800', height: '1000' });
-  expect(bySrc('products/1/a.webp').srcset).toContain('products/1/a.webp?width=480&quality=82 480w');
-  expect(bySrc('products/1/a.webp').srcset).toContain('products/1/a.webp 800w');
-  expect(bySrc('products/1/a.webp').srcset).not.toContain('data:image');
+  expect(bySrc('products/1/a.webp').srcset || '').not.toContain('data:image');
   expect(bySrc('products/1/a.webp').src).not.toContain('data:image');
+  expect(bySrc('products/1/a.webp').src).toContain('/storage/v1/object/public/site-media/products/1/a.webp');
   await page.locator('#prod-grid .prod-card').first().scrollIntoViewIfNeeded();
-  await expect(page.locator('#prod-grid .prod-card img').first()).toHaveAttribute('srcset', /render\/image\/public\/site-media/);
-  await expect(page.locator('#prod-grid .prod-card img').first()).toHaveAttribute('sizes', /100vw/);
+  /* Urun gorselleri de depodaki dosyadan gelmeli; donusturme adresi kapali. */
+  await expect(page.locator('#prod-grid .prod-card img').first()).toHaveAttribute('src', /\/storage\/v1\/object\/public\/site-media\//);
   expect(bySrc('collections/1/c.webp')).toMatchObject({ alt: 'Nişan koleksiyonu kapağı', width: '640', height: '640' });
   expect(bySrc('story/s.webp')).toMatchObject({ alt: 'Atölye görseli', width: '1200', height: '800' });
   expect(bySrc('campaigns/c.webp')).toMatchObject({ alt: 'CTA görseli' });
@@ -502,7 +547,12 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
 });
 
-test('Faz 10: legacy contact samples suppressed; approved management copy including claims is visible', async ({ page }) => {
+/* Bu test eskiden bu iletişim değerlerinin GİZLENMESİNİ doğruluyordu: Faz 10'da
+   bunlar doğrulanmamış demo bilgi sayılıyordu. Aradan geçen sürede aynı
+   değerler işletmenin gerçek bilgileri oldu ve panele önizleme onayıyla
+   kaydedildi. Değer bazlı eleme kaldırıldı; kural artık şu: panele kaydedilen
+   her geçerli bilgi vitrinde görünür. */
+test('Faz 10: yönetimden onaylanan içerik ve iletişim bilgileri vitrinde görünür', async ({ page }) => {
   const db = makeDb();
   db.banners = [{ id: 9, is_active: true, title: 'Kişiye özel tasarım', description: 'El emeği ve özenle seçilen kaliteli malzemeler.', sort_order: 1, starts_at: null, ends_at: null, media_assets: media('banners/9/new.webp', 'Yeni banner') }];
   db.content_sections = [
@@ -523,10 +573,9 @@ test('Faz 10: legacy contact samples suppressed; approved management copy includ
   await page.goto('/index.html');
   await waitReady(page);
 
-  for (const id of ['hdr-ig', 'ft-ig', 'channel-ig', 'hdr-wa', 'ft-wa', 'channel-wa']) await expect(page.locator(`#${id}`), id).toBeHidden();
-  await expect(page.locator('#tb-phone')).toBeHidden();
-  await expect(page.locator('#ft-phone')).toBeHidden();
-  await expect(page.locator('#ft-mail')).toBeHidden();
+  for (const id of ['hdr-ig', 'ft-ig', 'channel-ig', 'hdr-wa', 'ft-wa', 'channel-wa']) await expect(page.locator(`#${id}`), id).toBeVisible();
+  await expect(page.locator('#ft-phone')).toHaveText('+90 539 941 39 02');
+  await expect(page.locator('#ft-mail')).toHaveText('info@davetsandigi.com');
   await expect(page.locator('#hero-title')).toHaveText('Kişiye özel tasarım');
   await expect(page.locator('#hero-img')).toBeVisible();
   await expect(page.locator('#topbar-list')).toContainText('El emeği');
@@ -538,14 +587,18 @@ test('Faz 10: legacy contact samples suppressed; approved management copy includ
   await expect(page.locator('#story-text')).toContainText('kişiye özel tasarımlar');
   await expect(page.locator('#ctahead-t')).toHaveText('Birlikte tasarlayalım');
   await expect(page.locator('#campaign-modal')).toHaveClass(/open/);
-  await expect(page.locator('#cart-rule-note')).not.toContainText('Türkiye');
-  await expect(page.locator('#faq-list')).toContainText('Şu anda yayımlanmış soru bulunmuyor.');
+  await expect(page.locator('#cart-rule-note')).toContainText("Türkiye'nin her yerine teslimat");
+  /* Demo S.S.S. cevabı hâlâ eleniyor, ama yerine panelden gelen gerçek teslimat
+     metni konuyor: ayar dolu olduğu için soru artık yayımlanıyor. */
+  await expect(page.locator('#faq-list')).toContainText('Teslimat süresi ne kadardır?');
+  await expect(page.locator('#faq-list')).toContainText("Türkiye'nin her yerine teslimat");
   await expect(page.locator('#review-grid')).toContainText('A. Y.');
   await expect(page.locator('#review-grid')).not.toContainText('Elif & Burak');
   await expect(page.locator('#review-grid')).not.toContainText('Ayşe & Mert');
-  await expect(page.locator('body')).not.toContainText('Türkiye’nin her yerine');
-  await expect(page.locator('body')).not.toContainText('info@davetsandigi.com');
-  await expect(page.locator('body')).not.toContainText('905399413902');
+  /* Bu üç satır eskiden bu değerlerin sayfada GÖRÜNMEMESİNİ doğruluyordu; aynı
+     gerekçeyle kaldırıldı: panele kaydedilen gerçek bilgi artık vitrinde görünür.
+     Yerine WhatsApp bağlantısının gerçekten kurulduğunu doğruluyoruz. */
+  await expect(page.locator('#channel-wa')).toHaveAttribute('href', /wa\.me\/905399413902/);
   await page.click('#camp-close');
   await page.click('[data-legal="privacy"]');
   await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
@@ -570,11 +623,11 @@ test('Faz 11: category slug route, dynamic canonical and priced Product JSON-LD'
   await waitReady(page);
   await expect(page.locator('#prod-grid')).toContainText('Mum Ürünü');
   await expect(page.locator('#filterbar button.active')).toHaveText('Mum');
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?kategori=mum');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/mum/');
 
   await page.goto('/index.html?urun=kolonya-urun');
   await expect(page.locator('#product-modal')).toHaveClass(/open/);
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?urun=kolonya-urun');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/urun/kolonya-urun/');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Açıklama/);
   const schema = await page.locator('#product-schema').evaluate(node => JSON.parse(node.textContent));
   expect(schema['@type']).toBe('Product');
@@ -589,7 +642,7 @@ test('Faz 11: directory taxonomy category route query selects active slug', asyn
   await waitReady(page);
   await expect(page.locator('#prod-grid')).toContainText('Mum Ürünü');
   await expect(page.locator('#prod-grid')).not.toContainText('Kolonya Ürünü');
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/?kategori=mum');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/mum/');
 });
 
 test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', async ({ page }) => {
@@ -598,10 +651,22 @@ test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', 
   await waitReady(page);
   await expect(page).toHaveTitle('Davet Sandığı | Ürünler ve Koleksiyonlar');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /sipariş talebinizi WhatsApp/);
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://davet-sandigi.vercel.app/');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/');
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /social-card\.png$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  expect(await page.locator('#organization-schema').evaluate(node => node.textContent)).toContain('"@type":"Organization"');
+  const organization = JSON.parse(await page.locator('#organization-schema').evaluate(node => node.textContent));
+  expect(organization['@type']).toBe('Organization');
+  expect(organization.areaServed).toBe('TR');
+  expect(organization.contactPoint?.[0]?.['@type']).toBe('ContactPoint');
+  /* Sokak adresi yayımlanmadığı için PostalAddress yalnızca il/ilçe taşır. */
+  expect(organization.address).toEqual({ '@type': 'PostalAddress', addressLocality: 'Nilüfer', addressRegion: 'Bursa', addressCountry: 'TR' });
+  await expect(page.locator('#ft-addr')).toHaveText('Nilüfer / Bursa');
+  /* Yayındaki sorular FAQPage olarak da işaretlenmeli: yapay zekâ ve arama
+     sonuçları soru-cevabı buradan okuyor. */
+  const faqSchema = JSON.parse(await page.locator('#faq-schema').evaluate(node => node.textContent));
+  expect(faqSchema['@type']).toBe('FAQPage');
+  expect(faqSchema.mainEntity.length).toBeGreaterThan(0);
+  expect(faqSchema.mainEntity[0].acceptedAnswer['@type']).toBe('Answer');
   await expect(page.locator('h1')).toHaveCount(1);
   for (const path of ['/robots.txt', '/sitemap.xml', '/assets/images/brand/favicon.svg', '/assets/images/brand/favicon-32.png', '/assets/images/brand/favicon-16.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/social-card.png']) {
     const response = await page.request.get(path);
@@ -831,4 +896,72 @@ test('bakım modu kapalıyken vitrin normal açılır', async ({ page }) => {
   await expect(page.locator('header.header')).toBeVisible();
   expect(log.consoleErrors).toEqual([]);
   expect(log.pageErrors).toEqual([]);
+});
+
+/* Google ziyaretçiyi doğrudan koleksiyon adresine gönderir. O adrese girildiğinde
+   sitenin kendisi, koleksiyon görünümü açık hâlde gelmeli — sade bir ikizi değil. */
+test('koleksiyon adresine doğrudan girildiğinde koleksiyon görünümü açılır', async ({ page }) => {
+  await setup(page);
+  await page.goto('/kina-hediyelikleri/');
+  await expect(page.locator('#collview')).toHaveClass(/open/);
+  await expect(page.locator('#cv-banner-title')).toHaveText('Kına');
+  /* Adres çubuğu gerçek sayfa adresinde kalmalı; sorgu biçimine düşmemeli. */
+  expect(new URL(page.url()).pathname).toBe('/kina-hediyelikleri/');
+  expect(new URL(page.url()).search).toBe('');
+});
+
+/* Sayfanın başlığı yapı sırasında HTML'e yazılıyor. Uygulama aynı adresi açtığında
+   onu kendi biçimiyle yeniden üretirse bot ile kullanıcı farklı başlık görür. */
+test('üretilen sayfanın başlığı JavaScript açıldıktan sonra da değişmez', async ({ page }) => {
+  await setup(page);
+  const response = await page.goto('/kina-hediyelikleri/');
+  const staticHtml = await response.text();
+  const staticTitle = staticHtml.match(/<title>([^<]*)<\/title>/)[1];
+  await expect(page.locator('#collview')).toHaveClass(/open/);
+  await expect(page).toHaveTitle(staticTitle);
+});
+
+test('kategori adresine doğrudan girildiğinde sayfa kendi adresinde kalır', async ({ page }) => {
+  await setup(page);
+  const response = await page.goto('/mum/');
+  const staticTitle = (await response.text()).match(/<title>([^<]*)<\/title>/)[1];
+  /* waitReady ana sayfanın bölümlerini bekler; üretilen sayfada onlar yok. */
+  await page.waitForFunction(() => window.catalogState && window.catalogState.catalog === 'ready');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/mum/');
+  await expect(page).toHaveTitle(staticTitle);
+  expect(new URL(page.url()).pathname).toBe('/mum/');
+  /* Ana sayfa bölümleri çizilmeye çalışırken sessizce durmalı, çökmemeli. */
+  await expect(page.locator('.prod-card, .pg-empty').first()).toBeVisible();
+});
+
+/* Vitrin, panele kaydedilen gercek iletisim bilgilerini olduğu gibi göstermeli.
+   Daha önce "örnek veriyi yayına çıkarma" amaçlı bir değer süzgeci vardı ve
+   içindeki örnekler işletmenin gerçek numarası ile Instagram adresiydi; doğru
+   bilgi girildiğinde site onu demo sanıp gizliyor, sipariş akışı tamamen
+   kapanıyordu. Testler bunu görmemişti çünkü sahte veride başka bir numara
+   kullanılıyordu. Burada bilerek gerçek değerler kullanılıyor. */
+test('panele kaydedilen gerçek iletişim bilgileri vitrinde görünür', async ({ page }) => {
+  const db = makeDb();
+  db.site_settings_public = [{
+    ...db.site_settings_public[0],
+    whatsapp_number: '905399413902',
+    instagram_url: 'https://www.instagram.com/davetsandigi',
+    phone: '+90 539 941 39 02',
+    email: 'davetsandigi@gmail.com'
+  }];
+  await setup(page, { db });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+
+  for (const id of ['hdr-wa', 'cta-wa', 'ft-wa', 'channel-wa']) {
+    await expect(page.locator(`#${id}`), id + ' gizlenmiş').toBeVisible();
+    await expect(page.locator(`#${id}`)).toHaveAttribute('href', /wa\.me\/905399413902/);
+  }
+  for (const id of ['hdr-ig', 'ft-ig']) {
+    await expect(page.locator(`#${id}`), id + ' gizlenmiş').toBeVisible();
+    await expect(page.locator(`#${id}`)).toHaveAttribute('href', /instagram\.com\/davetsandigi/);
+  }
+  await expect(page.locator('#ft-phone')).toHaveText('+90 539 941 39 02');
+  await expect(page.locator('#ft-mail')).toHaveText('davetsandigi@gmail.com');
 });

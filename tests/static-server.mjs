@@ -15,10 +15,16 @@ createServer(async (request, response) => {
     return;
   }
   try {
-    const info = await stat(file);
+    let target = file;
+    let info = await stat(target);
+    /* Üretilen sayfalar /kina-hediyelikleri/ gibi dizin adreslerinden sunulur. */
+    if (info.isDirectory()) {
+      target = join(target, 'index.html');
+      info = await stat(target);
+    }
     if (!info.isFile()) throw new Error('Not a file');
-    response.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
-    createReadStream(file).pipe(response);
+    response.writeHead(200, { 'Content-Type': types[extname(target)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+    createReadStream(target).pipe(response);
   } catch {
     response.writeHead(404).end('Not found');
   }

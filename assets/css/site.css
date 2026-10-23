@@ -11,7 +11,9 @@
 html{scroll-behavior:smooth;background:var(--ivory);}
 body{margin:0;background:var(--ivory);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 img{max-width:100%;display:block;}
-img[srcset]{height:auto;}
+:where(img[srcset]){height:auto;}/* :where ile ozgulugu sifir: srcset tasiyan
+   bir gorsele object-fit veren her sinif kurali bunu gecer. Duz yazilsaydi
+   (0,1,1) ozgulugu tek sinifli kurallari ezer ve gorsel kabina sigmazdi. */
 a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;}
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
@@ -78,6 +80,25 @@ em{color:var(--gold);font-style:italic;}
 .hero-seal{position:absolute;left:-26px;bottom:36px;width:104px;height:104px;border-radius:50%;background:var(--ivory);border:1px solid var(--gold-soft);box-shadow:var(--shadow);display:grid;place-items:center;text-align:center;}
 .hero-seal b{font-family:var(--serif);font-size:15px;color:var(--forest);line-height:1.1;}
 .hero-seal span{display:block;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-top:3px;}
+/* ---- GENİŞ HERO ----
+   Banner görseli tam genişlikte arka plan, yazı soldaki boşluğun üzerinde.
+   Okunurluk görselin açıklığına bırakılmaz: solda krem bir perde var, böylece
+   görsel değiştiğinde de yazı okunur kalır. */
+.hero.hero-wide .wrap{display:flex;align-items:center;position:relative;z-index:2;min-height:clamp(420px,42vw,600px);padding-top:64px;padding-bottom:64px;}
+.hero-wide .hero-copy{max-width:540px;}
+.hero-wide .hero-media{position:absolute;inset:0;z-index:0;}
+.hero-wide .hero-media img{width:100%;height:100%;object-fit:cover;object-position:74% center;}
+.hero-wide::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(250,247,240,.97) 0%,rgba(250,247,240,.9) 32%,rgba(250,247,240,.42) 54%,rgba(250,247,240,0) 72%);}
+.hero-wide[data-state="empty"]::after,.hero-wide .hero-media[hidden]+.wrap{z-index:2;}
+@media (max-width:860px){
+  /* Dar ekranda yazı ile görsel üst üste binince ikisi de okunmuyor; ayrılıyorlar. */
+  .hero.hero-wide .wrap{min-height:0;padding-top:28px;padding-bottom:48px;}
+  .hero-wide .hero-media{position:relative;inset:auto;}
+  .hero-wide .hero-media img{height:auto;aspect-ratio:3/2;object-position:76% center;}
+  .hero-wide::after{display:none;}
+  .hero-wide .hero-copy{max-width:none;}
+}
+
 .hero-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--ivory) 85%,transparent);backdrop-filter:blur(6px);color:var(--espresso);font:400 26px/1 Georgia,serif;cursor:pointer;box-shadow:var(--shadow);}
 .hero-arrow[hidden]{display:none;}
 .hero-arrow.prev{left:18px;}.hero-arrow.next{right:18px;}
@@ -89,7 +110,7 @@ em{color:var(--gold);font-style:italic;}
 /* collections */
 .collections{background:var(--ivory);}
 .coll-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
-.coll-card{position:relative;display:flex;flex-direction:column;background:var(--cream);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .25s,box-shadow .25s;text-align:left;}
+.coll-card{cursor:pointer;position:relative;display:flex;flex-direction:column;background:var(--cream);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .25s,box-shadow .25s;text-align:left;}
 .coll-card:hover{transform:translateY(-5px);box-shadow:var(--shadow);}
 .coll-thumb{position:relative;aspect-ratio:1/1;overflow:hidden;}
 .coll-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
@@ -169,6 +190,12 @@ em{color:var(--gold);font-style:italic;}
 
 /* footer */
 .footer{background:var(--ink);color:rgba(250,247,240,.78);padding:64px 0 92px;}
+.footer-sitemap{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:28px;margin-top:40px;padding-top:26px;border-top:1px solid rgba(255,255,255,.10);}
+.footer-sitemap:empty{display:none;margin:0;padding:0;border-top:0;}
+.footer-sitemap h2{margin-bottom:14px;}
+.footer-sitemap ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 16px;}
+.footer-sitemap a{font-size:13.5px;color:rgba(250,247,240,.72);}
+.footer-sitemap a:hover{color:var(--gold-soft);}
 .footer-legal{display:flex;flex-wrap:wrap;align-items:center;gap:8px 8px;margin-top:26px;padding-top:22px;border-top:1px solid rgba(255,255,255,.10);}
 .footer-legal a{font-size:12.5px;color:rgba(250,247,240,.72);cursor:pointer;}
 .footer-legal a:hover{color:var(--gold-soft);}
@@ -270,7 +297,10 @@ em{color:var(--gold);font-style:italic;}
 /* collection banner */
 .cv-banner{position:relative;height:238px;background-size:cover;background-position:center;display:flex;align-items:flex-end;isolation:isolate;}
 .cv-banner-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
-.cv-banner-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(55,45,19,.05),rgba(55,45,19,.6));}
+.cv-banner-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(55,45,19,.20) 0%,rgba(55,45,19,.46) 45%,rgba(55,45,19,.80) 100%);}
+/* Beyaz yazinin okunurlugu gorselin koyuluguna birakilmaz: acik renkli bir
+   kapakta da yeterli kontrast kalmali. */
+.cv-banner-in{text-shadow:0 1px 12px rgba(55,45,19,.5);}
 .cv-banner-in{position:relative;padding-bottom:26px;color:#fff;}
 .cv-banner-in .eyebrow{color:var(--gold-soft);}
 .cv-banner-in h2{color:#fff;font-size:clamp(28px,4vw,38px);margin:8px 0 4px;}
@@ -280,9 +310,13 @@ em{color:var(--gold);font-style:italic;}
 .cv-category-card small{color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
 .cv-category-card strong{font-family:var(--serif);font-size:25px;color:var(--espresso);}
 .cv-category-card span{color:var(--moss);line-height:1.6;flex:1;}
-.cv-category-card b{color:var(--forest);font-size:13px;}
+.cv-category-card b{display:inline-flex;align-items:center;gap:8px;color:var(--forest);font-size:13px;}
+/* Satır içi simgeye boyut verilmezse yerleştiği kabın genişliğine yayılır. */
+.cv-category-card svg{width:16px;height:16px;flex-shrink:0;}
 .cv-category-all{background:var(--forest);color:var(--ivory);}
 .cv-category-all strong,.cv-category-all span,.cv-category-all b{color:var(--ivory);}
+/* Altın üst yazı koyu yeşil zeminde okunmuyordu. */
+.cv-category-all small{color:var(--gold-soft);}
 /* story */
 .story{background:var(--ivory);}
 .story-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:56px;align-items:center;}
@@ -401,6 +435,47 @@ em{color:var(--gold);font-style:italic;}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:400;background:var(--forest);color:var(--ivory);padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 /* reveal */
+/* ---- ÜRETİLEN SAYFALAR ----
+   Yapı sırasında üretilen koleksiyon, kategori, ürün ve iletişim sayfaları.
+   Ayrı bir stil dosyası yok: sitenin bileşenlerini kullanırlar, burada yalnızca
+   JavaScript olmadığı için gereken farklar var. */
+.pg .mainnav{display:flex;flex-wrap:wrap;gap:14px 20px;margin-left:auto;}
+/* Sitenin başlığı 78px sabit yükseklikte ve gezinmeyi mobilde menü düğmesine
+   saklıyor. Burada menü düğmesi yok, o yüzden başlık büyüyebilmeli; dar ekranda
+   gezinme kendi satırına iner, yoksa marka adı kırılıp üst üste biniyor. */
+.pg .header{position:static;}
+.pg .header .wrap{flex-wrap:wrap;height:auto;min-height:78px;padding-top:14px;padding-bottom:14px;row-gap:12px;}
+.pg .brand-txt small{white-space:nowrap;}
+.pg main.section{padding:48px 0 88px;}
+.pg .section-head{margin-bottom:40px;}
+.pg .section-head h1{font-family:var(--serif);font-size:clamp(30px,4vw,46px);line-height:1.15;color:var(--espresso);margin:14px 0 12px;}
+.pg-crumb ol{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--moss);}
+.pg-crumb li+li::before{content:"/";margin-right:8px;color:var(--line);}
+.pg-crumb a{text-decoration:underline;text-underline-offset:3px;}
+.pg-empty{border:1px dashed var(--line);border-radius:16px;padding:36px 24px;text-align:center;color:var(--moss);background:var(--cream);}
+.pg-noimg{aspect-ratio:4/5;display:grid;place-items:center;background:var(--cream);color:var(--moss);font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
+.pg-more{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);white-space:nowrap;}
+.pg-more:hover{color:var(--forest);}
+.pg .prod-body h3 a:hover{color:var(--gold);}
+.pg-product{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
+.pg-product-media img,.pg-product-media .pg-noimg{border-radius:18px;overflow:hidden;border:1px solid var(--line);}
+.pg-product-body h1{font-family:var(--serif);font-size:clamp(26px,3.4vw,40px);line-height:1.18;color:var(--espresso);}
+.pg-sku{color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:10px 0 18px;}
+.pg-price{font-size:22px;font-weight:700;color:var(--espresso);margin-bottom:16px;}
+.pg-rule{font-size:13.5px;color:var(--moss);margin-bottom:8px;}
+.pg-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;}
+.pg-contact-list{display:grid;grid-template-columns:max-content 1fr;gap:12px 26px;margin:0 0 28px;}
+.pg-contact-list dt{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);}
+.pg-contact-list dd{margin:0;}
+.pg .footer-bottom span+span{color:rgba(250,247,240,.6);}
+@media (max-width:1000px){
+  .pg .mainnav{order:3;width:100%;margin-left:0;justify-content:center;gap:12px 18px;padding-top:12px;border-top:1px solid var(--line);}
+  .pg .header-actions{margin-left:auto;}
+}
+@media (max-width:860px){
+  .pg-product{grid-template-columns:1fr;gap:26px;}
+}
+
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s,transform .7s;}
 .reveal.in{opacity:1;transform:none;}
 

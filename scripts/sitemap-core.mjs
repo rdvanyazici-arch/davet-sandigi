@@ -1,20 +1,29 @@
-export const canonicalOrigin = 'https://davet-sandigi.vercel.app';
+import { absoluteUrl, canonicalOrigin, categoryPath, collectionPath, contactPath, homePath, productPath } from './routes.mjs';
+
+export { canonicalOrigin };
 export const approvedSupabaseHost = 'zdksvgtkeeweufuajugd.supabase.co';
 
-export function publicSlugUrl(kind, slug) {
-  if (!['urun', 'kategori', 'koleksiyon'].includes(kind) || typeof slug !== 'string' || !slug.trim()) throw new Error('A public route requires an active slug.');
-  const url = new URL('/', canonicalOrigin);
-  url.searchParams.set(kind, slug.trim());
-  return url.href;
+/* Geçersiz slug tüm yapıyı durdurmasın: o kayıt atlanır ve uyarı yazılır. */
+function safePaths(slugs, toPath, label) {
+  const paths = [];
+  for (const slug of slugs) {
+    try {
+      paths.push(toPath(slug));
+    } catch (error) {
+      console.warn('[sitemap] ' + label + ' atlandı: ' + error.message);
+    }
+  }
+  return paths;
 }
 
 export function buildSitemapUrls(products, categories, collections = []) {
   return Array.from(new Set([
-    canonicalOrigin + '/',
-    ...products.map(slug => publicSlugUrl('urun', slug)),
-    ...categories.map(slug => publicSlugUrl('kategori', slug)),
-    ...collections.map(slug => publicSlugUrl('koleksiyon', slug))
-  ]));
+    absoluteUrl(homePath),
+    ...safePaths(collections, collectionPath, 'koleksiyon'),
+    ...safePaths(categories, categoryPath, 'kategori'),
+    ...safePaths(products, productPath, 'ürün'),
+    absoluteUrl(contactPath)
+  ].map(value => value.startsWith('http') ? value : absoluteUrl(value))));
 }
 
 export function buildSitemapXml(urls) {

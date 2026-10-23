@@ -1,22 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSitemapUrls, buildSitemapXml, fetchActiveSlugs } from '../scripts/sitemap-core.mjs';
+import { buildSitemapUrls, buildSitemapXml, fetchActiveSlugs, canonicalOrigin } from '../scripts/sitemap-core.mjs';
 
 const endpoint = 'https://zdksvgtkeeweufuajugd.supabase.co';
 const key = 'sb_publishable_test';
 
-test('sitemap contains canonical homepage and active product/category/collection slug routes', () => {
-  const urls = buildSitemapUrls(['nişan-kolonyası', 'mum'], ['nişan & söz'], ['nişan']);
+test('sitemap lists the homepage, collection, category, product and contact routes', () => {
+  const urls = buildSitemapUrls(['nisan-kolonyasi', 'mum'], ['kolonya'], ['kina']);
   assert.deepEqual(urls, [
-    'https://davet-sandigi.vercel.app/',
-    'https://davet-sandigi.vercel.app/?urun=ni%C5%9Fan-kolonyas%C4%B1',
-    'https://davet-sandigi.vercel.app/?urun=mum',
-    'https://davet-sandigi.vercel.app/?kategori=ni%C5%9Fan+%26+s%C3%B6z',
-    'https://davet-sandigi.vercel.app/?koleksiyon=ni%C5%9Fan'
+    canonicalOrigin + '/',
+    canonicalOrigin + '/kina-hediyelikleri/',
+    canonicalOrigin + '/kolonya/',
+    canonicalOrigin + '/urun/nisan-kolonyasi/',
+    canonicalOrigin + '/urun/mum/',
+    canonicalOrigin + '/iletisim/'
   ]);
   const xml = buildSitemapXml(urls);
-  assert.equal((xml.match(/<url>/g) || []).length, 5);
-  assert.match(xml, /<loc>https:\/\/davet-sandigi\.vercel\.app\//);
+  assert.equal((xml.match(/<url>/g) || []).length, 6);
+  assert.ok(xml.includes('<loc>' + canonicalOrigin + '/</loc>'));
+});
+
+test('sitemap skips slugs that cannot become a safe public route', () => {
+  const urls = buildSitemapUrls(['nişan kolonyası', 'mum'], ['urun', 'kolonya'], ['kina-hediyelikleri', 'kina']);
+  assert.deepEqual(urls, [
+    canonicalOrigin + '/',
+    canonicalOrigin + '/kina-hediyelikleri/',
+    canonicalOrigin + '/kolonya/',
+    canonicalOrigin + '/urun/mum/',
+    canonicalOrigin + '/iletisim/'
+  ]);
 });
 
 test('sitemap slug fetch filters active, non-archived rows and uses only a publishable key', async () => {
@@ -48,7 +60,7 @@ test('sitemap fetch rejects unapproved hosts and secret-key types', async () => 
 
 test('fallback sitemap can be generated with homepage only when Supabase is unavailable', () => {
   const xml = buildSitemapXml(buildSitemapUrls([], []));
-  assert.equal((xml.match(/<url>/g) || []).length, 1);
-  assert.match(xml, /https:\/\/davet-sandigi\.vercel\.app\//);
+  assert.equal((xml.match(/<url>/g) || []).length, 2);
+  assert.ok(xml.includes(canonicalOrigin + '/'));
   assert.doesNotMatch(xml, /\?urun=|\?kategori=|\?koleksiyon=/);
 });

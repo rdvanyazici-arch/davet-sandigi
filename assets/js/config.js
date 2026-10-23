@@ -38,5 +38,7 @@ function glyphSvg(g){
  };
  return m[g]||m.leaf;
 }
+/* routes.js yüklenmemişse boş döner; tek bir bozuk kayit sayfayi kirmaz. */
+function routeHref(kind,slug){var r=window.DS_ROUTES;return r&&typeof r[kind]==='function'?r[kind](slug):'';}
 function waNumber(){var n=String(settings.whatsapp||'').trim();return/^[1-9][0-9]{9,14}$/.test(n)?n:'';}
 function waLink(text){var n=waNumber();return'https://wa.me/'+(n?n:'')+'?text='+encodeURIComponent(text||'Merhaba, Davet Sandığı ürünleri hakkında bilgi almak istiyorum.');}
