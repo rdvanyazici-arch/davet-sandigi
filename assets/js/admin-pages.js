@@ -64,6 +64,10 @@ function pagesMediaError(mediaId){
 
 /* ---- preview ---- */
 function pagesPreviewMarkup(kind,p){
+ /* Yasal bölümler forma kendi anahtarlarıyla geliyor (legal_shipping, legal_kvkk
+    …). Burada yalnızca 'legal' aranıyordu; hiçbiri eşleşmediği için fonksiyon
+    boş metin döndürüyor, önizleme penceresi boş açılıyordu. */
+ if(/^legal(_|$)/.test(kind))kind='legal';
  var image=pagesImage(p.media_id),media=image.url?'<img src="'+pagesEsc(image.url)+'" alt="'+pagesEsc(image.alt)+'">':'<div class="pg-noimg">Görsel seçilmedi</div>';
  var button=function(text){return text?'<span class="pg-btn">'+pagesEsc(text)+'</span>':'';};
  var list=function(items){return'<div class="pg-cards">'+items.map(function(item,index){return'<article><b>'+(index+1)+'</b><h4>'+pagesEsc(item.title)+'</h4><p>'+pagesEsc(item.description)+'</p></article>';}).join('')+'</div>';};
