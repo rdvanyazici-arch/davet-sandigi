@@ -347,7 +347,7 @@ test('hata durumu: tüm sorgular başarısız, uydurma iletişim bilgisi yok', a
   await expect(page.locator('#review-grid')).toContainText('Yorumlar şu an yüklenemedi.');
   await expect(page.locator('#hero-title')).toHaveText('Davet Sandığı');
   for (const id of ['hdr-wa', 'cta-wa', 'ft-wa', 'story-wa', 'ft-ig']) await expect(page.locator(`#${id}`), id).toBeHidden();
-  for (const id of ['tb-phone', 'ft-phone', 'ft-mail', 'ft-addr']) await expect(page.locator(`#${id}`), id).toHaveText('');
+  for (const id of ['ft-phone', 'ft-mail', 'ft-addr']) await expect(page.locator(`#${id}`), id).toHaveText('');
   await expect(page.locator('body')).not.toContainText('0500 000');
   await expect(page.locator('body')).not.toContainText('500+');
   expect(log.pageErrors).toEqual([]);
@@ -518,7 +518,6 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await expect(page.locator('#channel-wa')).toContainText('WhatsApp’ta Sipariş Talebi Oluştur');
   await expect(page.locator('#topbar-list')).toContainText('Kişiye özel üretim');
   await expect(page.locator('#hdr-wa')).toHaveAttribute('href', /^https:\/\/wa\.me\/905301112233\?/);
-  await expect(page.locator('#tb-phone a, #tb-phone')).toHaveAttribute('href', 'tel:+902120000000');
   await expect(page.locator('#ft-phone')).toHaveAttribute('href', 'tel:+902120000000');
   await expect(page.locator('#ft-mail')).toHaveAttribute('href', 'mailto:info@example.test');
 

@@ -50,7 +50,6 @@ em{color:var(--gold);font-style:italic;}
 @media(max-width:1460px){.topbar li:nth-child(n+4){display:none;}}
 @media(max-width:1140px){.topbar li:nth-child(n+3){display:none;}}
 .topbar li svg{width:13px;height:13px;color:var(--gold);}
-.topbar .tb-right{display:inline-flex;align-items:center;gap:7px;color:var(--forest);font-weight:700;letter-spacing:.03em;white-space:nowrap;}
 
 /* header */
 .header{position:sticky;top:0;z-index:80;background:color-mix(in srgb,var(--ivory) 97%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
@@ -328,9 +327,13 @@ em{color:var(--gold);font-style:italic;}
 .story{background:var(--ivory);}
 .story-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:56px;align-items:center;}
 .story-media{position:relative;}
+.story-grid.story-solo{grid-template-columns:1fr;max-width:760px;}
 .story-media img{width:100%;border-radius:24px 120px 24px 120px;box-shadow:var(--shadow);aspect-ratio:4/3;object-fit:cover;border:1px solid rgba(184,154,99,.25);}
 .story-copy h2{font-size:clamp(30px,4vw,42px);margin:10px 0 14px;}
 .story-lead{font-family:var(--serif);font-size:20px;color:var(--forest);font-style:italic;margin:0 0 14px;}
+/* Hikâye bölümündeki Instagram kartı. Instagram'ın kendi arayüzünü taklit
+   etmez, sitenin kart dilini kullanır: gerçek hesap adı, gerçek bağlantı.
+   İmleç yalnızca dikkat çeken bir süs; sahte bir işlem yapmaz. */
 .story-text{color:var(--moss);font-size:15.5px;line-height:1.85;margin:0 0 26px;}
 /* reviews */
 .reviews{background:var(--cream);}
@@ -519,7 +522,6 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .header-actions .btn-wa{display:none;}
   .icon-btn,.menu-toggle{width:44px;height:44px;}
   .coll-grid,.prod-grid,.why-grid,.steps,.review-grid{grid-template-columns:1fr;}
-  .topbar .tb-right{font-size:11px;}
   .modal{padding:12px;}
   .modal-card{min-width:0;}
   .receipt{padding:24px 18px;}

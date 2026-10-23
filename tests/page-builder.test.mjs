@@ -190,7 +190,7 @@ test('iletişim sayfası konumu listeler', () => {
   data.settings = { brand_name: 'Davet Sandığı', address_locality: 'Nilüfer', address_region: 'Bursa' };
   const { pages } = buildPages(data, SUPABASE);
   const contact = pages.find(page => page.path === '/iletisim/');
-  assert.match(contact.body, /Konum<\/dt><dd>Nilüfer \/ Bursa/);
+  assert.match(contact.body, /pg-contact-k">Konum<\/span><span class="pg-contact-v">Nilüfer \/ Bursa/);
 });
 
 /* Üretilen sayfa index.html'in kendisinden türetilir: ikinci bir iskelet kopyası

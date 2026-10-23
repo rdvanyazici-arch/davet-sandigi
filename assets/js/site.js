@@ -128,7 +128,9 @@ function setPublicLink(id,url,label){
  link.hidden=!url;
  if(url){link.href=url;link.target='_blank';link.rel='noopener noreferrer';}
  else link.removeAttribute('href');
- if(label){var text=link.querySelector('span');if(text)text.textContent=label;else link.textContent=label;}
+ /* Daha önce span yoksa textContent'e yazılıyordu; bu, bağlantının içindeki
+    ikonu da siliyordu. Artık yalnızca metin kutusu varsa yazılır. */
+ if(label){var text=link.querySelector('span');if(text)text.textContent=label;else if(!link.querySelector('svg'))link.textContent=label;}
 }
 /* Bakim modu: site_settings.is_maintenance_mode true iken vitrin tamamen kapatilir.
    Ayar okunamazsa varsayilan kapalidir; showroom erisilebilir kalir. */
@@ -157,7 +159,7 @@ function applyContact(){
  setPublicLink('channel-ig',settings.instagram,'Instagram’ı ziyaret edin');
  var headerRequest=$('#hdr-wa span');if(headerRequest)headerRequest.textContent='WhatsApp’ta Sipariş Talebi';
  var ctaRequest=$('#cta-btnt');if(ctaRequest&&!$('#cta-wa').dataset.custom)ctaRequest.textContent='WhatsApp’ta Sipariş Talebi Oluştur';
- setContact('#tb-phone',settings.phone,'tel');setContact('#ft-phone',settings.phone,'tel');setContact('#ft-mail',settings.mail,'mailto');
+ setContact('#ft-phone',settings.phone,'tel');setContact('#ft-mail',settings.mail,'mailto');
  /* Yalniz il/ilce yayimlanir; bos ise satir gizli kalir. */
  var address=$('#ft-addr'),place=[settings.locality,settings.region].filter(Boolean).join(' / ');
  if(address){address.textContent=place;if(address.closest('li'))address.closest('li').hidden=!place;}
@@ -257,14 +259,18 @@ function renderTopbar(){
 }
 function renderStory(){
  var storyImg=$('#story-img');if(!storyImg)return;
- var s=publicSections.story,st=contentState('sections',!!(s&&(s.body||s.title))),txt=$('#story-text'),lead=$('#story-lead'),mediaBox=storyImg.parentNode;
+ var s=publicSections.story,st=contentState('sections',!!(s&&(s.body||s.title))),txt=$('#story-text'),lead=$('#story-lead');
  setSectionState('hikayemiz',st);
  if(lead){lead.textContent='';lead.style.display='none';}
- if(st!=='ready'){clearPublicImage($('#story-img'));mediaBox.hidden=true;if(txt)txt.textContent={loading:'Yükleniyor…',empty:'Henüz yayımlanmış içerik bulunmuyor.',error:'Bu bölüm şu an yüklenemedi.'}[st];return;}
+ if(st!=='ready'){clearPublicImage(storyImg);storyImg.parentNode.hidden=true;if(txt)txt.textContent={loading:'Yükleniyor…',empty:'Henüz yayımlanmış içerik bulunmuyor.',error:'Bu bölüm şu an yüklenemedi.'}[st];return;}
  if($('#story-eyebrow'))$('#story-eyebrow').textContent=s.eyebrow||'Hakkımızda';
  if($('#story-title'))$('#story-title').textContent=s.title||'Hikayemiz';
  if(txt)txt.innerHTML=nl2br(s.body||'');
- var m=mediaFrom(s.media_assets,'',s.title);if(m){applyMediaTo($('#story-img'),m,'(max-width: 1000px) 100vw, 45vw');mediaBox.hidden=false;}else{clearPublicImage($('#story-img'));mediaBox.hidden=true;}
+ var m=mediaFrom(s.media_assets,'',s.title),mediaBox=storyImg.parentNode;
+ if(m)applyMediaTo(storyImg,m,'(max-width: 1000px) 100vw, 45vw');else clearPublicImage(storyImg);
+ mediaBox.hidden=!m;
+ /* Görsel yoksa iki sütunluk düzen tek sütuna iner; yoksa sağ yarı boş kalır. */
+ var grid=mediaBox.parentNode;if(grid&&grid.classList)grid.classList.toggle('story-solo',!m);
 }
 function renderReviews(){
  var g=$('#review-grid');if(!g)return;
