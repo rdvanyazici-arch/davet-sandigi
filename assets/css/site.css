@@ -262,7 +262,7 @@ em{color:var(--gold);font-style:italic;}
 .checkout-fields textarea{resize:vertical;min-height:60px;}
 
 /* receipt modal */
-.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(55,45,19,.5);}
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto;background:rgba(55,45,19,.5);}
 .modal.open{display:flex;}
 .modal-card{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:var(--ivory);border-radius:16px;box-shadow:var(--shadow);}
 .receipt{padding:30px;}
@@ -389,10 +389,18 @@ em{color:var(--gold);font-style:italic;}
 /* product modal */
 .prod-card{cursor:pointer;}
 .pmodal .modal-card,.pmodal{}
-.pm-card{width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:var(--ivory);border-radius:20px;position:relative;box-shadow:var(--shadow);}
+/* Mobilde vh, adres çubuğu gizliyken ölçülen yüksekliktir; pencere ekranı
+   taşıyor ve kapatma düğmesi görünmez oluyordu. dvh o anda gerçekten
+   görünen yüksekliği verir. vh satırı, dvh desteklemeyen eski tarayıcılar
+   için yedek olarak önce yazıldı. */
+.pm-card{width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--ivory);border-radius:20px;position:relative;box-shadow:var(--shadow);}
 .pm-close{position:absolute;top:14px;right:14px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:rgba(55,45,19,.55);color:#fff;font-size:16px;cursor:pointer;}
 .pm-gallery{position:relative;background:var(--cream);border-radius:20px 20px 0 0;overflow:hidden;}
-#pm-main{width:100%;height:min(50vh,480px);object-fit:cover;display:block;}
+/* Ürün fotoğrafları dikey (3:4). Sabit yükseklik + cover, şişenin altını ve
+   setin üstünü kırpıyordu. Ürün penceresinde fotoğrafın tamamı görünmeli:
+   contain ile sığdırılır, boşluk krem zeminde kalır. Vitrin kartlarında
+   kırpma doğru olduğu için orası değişmedi. */
+#pm-main{width:100%;height:min(64vh,580px);object-fit:contain;display:block;background:var(--cream);}
 .pm-badge{position:absolute;top:16px;left:16px;z-index:2;padding:6px 13px;border-radius:999px;background:color-mix(in srgb,var(--ivory) 90%,transparent);backdrop-filter:blur(6px);color:var(--forest);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
 .pm-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;border-radius:50%;border:0;background:color-mix(in srgb,var(--ivory) 82%,transparent);backdrop-filter:blur(6px);color:var(--espresso);font:400 26px/1 Georgia,serif;cursor:pointer;box-shadow:0 4px 14px rgba(55,45,19,.18);}
 .pm-nav.prev{left:14px;}.pm-nav.next{right:14px;}
