@@ -503,7 +503,10 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .hero-media{order:-1;}
   .coll-grid,.prod-grid,.why-grid,.steps,.review-grid{grid-template-columns:repeat(2,1fr);}
   .footer .cols{grid-template-columns:1fr 1fr;}
-  .ctaband .inner{grid-template-columns:1fr;}
+  /* 1fr'in asgari genişliği içeriğe göre belirlenir; içerideki tek satırlık
+     WhatsApp düğmesi sütunu kabın dışına taşırıyordu. minmax(0,1fr) sütunun
+     küçülmesine izin verir. */
+  .ctaband .inner{grid-template-columns:minmax(0,1fr);}
   .ctaband .media{min-height:200px;}
   .story-grid{grid-template-columns:1fr;gap:34px;}
   .story-media{order:-1;}
@@ -513,6 +516,13 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .menu-toggle{display:block;}
   .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;z-index:81;}
   .mainnav.mob a{padding:10px 0;}
+}
+@media(max-width:620px){
+  /* Dar ekranda kartın iç boşluğu küçülür ve düğme satır kırabilir;
+     böylece yeşil kart ekrana sığar. */
+  .ctaband{padding:48px 0;}
+  .ctaband .txt{padding:36px 22px;}
+  .ctaband .txt .btn{white-space:normal;text-align:center;width:100%;justify-content:center;}
 }
 @media(max-width:900px){
   .topbar ul,.hero-proof{display:none;}
