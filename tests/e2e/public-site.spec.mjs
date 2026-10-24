@@ -13,7 +13,7 @@ const ORIGIN = `https://${PROJECT_HOST}`;
 const LOCAL_HOST = new URL(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4175').host;
 const PRICE_ERROR = 'Fiyat bilgisi şu an yüklenemedi';
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,OPTIONS' };
-const PNG = readFileSync('assets/images/brand/favicon-32.png');
+const PNG = readFileSync('assets/images/brand/favicon-48.png');
 
 const media = (path, alt, width = 800, height = 1000) => ({ storage_path: path, alt_text: alt, width, height });
 
@@ -667,7 +667,7 @@ test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', 
   expect(faqSchema.mainEntity.length).toBeGreaterThan(0);
   expect(faqSchema.mainEntity[0].acceptedAnswer['@type']).toBe('Answer');
   await expect(page.locator('h1')).toHaveCount(1);
-  for (const path of ['/robots.txt', '/sitemap.xml', '/assets/images/brand/favicon.svg', '/assets/images/brand/favicon-32.png', '/assets/images/brand/favicon-16.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/social-card.png']) {
+  for (const path of ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/assets/images/brand/favicon-48.png', '/assets/images/brand/favicon-96.png', '/assets/images/brand/favicon-192.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/logo.png', '/assets/images/brand/social-card.png']) {
     const response = await page.request.get(path);
     expect(response.ok(), path).toBeTruthy();
   }

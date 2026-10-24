@@ -262,7 +262,9 @@ function organizationSchema(settings) {
     '@type': 'Organization',
     name: settings.brand_name || 'Davet Sandığı',
     url: absoluteUrl(homePath),
-    areaServed: 'TR'
+    areaServed: 'TR',
+    /* Google bilgi panelinde markanın logosunu bu alandan okur. */
+    logo: absoluteUrl('/assets/images/brand/logo.png')
   };
   if (settings.instagram_url) schema.sameAs = [settings.instagram_url];
   const contact = { '@type': 'ContactPoint', contactType: 'customer support', availableLanguage: ['tr'] };

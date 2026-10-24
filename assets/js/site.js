@@ -65,7 +65,9 @@ function seoCanonical(url){var node=$('link[rel="canonical"]');if(node)node.href
    JavaScript, HTML'e gömülü zengin şemayı sadeleştirip geri alır. */
 function updateOrganizationSchema(){
  var node=$('#organization-schema');if(!node)return;
- var schema={'@context':'https://schema.org','@type':'Organization',name:'Davet Sandığı',url:SEO_ORIGIN+'/',areaServed:'TR'};
+ /* logo alanı yapı zamanındaki şemayla birebir aynı olmalı; Google bilgi
+    panelinde markanın logosunu buradan okur. */
+ var schema={'@context':'https://schema.org','@type':'Organization',name:'Davet Sandığı',url:SEO_ORIGIN+'/',areaServed:'TR',logo:SEO_ORIGIN+'/assets/images/brand/logo.png'};
  if(settings.instagram)schema.sameAs=[settings.instagram];
  var contact={'@type':'ContactPoint',contactType:'customer support',availableLanguage:['tr']};
  if(settings.phone)contact.telephone=settings.phone;
