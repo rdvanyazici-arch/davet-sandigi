@@ -292,7 +292,12 @@ em{color:var(--gold);font-style:italic;}
 
 /* cart summary + quote + kvkk */
 .cart-sum{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
-.sum-row{display:flex;justify-content:space-between;font-size:14px;color:var(--ink);}
+/* Etiketle değer arasında boşluk yoktu: "KargoTüm Türkiye'ye…" diye bitişik
+   çıkıyordu. Kargo açıklaması bir tutar değil, cümle; sağda küçük punto ve
+   ikincil renkte durması hem okunur hem de toplam satırlarıyla karışmaz. */
+.sum-row{display:flex;justify-content:space-between;gap:16px;font-size:14px;color:var(--ink);}
+.sum-row > span:last-child,.sum-row > b{text-align:right;}
+#cart-ship{font-size:12px;line-height:1.45;color:var(--moss);max-width:62%;}
 .sum-row.total{border-top:1px solid var(--line);padding-top:9px;margin-top:2px;align-items:baseline;}
 .sum-row.total b{font-family:var(--serif);font-size:23px;color:var(--forest);}
 .ci-quote{color:var(--gold);font-weight:700;font-size:12px;}
@@ -519,6 +524,15 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .menu-toggle{display:block;}
   .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;z-index:81;}
   .mainnav.mob a{padding:10px 0;}
+}
+@media(max-width:620px){
+  /* Mobilde özet paneli ekranın yarısını kaplıyordu; sepet listesine yalnız
+     bir buçuk ürünlük yer kalıyordu. Bilgi kaybetmeden sıkılaştırılır. */
+  .drawer-foot{padding:14px 18px;}
+  .drawer-note{font-size:10.5px;line-height:1.5;margin-bottom:12px;}
+  .drawer-foot .btn{margin-bottom:6px;}
+  .drawer-foot .btn-ghost{border:0;background:transparent;padding:8px 0;margin-bottom:0;font-size:13px;}
+  .sum-row.total b{font-size:20px;}
 }
 @media(max-width:620px){
   /* Dar ekranda kartın iç boşluğu küçülür ve düğme satır kırabilir;

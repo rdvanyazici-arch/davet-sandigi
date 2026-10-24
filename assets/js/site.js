@@ -170,7 +170,9 @@ function applyContact(){
 }
 function renderOrderContext(){
  var note=$('#cart-rule-note');if(!note)return;
- var parts=[settings.deliveryText,settings.shippingNote].filter(function(value){return!!String(value||'').trim();});
+ /* Kargo notu zaten özet tablosundaki "Kargo" satırında gösteriliyor;
+    buraya da eklenince sepette iki kez çıkıyordu. */
+ var parts=[settings.deliveryText].filter(function(value){return!!String(value||'').trim();});
  parts.push('Kesin fiyat ve sipariş talebi WhatsApp görüşmesinde onaylanır.');
  note.textContent=parts.join(' ');
 }

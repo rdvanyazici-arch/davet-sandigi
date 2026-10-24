@@ -525,7 +525,10 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await page.click('#open-cart');
   await expect(page.locator('#drawer-body .stepper')).toContainText('25');
   await expect(page.locator('#cart-rule-note')).toContainText('Teslimat bilgisi panelde yönetilir.');
-  await expect(page.locator('#cart-rule-note')).toContainText('Kargo bilgisi panelde yönetilir.');
+  /* Kargo notu yalnızca özet tablosunun "Kargo" satırında gösterilir;
+     bilgi metninde tekrarlanmaz. */
+  await expect(page.locator('#cart-rule-note')).not.toContainText('Kargo bilgisi panelde yönetilir.');
+  await expect(page.locator('#cart-ship')).toHaveText('Kargo bilgisi panelde yönetilir.');
   await expect(page.locator('#drawer-body')).toContainText('Kolonya Ürünü');
   await page.evaluate(() => { addToCart('1'); addToCart('1'); addToCart('1'); });
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ds_cart_v6'))[0].quantity)).toBe(100);
