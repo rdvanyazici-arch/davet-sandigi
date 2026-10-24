@@ -207,6 +207,13 @@ test('üretilen sayfa index.html iskeletini olduğu gibi taşır', () => {
     if (shell.includes(part)) assert.ok(html.includes(part), part + ' alt sayfada yok');
   });
   assert.ok(html.includes('/assets/js/site.js'), 'site betiği yüklenmiyor');
+
+  /* pages:seo bloğu her üretilen sayfada baştan yazılıyor. Sayfadan sayfaya
+     değişmeyen etiketler yanlışlıkla o bloğun içine taşınırsa alt sayfalarda
+     sessizce kaybolur; favicon'lar uzun süre böyle kayıptı. */
+  ['/favicon.ico', 'favicon-48.png', 'favicon-96.png', 'favicon-192.png', 'apple-touch-icon', 'name="robots"', 'rel="preconnect"'].forEach(etiket => {
+    assert.ok(html.includes(etiket), etiket + ' üretilen sayfada kaybolmuş');
+  });
   assert.ok(!html.includes('page.css'), 'ayrı stil dosyası geri gelmiş');
 });
 
