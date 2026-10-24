@@ -127,7 +127,7 @@ em{color:var(--gold);font-style:italic;}
 .coll-body h3{font-size:20px;}
 .coll-body p{margin:0;color:var(--moss);font-size:13px;}
 .coll-more{margin-top:10px;display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
-.coll-more svg{width:26px;height:26px;padding:6px;border:1px solid var(--gold-soft);border-radius:50%;transition:background .2s,color .2s;}
+.coll-more svg{width:22px;height:22px;padding:5px;border:1px solid var(--gold-soft);border-radius:50%;transition:background .2s,color .2s;}
 .coll-card:hover .coll-more svg{background:var(--gold);color:#fff;}
 
 /* product filter + grid */
@@ -280,7 +280,10 @@ em{color:var(--gold);font-style:italic;}
 .collview.open{display:block;}
 .collview-bar{position:sticky;top:0;background:color-mix(in srgb,var(--ivory) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:16px 0;z-index:2;}
 .collview-bar .wrap{display:flex;align-items:center;gap:16px;}
-.collview-bar button{padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:transparent;font-size:13px;font-weight:700;color:var(--ink);}
+/* Geri düğmesinin ikonu boyutlandırılmamıştı ve 30 piksele çıkıyordu;
+   yanındaki yazı 13 piksel olduğu için orantısız duruyordu. */
+.collview-bar button{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:transparent;font-size:13px;font-weight:700;color:var(--ink);line-height:1;}
+.collview-bar button svg{width:16px;height:16px;flex-shrink:0;}
 .collview-bar h2{font-size:22px;}
 .cv-more-wrap{text-align:center;margin-top:34px;}
 .cv-more-wrap[hidden]{display:none;}
