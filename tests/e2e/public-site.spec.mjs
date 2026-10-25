@@ -808,13 +808,15 @@ test('Faz 9: teklif ürünü ve WhatsApp mesaj önizlemesi', async ({ page }) =>
   await expect(page.locator('.receipt-disc')).toContainText('WhatsApp açılır');
 
   const message = await page.locator('#wa-message-preview').textContent();
-  expect(message).toMatch(/^Davet Sandığı sipariş talebi\nTalep referansı: DS-\d{14}-[A-Z0-9]{1,5}\n/);
+  /* Mesajı müşteri kendi ağzından gönderiyor: selamlamayla başlar, tarih
+     Türkçe biçimdedir, talep numarası sonda durur. */
+  expect(message).toMatch(/^Merhaba, aşağıdaki ürünler için sipariş talebi iletmek istiyorum\.\n/);
   expect(message).toContain('• Teklif Ürünü (TEKLIF-7)');
-  expect(message).toContain('Adet: 10');
-  expect(message).toContain('Birim fiyat: Özel fiyat teklifi');
-  expect(message).toContain('Etkinlik tarihi: 2026-12-20');
-  expect(message).toContain('Genel not: Kırmızı tema');
-  expect(message).toContain('Kargo ve kesin fiyat WhatsApp görüşmesinde onaylanacaktır.');
+  expect(message).toContain('10 adet — fiyat teklifi rica ediyorum');
+  expect(message).toContain('Davet tarihi: 20.12.2026');
+  expect(message).toContain('Not: Kırmızı tema');
+  expect(message).toContain('Kargo ve kesin fiyat için dönüşünüzü bekliyorum.');
+  expect(message).toMatch(/Talep no: DS-\d{14}-[A-Z0-9]{1,5}$/);
 
   await page.evaluate(() => { window.__openedWhatsapp = ''; window.open = url => { window.__openedWhatsapp = String(url); }; });
   await page.click('#rc-wa');

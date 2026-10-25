@@ -269,8 +269,11 @@ em{color:var(--gold);font-style:italic;}
 .cart-back{align-self:flex-start;margin-bottom:10px;border:0;background:transparent;padding:4px 0;font-size:13px;font-weight:700;color:var(--moss);cursor:pointer;}
 .cart-back:hover{color:var(--espresso);}
 .drawer.form-step .drawer-body,.drawer.form-step .cart-terms{display:none;}
+/* Form adımında alt bölüm tüm alanı kaplar; eylem şeridi içeriğin hemen
+   altında değil, alanın en altında durur ki boş beyaz bir bölge kalmasın. */
 .drawer.form-step .drawer-foot{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-.drawer.form-step .checkout-fields{flex:1;}
+.drawer.form-step .checkout-fields{flex:1 0 auto;}
+.drawer.form-step .cart-bar{margin-top:auto;}
 .stepper button:disabled{opacity:.35;cursor:not-allowed;}
 .drawer-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
 .drawer-total b{font-family:var(--serif);font-size:24px;color:var(--forest);}
@@ -292,7 +295,9 @@ em{color:var(--gold);font-style:italic;}
 /* receipt modal */
 .modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto;background:rgba(55,45,19,.5);}
 .modal.open{display:flex;}
-.modal-card{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:var(--ivory);border-radius:16px;box-shadow:var(--shadow);}
+/* Ürün penceresinde düzeltilen vh sorunu burada kalmıştı: mobilde pencere
+   ekranı taşıyor, makbuzun başlığı yukarıda görünmez oluyordu. */
+.modal-card{width:100%;max-width:520px;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--ivory);border-radius:16px;box-shadow:var(--shadow);}
 .receipt{padding:30px;}
 .receipt-head{text-align:center;border-bottom:1px dashed var(--line);padding-bottom:18px;margin-bottom:18px;}
 .receipt-head b{font-family:var(--serif);font-size:24px;color:var(--espresso);}

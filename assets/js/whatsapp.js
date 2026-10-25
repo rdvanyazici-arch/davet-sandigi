@@ -7,19 +7,31 @@ function requestReference(){
  return'DS-'+stamp+'-'+rand;
 }
 function validRequestLines(){return activeCart();}
+/* Bu metni müşteri KENDİ ağzından işletmeye gönderiyor. Önceki hâli bir
+   sistem bildirimi gibiydi: selamlama yok, "Bu mesaj bir sipariş talebidir"
+   gibi kendini açıklayan satırlar vardı ve tarih makine biçimindeydi.
+   Burada bir insanın yazacağı gibi kurulur; bilgiler aynı kalır. */
+function trTarih(iso){
+ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+ return m?m[3]+'.'+m[2]+'.'+m[1]:String(iso||'');
+}
 function buildOrderText(reference,eventDate,generalNote){
- var lines=['Davet Sandığı sipariş talebi','Talep referansı: '+reference,''];
+ var lines=['Merhaba, aşağıdaki ürünler için sipariş talebi iletmek istiyorum.',''];
+ var teklifVar=false;
  validRequestLines().forEach(function(x){
   var p=x.product,i=x.item,qty=cartQuantity(i),quote=isQuote(qty,p)||p.priceMode!=='price';
-  lines.push('• '+p.name+' ('+p.code+')','  Adet: '+qty,'  Birim fiyat: '+(quote?'Özel fiyat teklifi':fmt(p.price)),'  Toplam: '+(quote?'Özel fiyat teklifi':fmt(p.price*qty)));
-  if(i.note)lines.push('  Kişiselleştirme notu: '+i.note);
-  if(quote)lines.push('  Teklif notu: Kesin fiyat WhatsApp görüşmesinde belirlenecektir.');
+  lines.push('• '+p.name+' ('+p.code+')');
+  lines.push(quote?'  '+qty+' adet — fiyat teklifi rica ediyorum':'  '+qty+' adet × '+fmt(p.price)+' = '+fmt(p.price*qty));
+  if(i.note)lines.push('  Not: '+i.note);
+  if(quote)teklifVar=true;
   lines.push('');
  });
- if(eventDate)lines.push('Etkinlik tarihi: '+eventDate);
- if(generalNote)lines.push('Genel not: '+generalNote);
+ if(!teklifVar&&!hasUnpriced())lines.push('Toplam: '+fmt(subtotal()),'');
+ if(eventDate)lines.push('Davet tarihi: '+trTarih(eventDate));
+ if(generalNote)lines.push('Not: '+generalNote);
  if(eventDate||generalNote)lines.push('');
- lines.push('Kargo ve kesin fiyat WhatsApp görüşmesinde onaylanacaktır.','Bu mesaj bir sipariş talebidir.');
+ lines.push('Kargo ve kesin fiyat için dönüşünüzü bekliyorum.');
+ lines.push('Talep no: '+reference);
  return lines.join('\n');
 }
 function checkout(){
