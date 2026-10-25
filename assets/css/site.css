@@ -248,7 +248,27 @@ em{color:var(--gold);font-style:italic;}
 .stepper button:hover{background:var(--cream);}
 .stepper span{min-width:26px;text-align:center;font-size:13px;font-weight:700;}
 .ci-remove{margin-left:auto;align-self:flex-start;border:0;background:transparent;color:#b4472f;font-size:12px;font-weight:700;}
-.drawer-foot{border-top:1px solid var(--line);padding:20px 24px;background:var(--cream);}
+.drawer-foot{border-top:1px solid var(--line);padding:16px 24px;background:var(--cream);}
+/* ---- SEPET: adımlar ve alt şerit ----
+   Tutar dökümü ve koşullar katlanabilir bir bölümde; altta yalnızca toplam ve
+   ana eylem kalır. Bilgi formu açıldığında sepet listesi ve döküm gizlenip
+   form tüm alanı kullanır, böylece dar ekranda alanlar sıkışmaz. */
+.cart-terms{margin-bottom:12px;}
+.cart-terms > summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--moss);}
+.cart-terms > summary::-webkit-details-marker{display:none;}
+.cart-terms > summary::after{content:"";width:8px;height:8px;border-right:1.6px solid var(--gold);border-bottom:1.6px solid var(--gold);transform:rotate(45deg);transition:transform .2s;flex-shrink:0;}
+.cart-terms[open] > summary::after{transform:rotate(-135deg);}
+.cart-bar{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.cart-bar-total{display:flex;flex-direction:column;line-height:1.15;flex-shrink:0;}
+.cart-bar-total span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--moss);}
+.cart-bar-total b{font-family:var(--serif);font-size:22px;color:var(--forest);}
+.cart-bar .btn{flex:1;justify-content:center;margin:0;}
+.cart-back{align-self:flex-start;margin-bottom:10px;border:0;background:transparent;padding:4px 0;font-size:13px;font-weight:700;color:var(--moss);cursor:pointer;}
+.cart-back:hover{color:var(--espresso);}
+.drawer.form-step .drawer-body,.drawer.form-step .cart-terms{display:none;}
+.drawer.form-step .drawer-foot{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.drawer.form-step .checkout-fields{flex:1;}
+.stepper button:disabled{opacity:.35;cursor:not-allowed;}
 .drawer-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
 .drawer-total b{font-family:var(--serif);font-size:24px;color:var(--forest);}
 .drawer-note{font-size:11px;color:var(--moss);margin:0 0 16px;}
@@ -533,6 +553,12 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .menu-toggle{display:block;}
   .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;z-index:81;}
   .mainnav.mob a{padding:10px 0;}
+}
+@media(max-width:620px){
+  /* Yan panel 375 piksellik ekranda 345 piksel kaplıyordu; yan olmasının
+     faydası yok, kenarda boşa giden yer ve gölge kalıyordu. Tam ekran. */
+  .drawer{width:100%;max-width:none;box-shadow:none;}
+  .cart-bar-total b{font-size:19px;}
 }
 @media(max-width:620px){
   /* Sipariş formu açılınca alt panel 581 piksele çıkıyor, sepet listesine

@@ -374,6 +374,7 @@ on('#cart-fab','click',openCart);
 on('#drawer-close','click',closeCart);
 on('#overlay','click',closeCart);
 on('#continue-btn','click',closeCart);
+on('#checkout-back','click',function(){cartFormStep(false);var b=$('#checkout-btn');if(b)b.focus();});
 on('#checkout-btn','click',checkout);
 on('#rc-close','click',closeOrder);
 on('#rc-print','click',function(){window.print();});

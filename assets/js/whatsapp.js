@@ -27,7 +27,15 @@ function checkout(){
  if(!catalogReady()||cartPriceError()){alert(PUBLIC_PRICE_ERROR+'. Lütfen sayfayı yenileyip tekrar deneyin.');return;}
  if(!validRequestLines().length){alert('Talep oluşturmak için yayındaki bir ürünü sepetinize ekleyin.');return;}
  if(!waNumber()){alert('WhatsApp numarası geçerli değil. Yönetim panelinden ülke koduyla ve yalnızca rakam kullanarak güncelleyin.');return;}
- if(!cf.classList.contains('show')){cf.classList.add('show');$('#c-event-date').focus();announceCart('Sipariş talebi bilgileri açıldı.');return;}
+ /* Bilgi alanları dar bir alt panele sıkışmak yerine kendi adımında açılır:
+    sepet listesi ve tutar dökümü gizlenir, form tüm alanı kullanır. */
+ if(!cf.classList.contains('show')){
+  cf.classList.add('show');
+  var dr=$('#drawer');if(dr)dr.classList.add('form-step');
+  var gb=$('#checkout-back');if(gb)gb.hidden=false;
+  var cb=$('#checkout-btn');if(cb)cb.firstChild.nodeValue='WhatsApp’ta Önizle ';
+  $('#c-event-date').focus();announceCart('Sipariş talebi bilgileri açıldı.');return;
+ }
  if(!$('#c-kvkk').checked){alert('Devam etmek için KVKK Aydınlatma Metni onayını işaretleyin.');return;}
  var eventDate=$('#c-event-date').value,generalNote=$('#c-note').value.trim(),reference=requestReference(),text=buildOrderText(reference,eventDate,generalNote);
  renderReceipt(reference,eventDate,generalNote,text);$('#order-modal').classList.add('open');activateFocusLayer($('#order-modal'),closeOrder,$('#checkout-btn'));
