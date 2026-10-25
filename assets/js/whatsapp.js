@@ -34,7 +34,11 @@ function checkout(){
   var dr=$('#drawer');if(dr)dr.classList.add('form-step');
   var gb=$('#checkout-back');if(gb)gb.hidden=false;
   var cb=$('#checkout-btn');if(cb)cb.firstChild.nodeValue='WhatsApp’ta Önizle ';
-  $('#c-event-date').focus();announceCart('Sipariş talebi bilgileri açıldı.');return;
+  /* Tarih alanına odaklanmak iOS'ta takvimi anında açıyordu: kullanıcı formu
+     görmeden karşısına takvim çıkıyordu. Odak, adımın ilk denetimi olan
+     geri düğmesine verilir. */
+  if(gb)gb.focus();
+  announceCart('Sipariş talebi bilgileri açıldı.');return;
  }
  if(!$('#c-kvkk').checked){alert('Devam etmek için KVKK Aydınlatma Metni onayını işaretleyin.');return;}
  var eventDate=$('#c-event-date').value,generalNote=$('#c-note').value.trim(),reference=requestReference(),text=buildOrderText(reference,eventDate,generalNote);
