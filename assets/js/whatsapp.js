@@ -30,7 +30,7 @@ function buildOrderText(reference,eventDate,generalNote){
  if(eventDate)lines.push('Davet tarihi: '+trTarih(eventDate));
  if(generalNote)lines.push('Not: '+generalNote);
  if(eventDate||generalNote)lines.push('');
- lines.push('Kargo ve kesin fiyat için dönüşünüzü bekliyorum.');
+ lines.push('Detaylar ve ödeme için dönüşünüzü bekliyorum.');
  lines.push('Talep no: '+reference);
  return lines.join('\n');
 }

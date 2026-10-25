@@ -815,7 +815,7 @@ test('Faz 9: teklif ürünü ve WhatsApp mesaj önizlemesi', async ({ page }) =>
   expect(message).toContain('10 adet — fiyat teklifi rica ediyorum');
   expect(message).toContain('Davet tarihi: 20.12.2026');
   expect(message).toContain('Not: Kırmızı tema');
-  expect(message).toContain('Kargo ve kesin fiyat için dönüşünüzü bekliyorum.');
+  expect(message).toContain('Detaylar ve ödeme için dönüşünüzü bekliyorum.');
   expect(message).toMatch(/Talep no: DS-\d{14}-[A-Z0-9]{1,5}$/);
 
   await page.evaluate(() => { window.__openedWhatsapp = ''; window.open = url => { window.__openedWhatsapp = String(url); }; });
