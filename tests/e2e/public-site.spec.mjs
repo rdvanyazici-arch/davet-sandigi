@@ -477,7 +477,11 @@ test('Faz 15: yasal footer modalı yalnız onaylı content_sections metnini gös
   await waitReady(page);
   const footerLegal=page.locator('.footer-legal [data-legal]');
   await expect(footerLegal).toHaveCount(8);
-  await expect(footerLegal.first()).toHaveAttribute('role','button');
+  /* Yayımlanmış metin kalıcı adresiyle bağlanır, yayımlanmamış olan düğme kalır. */
+  for (const link of await footerLegal.all()) {
+    const href = await link.getAttribute('href'), role = await link.getAttribute('role');
+    expect(href ? /^\/yasal\/[a-z0-9-]+\/$/.test(href) : role === 'button', String(href || role)).toBe(true);
+  }
   await expect.poll(() => page.evaluate(() => catalogState.sections)).toBe('ready');
   const publicText=await page.locator('body').innerText();
   expect(publicText).not.toMatch(/örnek|taslak|Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i);
@@ -654,10 +658,10 @@ test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', 
   await setup(page);
   await page.goto('/index.html');
   await waitReady(page);
-  await expect(page).toHaveTitle('Davet Sandığı | Ürünler ve Koleksiyonlar');
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /sipariş talebinizi WhatsApp/);
+  await expect(page).toHaveTitle('Davet Sandığı | Kişiye Özel Nişan, Kına ve Baby Shower Hediyelikleri');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /isminize ve tarihinize özel/);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalOrigin + '/');
-  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /social-card\.png$/);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /social-card\.jpg$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   const organization = JSON.parse(await page.locator('#organization-schema').evaluate(node => node.textContent));
   expect(organization['@type']).toBe('Organization');
@@ -673,7 +677,7 @@ test('Faz 11: SEO metadata, one H1, Organization schema and favicon resources', 
   expect(faqSchema.mainEntity.length).toBeGreaterThan(0);
   expect(faqSchema.mainEntity[0].acceptedAnswer['@type']).toBe('Answer');
   await expect(page.locator('h1')).toHaveCount(1);
-  for (const path of ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/assets/images/brand/favicon-48.png', '/assets/images/brand/favicon-96.png', '/assets/images/brand/favicon-192.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/logo.png', '/assets/images/brand/social-card.png']) {
+  for (const path of ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/assets/images/brand/favicon-48.png', '/assets/images/brand/favicon-96.png', '/assets/images/brand/favicon-192.png', '/assets/images/brand/apple-touch-icon.png', '/assets/images/brand/logo.png', '/assets/images/brand/social-card.jpg']) {
     const response = await page.request.get(path);
     expect(response.ok(), path).toBeTruthy();
   }
@@ -1059,3 +1063,4 @@ test('iletişim sayfası ana sayfanın bandı ve kartlarıyla kurulur', async ({
     expect(overflow, width + ' piksel').toBeLessThanOrEqual(0);
   }
 });
+

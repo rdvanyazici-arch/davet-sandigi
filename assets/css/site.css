@@ -737,3 +737,24 @@ body.maint-on>:not(.maint){display:none!important;}
   .pg-contact-cards [data-key="delivery"]{order:3;grid-column:1/-1;}
 }
 .hero-proof:empty{display:none;}
+/* ===== yasal metin sayfaları (/yasal/…) ve 404 =====
+   İletişim sayfasıyla aynı iskelet: ortalı yol gösterici ve bölüm başlığı. */
+.section.pg:has(.pg-legal),.section.pg:has(.pg-404){padding-top:44px;}
+.pg-legal{max-width:800px;margin:0 auto;}
+.pg-legal .pg-crumb ol,.pg-404 .pg-crumb ol{justify-content:center;margin-bottom:14px;}
+.pg-legal .section-head{margin-bottom:30px;}
+.pg-legal-body{background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:38px 44px;color:var(--ink);font-size:15.5px;line-height:1.8;overflow-wrap:anywhere;}
+.pg-legal-body p{margin:0 0 16px;}
+.pg-legal-body p:last-child{margin-bottom:0;}
+.pg-legal-more{margin-top:30px;text-align:center;}
+.pg-legal-more h2,.pg-404 h2{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 14px;}
+.pg-legal-more ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;font-size:13.5px;}
+.pg-legal-more a{color:var(--moss);text-decoration:underline;text-underline-offset:3px;}
+.pg-legal-more a:hover{color:var(--gold);}
+.pg-404{max-width:820px;margin:0 auto;text-align:center;}
+.pg-404-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:0 0 44px;}
+.pg-404 h2{margin-top:30px;}
+.pg-404-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+.pg-404-links .btn{padding:10px 20px;}
+@media(max-width:620px){.pg-legal-body{padding:24px 20px;font-size:15px;}}
+

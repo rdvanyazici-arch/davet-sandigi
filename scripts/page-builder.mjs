@@ -1,7 +1,7 @@
 /* Katalog verisinden sayfa tanımlarını üretir. Saf fonksiyon: ağ, dosya veya
    ortam erişimi yok, bu yüzden sabit verilerle test edilebilir. */
 
-import { absoluteUrl, categoryPath, collectionPath, contactPath, homePath, productPath } from './routes.mjs';
+import { LEGAL_PAGES, absoluteUrl, categoryPath, collectionPath, contactPath, homePath, legalPath, productPath } from './routes.mjs';
 import { resolveFaq } from './faq-resolve.mjs';
 import { breadcrumb, esc, image, jsonLd, mediaUrl, money, productCard, publicPlace, whatsappLink } from './page-templates.mjs';
 
@@ -41,6 +41,48 @@ const CONTACT_ICONS = {
   Kargo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
   Konum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>'
 };
+
+function approvedLegal(rows, sectionKey) {
+  const section = (rows || []).find(row => row.section_key === sectionKey);
+  if (!section || section.is_active === false) return null;
+  const json = section.content_json || {};
+  const body = String(section.body || '').trim();
+  if (json.legal_review_approved !== true || !body || /Hukuk danışmanı onayı bekliyor|\[TAMAMLANACAK\]/i.test(body)) return null;
+  return section;
+}
+
+/* Footer'daki yasal bağlantılar: yayımlanmış metnin kalıcı adresi href'e yazılır
+   (paylaşılabilir, arama motoru izler); tıklayınca yine pencerede açılır.
+   Sayfası olmayan metin eskisi gibi düğme olarak kalır. */
+export function legalFooterLinks(legalLinks) {
+  const byKey = new Map((legalLinks || []).map(item => [item.key, item]));
+  return LEGAL_PAGES.map(legal => {
+    const link = byKey.get(legal.key);
+    return link
+      ? '<a href="' + link.path + '" data-legal="' + legal.key + '" aria-haspopup="dialog">' + esc(legal.label) + '</a>'
+      : '<a data-legal="' + legal.key + '" role="button" tabindex="0" aria-haspopup="dialog">' + esc(legal.label) + '</a>';
+  }).join('<span>·</span>');
+}
+
+/* Vercel kökteki 404.html'i bulunamayan her adres için sunar. Sayfa sitenin
+   kendi iskeletinden türetilir; ziyaretçi menüyü, sepeti ve footer'ı görür. */
+export function notFoundPage(siteLinks) {
+  const chips = list => list.map(item => '<a class="btn btn-ghost" href="' + item.path + '">' + esc(item.name) + '</a>').join('');
+  return {
+    path: '/404.html',
+    title: 'Sayfa bulunamadı | Davet Sandığı',
+    description: 'Aradığınız sayfa bulunamadı. Davet Sandığı koleksiyonlarına ve ürünlerine ana sayfadan ulaşabilirsiniz.',
+    noindex: true,
+    schemas: [],
+    body: '<div class="pg-404" id="page-404">'
+      + '<div class="section-head"><div class="ornament"><span class="eyebrow">404</span></div><h1>Aradığınız sayfa bulunamadı</h1>'
+      + '<p>Sayfa kaldırılmış ya da adresi değişmiş olabilir. Koleksiyonlarımıza göz atabilir ya da ana sayfaya dönebilirsiniz.</p></div>'
+      + '<div class="pg-404-actions"><a class="btn btn-primary" href="/">Ana sayfaya dön</a><a class="btn btn-ghost" href="/iletisim/">İletişim</a></div>'
+      + ((siteLinks.collections || []).length ? '<h2>Koleksiyonlar</h2><div class="pg-404-links">' + chips(siteLinks.collections) + '</div>' : '')
+      + ((siteLinks.categories || []).length ? '<h2>Kategoriler</h2><div class="pg-404-links">' + chips(siteLinks.categories) + '</div>' : '')
+      + '</div>'
+  };
+}
 
 function skip(label, error) { console.warn('[pages] ' + label + ' atlandı: ' + error.message); }
 
@@ -88,7 +130,7 @@ export function buildPages(data, supabaseUrl) {
     const list = products.filter(product => Number(product.category_id) === Number(category.id));
     const crumb = breadcrumb([{ name: 'Ana sayfa', path: homePath }, { name: category.name, path: category.path }]);
     const description = (category.description || '').trim()
-      || 'Kişiye özel ' + category.name.toLocaleLowerCase('tr-TR') + ' modelleri. İsim ve tarih sizin, üretim bizim atölyemizde.';
+      || 'Nişan, söz, kına ve baby shower için kişiye özel ' + category.name.toLocaleLowerCase('tr-TR') + ' modelleri. İsminiz ve tarihinizle atölyemizde hazırlanır; Türkiye\'nin her yerine kargo.';
     pages.push({
       path: category.path,
       title: 'Kişiye Özel ' + category.name + ' | Davet Sandığı',
@@ -101,8 +143,11 @@ export function buildPages(data, supabaseUrl) {
   for (const product of products) {
     let path;
     try { path = productPath(product.slug); } catch (error) { skip('ürün ' + product.slug, error); continue; }
-    const parent = liveCollections.find(collection => product.collectionIds.includes(Number(collection.id)))
-      || liveCategories.find(category => Number(category.id) === Number(product.category_id));
+    /* Yol gösterici ürünün kategorisinden geçer (Ana sayfa / Kolonya / ürün).
+       Koleksiyon önce seçildiğinde, ürünler her koleksiyonda olduğu için hepsi
+       "Nişan & Söz" altında görünüyordu. */
+    const parent = liveCategories.find(category => Number(category.id) === Number(product.category_id))
+      || liveCollections.find(collection => product.collectionIds.includes(Number(collection.id)));
     const crumb = breadcrumb([
       { name: 'Ana sayfa', path: homePath },
       ...(parent ? [{ name: parent.name, path: parent.path }] : []),
@@ -206,10 +251,35 @@ export function buildPages(data, supabaseUrl) {
       + '</div>'
   });
 
+  /* Yasal metinler: yalnız panelde hukuk onayı işaretlenmiş ve yer tutucu
+     içermeyen metinler sayfa olur. Tarayıcıdaki openLegal ile aynı süzgeç. */
+  for (const legal of LEGAL_PAGES) {
+    const section = approvedLegal(data.legal, legal.section);
+    if (!section) continue;
+    const path = legalPath(legal.slug);
+    const title = String(section.title || legal.label).trim();
+    const crumb = breadcrumb([{ name: 'Ana sayfa', path: homePath }, { name: title, path }]);
+    const others = LEGAL_PAGES.filter(item => item !== legal && approvedLegal(data.legal, item.section));
+    pages.push({
+      path,
+      title: title + ' | Davet Sandığı',
+      description: title + ' — Davet Sandığı yasal bilgilendirme metni.',
+      schemas: [crumb.schema],
+      body: '<div class="pg-legal">' + crumb.html
+        + '<div class="section-head"><div class="ornament"><span class="eyebrow">Yasal Bilgilendirme</span></div><h1>' + esc(title) + '</h1></div>'
+        + '<article class="pg-legal-body">' + String(section.body).trim().split(/\r?\n\s*\r?\n/).map(part => '<p>' + nl2br(part.trim()) + '</p>').join('') + '</article>'
+        + (others.length ? '<nav class="pg-legal-more" aria-label="Diğer yasal metinler"><h2>Diğer yasal metinler</h2><ul>'
+          + others.map(item => '<li><a href="' + legalPath(item.slug) + '">' + esc(item.label) + '</a></li>').join('') + '</ul></nav>' : '')
+        + '</div>'
+    });
+    legalLinks.push({ key: legal.key, label: legal.label, path });
+  }
+
   const siteLinks = {
     collections: liveCollections.map(item => ({ name: item.name, path: item.path })),
     categories: liveCategories.map(item => ({ name: item.name, path: item.path })),
-    pages: [{ name: 'İletişim', path: contactPath }]
+    pages: [{ name: 'İletişim', path: contactPath }],
+    legal: legalLinks
   };
 
   return { pages, nav, legalLinks, siteLinks };
@@ -362,6 +432,7 @@ export function buildHomeBlocks(data, siteLinks, supabaseUrl) {
     'howto-steps': cardList(sectionItems(sections, 'process', 'steps'), 'step', 'step-ic'),
     'why-grid': cardList(sectionItems(sections, 'why_us', 'items'), 'why-card', 'why-ic'),
     'faq-list': faqItems(faqs),
+    'legal-links': legalFooterLinks(siteLinks.legal),
     schema: jsonLdScript('organization-schema', organizationSchema(settings))
       + (faq ? jsonLdScript('faq-schema', faq) : '')
   };
@@ -385,10 +456,10 @@ function injectBlock(html, key, content) {
    ve iki taraf birbirinden sapamaz. */
 function seoBlock(page) {
   const url = absoluteUrl(page.path);
-  const image = page.image ? page.image.src : absoluteUrl('/assets/images/brand/social-card.png');
+  const image = page.image ? page.image.src : absoluteUrl('/assets/images/brand/social-card.jpg');
   return [
     '<meta name="description" content="' + esc(page.description) + '">',
-    '<link rel="canonical" href="' + esc(url) + '">',
+    ...(page.noindex ? [] : ['<link rel="canonical" href="' + esc(url) + '">']),
     '<meta property="og:type" content="' + esc(page.ogType || 'website') + '">',
     '<meta property="og:site_name" content="Davet Sandığı">',
     '<meta property="og:title" content="' + esc(page.title) + '">',
@@ -417,6 +488,7 @@ export function derivePage(indexHtml, page, settings) {
     '<script type="application/ld+json"' + (index === 0 ? ' id="organization-schema"' : '') + '>' + jsonLd(schema) + '</script>').join(''));
   html = injectBlock(html, 'home-main', '<div class="section pg"><div class="wrap">' + page.body + '</div></div>');
   html = injectBlock(html, 'home-extra', '');
+  if (page.noindex) html = html.replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex,follow">');
   return rewriteHomeAnchors(html);
 }
 

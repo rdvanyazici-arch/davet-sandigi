@@ -7,7 +7,7 @@
 import { mkdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { approvedSupabaseHost } from './sitemap-core.mjs';
-import { buildHomeBlocks, buildPages, derivePage, injectHome, normalizeProducts } from './page-builder.mjs';
+import { buildHomeBlocks, buildPages, derivePage, injectHome, normalizeProducts, notFoundPage } from './page-builder.mjs';
 
 const root = process.cwd();
 const manifestPath = resolve(root, '.generated-pages.json');
@@ -85,6 +85,10 @@ for (const page of pages) {
   await writeFile(resolve(root, file), derivePage(nextHome, page, data.settings), 'utf8');
   written.push(file);
 }
+
+/* Bulunamayan adresler için Vercel kökteki 404.html'i sunar. Manifest'e
+   girmez: yayından kaldırma temizliği onu hiçbir zaman silmemeli. */
+await writeFile(resolve(root, '404.html'), derivePage(nextHome, notFoundPage(siteLinks), data.settings), 'utf8');
 
 /* Yayından kaldırılan kayıtların sayfaları geride kalmasın. */
 const previous = await readManifest();

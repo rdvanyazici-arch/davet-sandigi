@@ -6,7 +6,7 @@
   var SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   var SUFFIX = '-hediyelikleri';
   var RESERVED = ['admin', 'api', 'assets', 'backups', 'docs', 'iletisim', 'node_modules',
-    'robots', 'scripts', 'sitemap', 'supabase', 'test-results', 'tests', 'urun'];
+    'robots', 'scripts', 'sitemap', 'supabase', 'test-results', 'tests', 'urun', 'yasal'];
 
   function clean(slug) {
     var value = String(slug == null ? '' : slug).trim().toLowerCase();

@@ -162,6 +162,9 @@ function openCategoryFromLocation(){
 /* Adres hem sorgu parametresinden hem yoldan okunur: /kina-hediyelikleri/
    adresine doğrudan girildiğinde de aynı koleksiyon görünümü açılır. */
 function collectionRoute(){
+ /* 404 sayfasında adres bir kategori/koleksiyon değildir; "yayında değil"
+    uyarısı çıkmasın. */
+ if(document.getElementById('page-404'))return{collection:'',category:''};
  var q=new URLSearchParams(location.search),collection=q.get('koleksiyon')||'',category=q.get('kategori')||'';
  var routes=window.DS_ROUTES,parsed=routes&&routes.parsePath?routes.parsePath(location.pathname):null;
  if(parsed&&parsed.kind==='collection'&&!collection)collection=parsed.slug;

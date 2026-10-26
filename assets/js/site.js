@@ -37,9 +37,9 @@ function trapDialogKeys(event){
 }
 document.addEventListener('keydown',trapDialogKeys,true);
 var SEO_ORIGIN=String((window.__DAVET_SANDIGI_ENV__||{}).SITE_ORIGIN||'https://www.davetsandigi.com.tr').replace(/\/+$/,'');
-var SEO_DEFAULT_TITLE='Davet Sandığı | Ürünler ve Koleksiyonlar';
-var SEO_DEFAULT_DESCRIPTION='Davet Sandığı ürün kataloğunu ve koleksiyonlarını inceleyin. Yayındaki ürünlerin detaylarına ulaşın; sipariş talebinizi WhatsApp üzerinden iletin.';
-var SEO_DEFAULT_IMAGE=SEO_ORIGIN+'/assets/images/brand/social-card.png';
+var SEO_DEFAULT_TITLE='Davet Sandığı | Kişiye Özel Nişan, Kına ve Baby Shower Hediyelikleri';
+var SEO_DEFAULT_DESCRIPTION='Nişan, söz, kına ve baby shower için isminize ve tarihinize özel kolonya, mum, yelpaze ve badem şekeri. Atölyemizde hazırlanır, Türkiye\'nin her yerine kargo.';
+var SEO_DEFAULT_IMAGE=SEO_ORIGIN+'/assets/images/brand/social-card.jpg';
 /* Sayfanın kendi başlık ve açıklaması yapı sırasında HTML'e yazıldı. Uygulama
    aynı adresi açtığında onları yeniden üretmez, HTML'dekini geri koyar: aksi
    halde aynı sayfa botlara ve kullanıcıya farklı başlık gösterirdi. */
@@ -425,6 +425,8 @@ $all('#mainnav a').forEach(function(a){a.addEventListener('click',function(){$('
  /* Yalnızca tanınan alt sayfa türleri özel işlenir; /index.html gibi
     tanınmayan adresler ana sayfa sayılır. */
  var altSayfa={collection:'#koleksiyonlar',category:'#urunler',product:'#urunler',contact:'#iletisim'};
+ /* 404 ve yasal metin sayfaları menüdeki hiçbir başlığa ait değil. */
+ if(document.getElementById('page-404')||document.querySelector('.pg-legal')){isaretle('');return;}
  if(parsed&&altSayfa[parsed.kind]){isaretle(altSayfa[parsed.kind]);return;}
  if(!('IntersectionObserver' in window))return;
  var hedefler=links.map(function(a){var h=(a.getAttribute('href')||'').replace(/^\/?/, '');return h==='#top'?null:document.querySelector(h);}).filter(Boolean);

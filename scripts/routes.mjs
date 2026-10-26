@@ -11,7 +11,7 @@ const COLLECTION_SUFFIX = '-hediyelikleri';
 /* Kök dizinde kategori adresiyle çakışmaması gereken adlar. */
 export const RESERVED_ROOT_SEGMENTS = new Set([
   'admin', 'api', 'assets', 'backups', 'docs', 'iletisim', 'node_modules',
-  'robots', 'scripts', 'sitemap', 'supabase', 'test-results', 'tests', 'urun'
+  'robots', 'scripts', 'sitemap', 'supabase', 'test-results', 'tests', 'urun', 'yasal'
 ]);
 
 function normalizeSlug(slug, label) {
@@ -46,6 +46,24 @@ export function productPath(slug) {
 }
 
 export const homePath = '/';
+
+/* Yasal metinlerin kalıcı adresleri. "key" footer'daki data-legal değeri,
+   "section" panelde metnin tutulduğu content_sections anahtarı. Adresler
+   paylaşılabilir (ör. WhatsApp'ta KVKK metni); değiştirilmemeli. */
+export const LEGAL_PAGES = [
+  { key: 'privacy', section: 'legal_privacy', slug: 'gizlilik-politikasi', label: 'Gizlilik Politikası' },
+  { key: 'kvkk', section: 'legal_kvkk', slug: 'kvkk-aydinlatma-metni', label: 'KVKK Aydınlatma Metni' },
+  { key: 'cookie', section: 'legal_local_storage', slug: 'cerez-ve-yerel-depolama', label: 'Çerez ve Yerel Depolama' },
+  { key: 'data_sharing', section: 'legal_data_sharing', slug: 'veri-aktarimi', label: "WhatsApp ve Instagram'a Veri Aktarımı" },
+  { key: 'mesafeli', section: 'legal_order_process', slug: 'siparis-ve-satis-sureci', label: 'Sipariş Talebi ve Satış Süreci' },
+  { key: 'returns', section: 'legal_returns', slug: 'iptal-ve-iade', label: 'İptal, İade ve Kişiye Özel Ürünler' },
+  { key: 'shipping', section: 'legal_shipping', slug: 'kargo-ve-teslimat', label: 'Kargo ve Teslimat' },
+  { key: 'media_permissions', section: 'legal_media_permissions', slug: 'gorsel-paylasim-izni', label: 'Yorum ve Görsel Paylaşım İzni' }
+];
+
+export function legalPath(slug) {
+  return '/yasal/' + normalizeSlug(slug, 'Yasal metin') + '/';
+}
 export const contactPath = '/iletisim/';
 
 export function absoluteUrl(path) {

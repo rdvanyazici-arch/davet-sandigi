@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildHomeBlocks, buildPages, derivePage, injectHome, normalizeProducts } from '../scripts/page-builder.mjs';
+import { buildHomeBlocks, buildPages, derivePage, injectHome, legalFooterLinks, normalizeProducts, notFoundPage } from '../scripts/page-builder.mjs';
 import { canonicalOrigin } from '../scripts/routes.mjs';
 
 const SUPABASE = 'https://zdksvgtkeeweufuajugd.supabase.co';
@@ -271,4 +271,43 @@ test('banner görseli, düğmeleri ve üst şerit yapı sırasında HTML\'e yaz�
   assert.ok(!blocks['hero-cta'].includes('javascript:'), 'güvensiz bağlantı yazılmamalı');
   assert.equal((blocks.topbar.match(/<li>/g) || []).length, 2);
   assert.ok(blocks.topbar.includes('İki &lt;b&gt;'));
+});
+
+test('yalnız hukuk onaylı yasal metinler kalıcı adresli sayfa olur', () => {
+  const data = fixture();
+  data.legal = [
+    { section_key: 'legal_kvkk', title: 'KVKK Aydınlatma Metni', body: 'Birinci paragraf.\n\nİkinci <paragraf>.', content_json: { legal_review_approved: true } },
+    { section_key: 'legal_privacy', title: 'Gizlilik', body: 'Hukuk danışmanı onayı bekliyor. [TAMAMLANACAK]', content_json: { legal_review_approved: true } },
+    { section_key: 'legal_returns', title: 'İade', body: 'Metin', content_json: { legal_review_approved: false } }
+  ];
+  const { pages, siteLinks } = buildPages(data, SUPABASE);
+  const legal = pages.filter(page => page.path.startsWith('/yasal/'));
+  assert.deepEqual(legal.map(page => page.path), ['/yasal/kvkk-aydinlatma-metni/']);
+  assert.match(legal[0].body, /<p>Birinci paragraf\.<\/p><p>İkinci &lt;paragraf&gt;\.<\/p>/);
+  const footer = legalFooterLinks(siteLinks.legal);
+  assert.match(footer, /<a href="\/yasal\/kvkk-aydinlatma-metni\/" data-legal="kvkk"/);
+  assert.match(footer, /<a data-legal="privacy" role="button"/);
+  assert.equal((footer.match(/data-legal=/g) || []).length, 8);
+});
+
+test('404 sayfası indekslenmez, kanonik adres taşımaz ve sitenin iskeletini kullanır', () => {
+  const data = fixture();
+  const { siteLinks } = buildPages(data, SUPABASE);
+  const shell = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = derivePage(shell, notFoundPage(siteLinks), data.settings);
+  assert.match(html, /<meta name="robots" content="noindex,follow">/);
+  assert.ok(!html.includes('rel="canonical"'), '404 sayfasında kanonik adres olmamalı');
+  assert.match(html, /id="page-404"/);
+  assert.match(html, /class="footer"/);
+  assert.match(html, /<title>Sayfa bulunamadı \| Davet Sandığı<\/title>/);
+});
+
+test('ürün sayfasının yol göstericisi koleksiyondan değil kategoriden geçer', () => {
+  const data = fixture();
+  const { pages } = buildPages(data, SUPABASE);
+  const product = pages.find(page => page.path.startsWith('/urun/'));
+  const crumb = product.schemas.find(schema => schema['@type'] === 'BreadcrumbList');
+  const names = crumb.itemListElement.map(item => item.name);
+  const category = data.categories.find(item => Number(item.id) === Number(data.products.find(p => product.path.includes(p.slug)).category_id));
+  assert.equal(names[1], category.name);
 });
