@@ -3,6 +3,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".",
   "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/urun/pembe-kurdeleli-roll-on-kolonya/",
+      "destination": "/urun/pembe-kurdeleli-sprey-kolonya/",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
