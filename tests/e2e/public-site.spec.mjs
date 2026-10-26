@@ -1040,14 +1040,19 @@ test('ana sayfa veri gelmeden boş görünmez: banner yazısı ve düğmeleri g�
   await expect(page.locator('#hero-title')).not.toHaveText('Davet Sandığı');
 });
 
-test('iletişim sayfası diğer sayfalarla aynı başlık düzeninde ve kartlar simgeli', async ({ page }) => {
+test('iletişim sayfası ana sayfanın bandı ve kartlarıyla kurulur', async ({ page }) => {
   await setup(page);
   await page.goto('/iletisim/');
   await expect(page.locator('main .section-head h1')).toHaveText('İletişim');
-  await expect(page.locator('.pg-contact-card .pg-contact-ic svg').first()).toBeVisible();
-  const cards = page.locator('.pg-contact-card');
-  const count = await cards.count();
-  expect(count).toBeGreaterThanOrEqual(4);
+  /* Ana sayfanın bileşenleri: yeşil iletişim bandı ve Neden Biz kartları. */
+  await expect(page.locator('.pg-contact .ctaband a.btn-wa')).toHaveAttribute('href', /^https:\/\/wa\.me\/905301112233/);
+  await expect(page.locator('.pg-contact .ctaband a.cta-ig')).toBeVisible();
+  await expect(page.locator('.pg-contact-cards .why-card')).toHaveCount(4);
+  await expect(page.locator('.pg-contact-cards .why-card h3')).toHaveText(['Telefon', 'E-posta', 'Konum', 'Teslimat ve Kargo']);
+  /* Ana sayfanın kendi iletişim bandı değişmeden kalır. */
+  await page.goto('/index.html');
+  await expect(page.locator('#iletisim.ctaband #cta-wa')).toHaveCount(1);
+  await page.goto('/iletisim/');
   for (const width of [1440, 820, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);

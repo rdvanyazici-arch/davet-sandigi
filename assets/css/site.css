@@ -708,40 +708,32 @@ body.maint-on>:not(.maint){display:none!important;}
   .footer-contact{grid-column:1/-1;}
   .footer h2{margin-bottom:14px;}
 }
-/* ===== iletişim sayfası =====
-   Diğer sayfalarla aynı iskelet: ortalı başlık, eşit genişlikte simgeli kartlar.
-   Kart sayısı kadar sütun (en çok beş); tablet iki, telefon tek sütun. */
-.pg-contact-grid{grid-template-columns:repeat(var(--cards,4),minmax(0,1fr));max-width:1100px;margin:0 auto 36px;}
-.pg-contact-grid[data-count="1"]{--cards:1;max-width:320px;}
-.pg-contact-grid[data-count="2"]{--cards:2;max-width:640px;}
-.pg-contact-grid[data-count="3"]{--cards:3;max-width:900px;}
-.pg-contact-grid[data-count="5"]{--cards:5;max-width:none;}
-.pg-contact-card{align-items:center;text-align:center;padding:28px 18px 26px;}
-.pg-contact-ic{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;background:var(--ivory);border:1px solid var(--gold-soft);color:var(--forest);}
-.pg-contact-ic svg{width:21px;height:21px;}
-.pg-contact-v{font-size:15px;}
-.pg-info{max-width:1100px;margin:0 auto;}
-.pg-contact-v{overflow-wrap:normal;word-break:normal;}
-/* Beş kart dar ekranda e-postayı ikiye bölüyordu: 3 + 2 dizilir. */
-@media(max-width:1240px){
-  .pg-contact-grid[data-count="5"]{--cards:6;max-width:900px;}
-  .pg-contact-grid[data-count="5"]>*{grid-column:span 2;}
-  .pg-contact-grid[data-count="5"]>:nth-child(n+4){grid-column:span 3;}
-}
-@media(max-width:1000px){
-  .pg-contact-grid[data-count]{--cards:2;max-width:640px;}
-  .pg-contact-grid[data-count]>*{grid-column:auto!important;}
-  .pg-contact-grid[data-count="5"]>:last-child,.pg-contact-grid[data-count="3"]>:last-child{grid-column:1/-1!important;}
-}
-@media(max-width:620px){
-  /* Telefonda kartlar yatay satır: simge solda, bilgi sağda. Tek sütun dik
-     kartlar sayfayı gereksiz uzatıyordu. */
-  .pg-contact-grid[data-count]{--cards:1;max-width:none;gap:10px;}
-  .pg-contact-grid[data-count]>*{grid-column:auto!important;}
-  .pg-contact-card{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:2px;align-items:center;text-align:left;padding:14px 16px;}
-  .pg-contact-ic{grid-row:1/3;width:44px;height:44px;margin:0;}
-  .pg-contact-k{align-self:end;}
-  .pg-contact-v{align-self:start;overflow-wrap:anywhere;}
-  .pg-info{padding:24px 20px;}
+/* ===== iletişim sayfası (/iletisim/) =====
+   Ana sayfanın yeşil iletişim bandı ve "Neden Biz" kartları kullanılır; burada
+   yalnız sayfaya özel aralıklar var. Ana sayfadaki bileşenlere dokunulmaz. */
+.section.pg:has(.pg-contact){padding-top:44px;}
+.pg-contact .pg-crumb ol{justify-content:center;margin-bottom:14px;}
+.pg-contact .section-head{margin-bottom:36px;}
+.pg-contact .ctaband{padding:0;margin:0 0 26px;}
+.pg-contact .ctaband .inner{min-height:300px;}
+.pg-contact-cards{grid-template-columns:repeat(var(--cards,4),minmax(0,1fr));}
+.pg-contact-cards[data-count="1"]{--cards:1;}
+.pg-contact-cards[data-count="2"]{--cards:2;}
+.pg-contact-cards[data-count="3"]{--cards:3;}
+.pg-contact-cards .why-card{display:block;color:inherit;}
+.pg-contact-cards .pg-contact-v{color:var(--espresso);font-size:15px;overflow-wrap:anywhere;}
+@media(max-width:1000px){.pg-contact-cards[data-count]{--cards:2;}}
+@media(max-width:520px){
+  /* Telefonda iki sütun ve sıkı kart: tek sütunda dört uzun kart sayfayı uzatıyordu. */
+  .pg-contact-cards{gap:12px;}
+  .pg-contact-cards .why-card{padding:20px 12px;}
+  .pg-contact-cards .why-ic{width:46px;height:46px;margin-bottom:12px;}
+  .pg-contact-cards .why-ic svg{width:20px;height:20px;}
+  .pg-contact-cards .why-card h3{font-size:17px;margin-bottom:4px;}
+  .pg-contact-cards .pg-contact-v{font-size:13.5px;}
+  /* Telefon ve konum yan yana; e-posta ile teslimat bilgisi uzun olduğu için tam satır. */
+  .pg-contact-cards [data-key="place"]{order:1;}
+  .pg-contact-cards [data-key="mail"]{order:2;grid-column:1/-1;}
+  .pg-contact-cards [data-key="delivery"]{order:3;grid-column:1/-1;}
 }
 .hero-proof:empty{display:none;}

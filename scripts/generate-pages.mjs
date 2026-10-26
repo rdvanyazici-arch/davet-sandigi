@@ -42,7 +42,7 @@ async function loadCatalog(config) {
     query(config, 'collections', { ...LIVE, select: 'id,slug,name,short_description,media_assets!cover_media_id(' + MEDIA + ')', order: 'sort_order.asc,id.asc' }),
     query(config, 'categories', { ...LIVE, select: 'id,slug,name,description,category_collections(collection_id)', order: 'sort_order.asc,id.asc' }),
     query(config, 'products', { ...LIVE, select: 'id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,category_id,product_collections(collection_id),product_images(alt_text,sort_order,is_primary,media_assets(' + MEDIA + '))', order: 'sort_order.asc,id.asc', limit: '1000' }),
-    query(config, 'content_sections', { is_active: 'eq.true', select: 'section_key,eyebrow,title,body,content_json' }),
+    query(config, 'content_sections', { is_active: 'eq.true', select: 'section_key,eyebrow,title,body,content_json,media_assets!media_id(' + MEDIA + ')' }),
     query(config, 'banners', { is_active: 'eq.true', select: 'eyebrow,title,description,primary_button_text,primary_button_url,secondary_button_text,secondary_button_url,starts_at,ends_at,media_assets!media_id(' + MEDIA + ')', order: 'sort_order.asc,id.asc' }),
     query(config, 'faqs', { is_active: 'eq.true', select: 'question,answer', order: 'sort_order.asc,id.asc' })
   ]);

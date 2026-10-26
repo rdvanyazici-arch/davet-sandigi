@@ -38,6 +38,7 @@ const CONTACT_ICONS = {
   Telefon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.6a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.5-1.2a2 2 0 012.1-.4c.8.3 1.7.5 2.6.6a2 2 0 011.7 2z"/></svg>',
   'E-posta': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
   Instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
+  Kargo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
   Konum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>'
 };
 
@@ -149,16 +150,41 @@ export function buildPages(data, supabaseUrl) {
   }
 
   const contactCrumb = breadcrumb([{ name: 'Ana sayfa', path: homePath }, { name: 'İletişim', path: contactPath }]);
-  /* İletişim bilgileri sitenin kart diliyle gösterilir: her biri tıklanabilir,
-     ham adres yerine ne yapacağını söyleyen bir etiket taşır. */
-  const contactCards = [];
+  /* İletişim sayfası (footer'daki "İletişim sayfası →" bağlantısı) ana sayfanın
+     parçalarından kurulur: ortalı bölüm başlığı, ana sayfadaki yeşil iletişim
+     bandının aynısı (WhatsApp + Instagram) ve "Neden Davet Sandığı?" kartlarıyla
+     aynı görünümde bilgi kartları. Ana sayfanın kendisine dokunulmaz. */
+  const cta = (data.sections || {}).cta || {};
   const contactWa = whatsappLink(settings, 'Merhaba, sipariş talebimi iletmek istiyorum.');
-  if (contactWa) contactCards.push({ label: 'WhatsApp', value: 'Sipariş talebi gönderin', href: contactWa, external: true });
-  if (settings.phone) contactCards.push({ label: 'Telefon', value: settings.phone, href: 'tel:' + String(settings.phone).replace(/[^+0-9]/g, '') });
-  if (settings.email) contactCards.push({ label: 'E-posta', value: settings.email, href: 'mailto:' + settings.email });
-  if (settings.instagram_url) contactCards.push({ label: 'Instagram', value: instagramHandle(settings.instagram_url), href: settings.instagram_url, external: true });
+  const ctaAsset = Array.isArray(cta.media_assets) ? cta.media_assets[0] : cta.media_assets;
+  const ctaMedia = ctaAsset ? mediaUrl(supabaseUrl, ctaAsset) : null;
+  const band = (contactWa || settings.instagram_url)
+    ? '<section class="ctaband pg-contact-band" aria-labelledby="pg-contact-band-t"><div class="inner"><div class="txt">'
+      + '<span class="eyebrow">' + esc(cta.eyebrow || 'Sipariş Talebi') + '</span>'
+      + '<h2 id="pg-contact-band-t">' + esc(cta.title || 'Davetinizi birlikte planlayalım') + '</h2>'
+      + '<p>' + esc(cta.body || 'Seçtiğiniz ürünleri ve davet tarihinizi yazın; tasarım ve fiyat bilgisini WhatsApp üzerinden iletelim.') + '</p>'
+      + '<div class="cta-actions">'
+      + (contactWa ? '<a class="btn btn-wa" href="' + esc(contactWa) + '" rel="noopener noreferrer">' + CONTACT_ICONS.WhatsApp + '<span>WhatsApp’ta Sipariş Talebi Oluştur</span></a>' : '')
+      + (settings.instagram_url ? '<a class="btn btn-ghost btn-instagram cta-ig" href="' + esc(settings.instagram_url) + '" rel="noopener noreferrer me">' + CONTACT_ICONS.Instagram + '<span>Instagram’da takip edin</span></a>' : '')
+      + '</div></div>'
+      + (ctaMedia ? '<div class="media">' + image({ ...ctaMedia, alt: ctaMedia.alt || cta.title || 'Davet Sandığı atölyesi' }, '(max-width: 1000px) 100vw, 40vw') + '</div>' : '')
+      + '</div></section>'
+    : '';
+  const infoCards = [];
+  if (settings.phone) infoCards.push({ label: 'Telefon', value: settings.phone, href: 'tel:' + String(settings.phone).replace(/[^+0-9]/g, '') });
+  if (settings.email) infoCards.push({ label: 'E-posta', value: settings.email, href: 'mailto:' + settings.email });
   const contactPlace = publicPlace(settings);
-  if (contactPlace) contactCards.push({ label: 'Konum', value: contactPlace.locality + ' / ' + contactPlace.region });
+  if (contactPlace) infoCards.push({ label: 'Konum', value: contactPlace.locality + ' / ' + contactPlace.region });
+  const delivery = [settings.delivery_text, settings.shipping_note].map(text => String(text || '').trim()).filter(Boolean).join(' ');
+  if (delivery) infoCards.push({ label: 'Teslimat ve Kargo', icon: 'Kargo', value: delivery, long: true });
+  const cards = infoCards.length
+    ? '<div class="why-grid pg-contact-cards" data-count="' + infoCards.length + '">' + infoCards.map(card => {
+      const inner = '<div class="why-ic" aria-hidden="true">' + (CONTACT_ICONS[card.icon || card.label] || '') + '</div>'
+        + '<h3>' + esc(card.label) + '</h3><p' + (card.long ? '' : ' class="pg-contact-v"') + '>' + esc(card.value) + '</p>';
+      const key = ' data-key="' + { Telefon: 'phone', 'E-posta': 'mail', Konum: 'place' }[card.label] + '"';
+      return card.href ? '<a class="why-card"' + key + ' href="' + esc(card.href) + '">' + inner + '</a>' : '<div class="why-card"' + (card.long ? ' data-key="delivery"' : key) + '>' + inner + '</div>';
+    }).join('') + '</div>'
+    : '';
   pages.push({
     path: contactPath,
     title: 'İletişim | Davet Sandığı',
@@ -173,25 +199,11 @@ export function buildPages(data, supabaseUrl) {
       ...(settings.phone ? { telephone: settings.phone } : {}),
       ...(settings.instagram_url ? { sameAs: [settings.instagram_url] } : {})
     }],
-    /* Koleksiyon ve kategori sayfalarıyla aynı iskelet: ortalı bölüm başlığı,
-       altında eşit kartlar. Eskiden sola yaslı düz başlık ve 3+1 dağılan
-       kartlarla sitenin geri kalanından kopuk duruyordu. */
-    body: contactCrumb.html + '<div class="section-head"><div class="ornament"><span class="eyebrow">Bize Ulaşın</span></div><h1>İletişim</h1>'
-      + '<p>Sipariş talebinizi WhatsApp üzerinden iletebilir, ürünleri Instagram hesabımızdan takip edebilirsiniz. Sitede çevrimiçi ödeme alınmaz.</p></div>'
-      + (contactCards.length
-        ? '<div class="pg-contact-grid" data-count="' + contactCards.length + '">' + contactCards.map(card => {
-          const inner = '<span class="pg-contact-ic" aria-hidden="true">' + (CONTACT_ICONS[card.label] || '') + '</span><span class="pg-contact-k">' + esc(card.label) + '</span><span class="pg-contact-v">' + esc(card.value) + '</span>';
-          if (!card.href) return '<div class="pg-contact-card">' + inner + '</div>';
-          const rel = card.external ? ' rel="noopener noreferrer me"' : '';
-          return '<a class="pg-contact-card" href="' + esc(card.href) + '"' + rel + '>' + inner + '</a>';
-        }).join('') + '</div>'
-        : '<p class="pg-empty">İletişim bilgileri yönetim panelinden girilmedi.</p>')
-      + (settings.delivery_text || settings.shipping_note
-        ? '<div class="pg-info">'
-          + (settings.delivery_text ? '<section><h2>Teslimat</h2><p>' + esc(settings.delivery_text) + '</p></section>' : '')
-          + (settings.shipping_note ? '<section><h2>Kargo</h2><p>' + esc(settings.shipping_note) + '</p></section>' : '')
-          + '</div>'
-        : '')
+    body: '<div class="pg-contact">' + contactCrumb.html
+      + '<div class="section-head"><div class="ornament"><span class="eyebrow">Bize Ulaşın</span></div><h1>İletişim</h1>'
+      + '<p>Sipariş talepleriniz ve sorularınız için bize dilediğiniz kanaldan ulaşabilirsiniz. Sitede çevrimiçi ödeme alınmaz.</p></div>'
+      + (band || cards ? band + cards : '<p class="pg-empty">İletişim bilgileri yönetim panelinden girilmedi.</p>')
+      + '</div>'
   });
 
   const siteLinks = {
