@@ -200,10 +200,6 @@ function linkItems(items) {
   return items.map(item => '<li><a href="' + item.path + '">' + esc(item.name) + '</a></li>').join('');
 }
 
-function column(heading, items) {
-  return items.length ? '<div><h2>' + esc(heading) + '</h2><ul>' + linkItems(items) + '</ul></div>' : '';
-}
-
 function nl2br(value) {
   return esc(value || '').replace(/\r?\n/g, '<br>');
 }
@@ -299,7 +295,9 @@ export function buildHomeBlocks(data, siteLinks) {
   const faq = faqSchema(faqs);
   return {
     collections: linkItems(siteLinks.collections),
-    sitelinks: column('Kategoriler', siteLinks.categories) + column('Sayfalar', siteLinks.pages),
+    /* Footer'da koleksiyonlarla aynı sütunda duran kategori listesi. İletişim
+       sayfası artık İletişim sütununda sabit bir bağlantı. */
+    sitelinks: linkItems(siteLinks.categories),
     'hero-eyebrow': banner ? esc(banner.eyebrow || '') : '',
     'hero-title': banner ? titleHtml(banner.title) : '',
     'hero-lead': banner ? esc(banner.description || '') : '',

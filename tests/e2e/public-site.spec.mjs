@@ -324,6 +324,8 @@ test('boş durum: yayında içerik yok', async ({ page }) => {
   await expect(state(page, 'koleksiyonlar')).toHaveAttribute('data-state', 'empty');
   await expect(page.locator('#faq-list')).toContainText('Şu anda yayımlanmış soru bulunmuyor.');
   await expect(page.locator('#review-grid')).toContainText('Henüz yayınlanmış yorum bulunmuyor.');
+  /* Yorum yokken bölüm tümüyle gizli kalır. */
+  await expect(page.locator('#yorumlar')).toBeHidden();
   await expect(page.locator('#story-text')).toHaveText('Henüz yayımlanmış içerik bulunmuyor.');
   await expect(page.locator('#hakkimizda .steps')).toContainText('Henüz yayımlanmış süreç bilgisi bulunmuyor.');
   await expect(state(page, 'neden-biz')).toHaveAttribute('data-state', 'empty');
@@ -511,11 +513,11 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
 
   await expect(page.locator('#hdr-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
   await expect(page.locator('#ft-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
-  await expect(page.locator('#channel-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
-  await expect(page.locator('#social-commerce')).toContainText('Instagram ana satış ve marka iletişim kanalıdır.');
-  await expect(page.locator('#social-commerce')).toContainText('Sipariş talebi WhatsApp üzerinden iletilir.');
+  /* İletişim kanalları bölümü birleşik iletişim bölümüne katıldı. */
+  await expect(page.locator('#cta-ig')).toHaveAttribute('href', 'https://www.instagram.com/brand-channel-check');
+  await expect(page.locator('#social-commerce')).toHaveCount(0);
   await expect(page.locator('#hdr-wa')).toContainText('WhatsApp’ta Sipariş Talebi');
-  await expect(page.locator('#channel-wa')).toContainText('WhatsApp’ta Sipariş Talebi Oluştur');
+  await expect(page.locator('#cta-wa')).toContainText('WhatsApp’ta Sipariş Talebi Oluştur');
   await expect(page.locator('#topbar-list')).toContainText('Kişiye özel üretim');
   await expect(page.locator('#hdr-wa')).toHaveAttribute('href', /^https:\/\/wa\.me\/905301112233\?/);
   await expect(page.locator('#ft-phone')).toHaveAttribute('href', 'tel:+902120000000');
@@ -543,7 +545,8 @@ test('Faz 10: Instagram ana kanal, WhatsApp sipariş talebi; telefon ve e-posta 
   await expect(page.locator('#review-grid')).toContainText('A. Y.');
   await expect(page.locator('#review-grid')).not.toContainText('Elif & Burak');
   await expect(page.locator('#review-grid')).not.toContainText('Zeynep Y.');
-  await expect(page.locator('.footer-about')).toHaveText('Nişan, kına, Baby Shower ve düğün koleksiyonlarını inceleyebilirsiniz.');
+  /* Footer tanıtımı eskiden kapatılmış düğün koleksiyonundan söz ediyordu. */
+  await expect(page.locator('.footer-about')).not.toContainText('düğün');
   await page.click('#drawer-close');
   await page.click('[data-legal="privacy"]');
   await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
@@ -575,7 +578,7 @@ test('Faz 10: yönetimden onaylanan içerik ve iletişim bilgileri vitrinde gör
   await page.goto('/index.html');
   await waitReady(page);
 
-  for (const id of ['hdr-ig', 'ft-ig', 'channel-ig', 'hdr-wa', 'ft-wa', 'channel-wa']) await expect(page.locator(`#${id}`), id).toBeVisible();
+  for (const id of ['hdr-ig', 'ft-ig', 'cta-ig', 'hdr-wa', 'ft-wa', 'cta-wa']) await expect(page.locator(`#${id}`), id).toBeVisible();
   await expect(page.locator('#ft-phone')).toHaveText('+90 539 941 39 02');
   await expect(page.locator('#ft-mail')).toHaveText('info@davetsandigi.com');
   await expect(page.locator('#hero-title')).toHaveText('Kişiye özel tasarım');
@@ -600,7 +603,7 @@ test('Faz 10: yönetimden onaylanan içerik ve iletişim bilgileri vitrinde gör
   /* Bu üç satır eskiden bu değerlerin sayfada GÖRÜNMEMESİNİ doğruluyordu; aynı
      gerekçeyle kaldırıldı: panele kaydedilen gerçek bilgi artık vitrinde görünür.
      Yerine WhatsApp bağlantısının gerçekten kurulduğunu doğruluyoruz. */
-  await expect(page.locator('#channel-wa')).toHaveAttribute('href', /wa\.me\/905399413902/);
+  await expect(page.locator('#cta-wa')).toHaveAttribute('href', /wa\.me\/905399413902/);
   await page.click('#camp-close');
   await page.click('[data-legal="privacy"]');
   await expect(page.locator('#legal-body')).toHaveText('Bu metin henüz onaylanıp yayımlanmamıştır.');
@@ -612,9 +615,9 @@ test('Faz 10: mobilde Instagram/WhatsApp ve tutarlı kapsam metinleri taşmaz', 
   await page.goto('/index.html');
   await waitReady(page);
   await page.click('#cookie-reject');
-  await expect(page.locator('#channel-ig')).toBeVisible();
-  await expect(page.locator('#channel-wa')).toBeVisible();
-  await expect(page.locator('.footer-about')).toContainText('Baby Shower ve düğün koleksiyonlarını');
+  await expect(page.locator('#cta-ig')).toBeVisible();
+  await expect(page.locator('#cta-wa')).toBeVisible();
+  await expect(page.locator('.footer-about')).toContainText('baby shower');
   const sizes = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: document.documentElement.clientWidth }));
   expect(sizes.body).toBeLessThanOrEqual(sizes.viewport + 1);
 });
@@ -958,7 +961,7 @@ test('panele kaydedilen gerçek iletişim bilgileri vitrinde görünür', async 
   await waitReady(page);
   await page.click('#cookie-reject');
 
-  for (const id of ['hdr-wa', 'cta-wa', 'ft-wa', 'channel-wa']) {
+  for (const id of ['hdr-wa', 'cta-wa', 'ft-wa']) {
     await expect(page.locator(`#${id}`), id + ' gizlenmiş').toBeVisible();
     await expect(page.locator(`#${id}`)).toHaveAttribute('href', /wa\.me\/905399413902/);
   }
@@ -968,4 +971,18 @@ test('panele kaydedilen gerçek iletişim bilgileri vitrinde görünür', async 
   }
   await expect(page.locator('#ft-phone')).toHaveText('+90 539 941 39 02');
   await expect(page.locator('#ft-mail')).toHaveText('davetsandigi@gmail.com');
+});
+
+/* Menü hangi bölümde olunduğunu göstermeli; eskiden kaydırırken "Ana Sayfa"
+   işaretli kalıyordu. */
+test('menü kaydırılan bölümü işaretler', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await page.click('#cookie-reject');
+  await expect(page.locator('#mainnav a[href="#top"]')).toHaveClass(/active/);
+  await page.locator('#sss').scrollIntoViewIfNeeded();
+  await page.evaluate(() => document.querySelector('#sss').scrollIntoView({ block: 'start' }));
+  await expect(page.locator('#mainnav a[href="#sss"]')).toHaveClass(/active/);
+  await expect(page.locator('#mainnav a[href="#top"]')).not.toHaveClass(/active/);
 });

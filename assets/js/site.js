@@ -149,16 +149,15 @@ function applyMaintenance(){
 }
 function applyContact(){
  var ok=!!waNumber(),wl=ok?waLink('Davet Sandığı için sipariş talebi oluşturmak istiyorum.'):'';
- ['hdr-wa','cta-wa','ft-wa','channel-wa'].forEach(function(id){
+ ['hdr-wa','cta-wa','ft-wa'].forEach(function(id){
   var e=$('#'+id);if(!e)return;var custom=!!e.dataset.custom;
   e.hidden=!ok&&!custom;
   if(ok&&!custom)e.href=wl;else if(!custom)e.removeAttribute('href');
  });
  setPublicLink('hdr-ig',settings.instagram,'Instagram');
  setPublicLink('ft-ig',settings.instagram);
- setPublicLink('story-ig',settings.instagram,'Instagram’ı ziyaret edin');
  updateOrganizationSchema();
- setPublicLink('channel-ig',settings.instagram,'Instagram’ı ziyaret edin');
+ setPublicLink('cta-ig',settings.instagram,'Instagram’da takip edin');
  var headerRequest=$('#hdr-wa span');if(headerRequest)headerRequest.textContent='WhatsApp’ta Sipariş Talebi';
  var ctaRequest=$('#cta-btnt');if(ctaRequest&&!$('#cta-wa').dataset.custom)ctaRequest.textContent='WhatsApp’ta Sipariş Talebi Oluştur';
  setContact('#ft-phone',settings.phone,'tel');setContact('#ft-mail',settings.mail,'mailto');
@@ -166,7 +165,6 @@ function applyContact(){
  var address=$('#ft-addr'),place=[settings.locality,settings.region].filter(Boolean).join(' / ');
  if(address){address.textContent=place;if(address.closest('li'))address.closest('li').hidden=!place;}
  renderOrderContext();
- setSectionState('social-commerce',catalogState.settings==='loading'?'loading':catalogState.settings==='error'?'error':'ready');
 }
 function renderOrderContext(){
  var note=$('#cart-rule-note');if(!note)return;
@@ -280,6 +278,9 @@ function renderReviews(){
  var g=$('#review-grid');if(!g)return;
  var st=contentState('testimonials',publicTestimonials.length>0),nb=$('#revhead-note');if(nb)nb.innerHTML='';
  setSectionState('yorumlar',st);
+ /* Yayında yorum yokken "Henüz yorum yok" yazan bir bölüm yeni bir sitede
+    güven kaybettirir; bölüm yalnızca yorum varken görünür. */
+ var rs=$('#yorumlar');if(rs)rs.hidden=(st==='empty');
  if(st!=='ready'){g.innerHTML=stateBox(st,{loading:'Yorumlar yükleniyor…',empty:'Henüz yayınlanmış yorum bulunmuyor.',error:'Yorumlar şu an yüklenemedi.'}[st]);if($('#rev-prev'))$('#rev-prev').hidden=true;if($('#rev-next'))$('#rev-next').hidden=true;return;}
  g.innerHTML='';
  publicTestimonials.forEach(function(r){
@@ -386,6 +387,27 @@ on('#prod-more','click',renderMoreMain);
 window.addEventListener('scroll',function(){var b=$('#prod-more');if(!b||b.hidden)return;var g=$('#prod-grid');if(g&&g.getBoundingClientRect().bottom<=window.innerHeight+300)renderMoreMain();});
 on('#menu-toggle','click',function(){var open=$('#mainnav').classList.toggle('mob');this.setAttribute('aria-expanded',open?'true':'false');});
 $all('#mainnav a').forEach(function(a){a.addEventListener('click',function(){$('#mainnav').classList.remove('mob');});});
+/* Menü hangi bölümde olunduğunu gösterir. Ana sayfada kaydırmayı izler; alt
+   sayfalarda sayfanın türüne göre ilgili başlık işaretlenir. */
+(function(){
+ var links=$all('#mainnav a');if(!links.length)return;
+ function isaretle(hash){links.forEach(function(a){var h=(a.getAttribute('href')||'').replace(/^\/?/, '');a.classList.toggle('active',h===hash);if(h===hash)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');});}
+ var p=location.pathname, parsed=window.DS_ROUTES&&window.DS_ROUTES.parsePath?window.DS_ROUTES.parsePath(p):null;
+ /* Yalnızca tanınan alt sayfa türleri özel işlenir; /index.html gibi
+    tanınmayan adresler ana sayfa sayılır. */
+ var altSayfa={collection:'#koleksiyonlar',category:'#urunler',product:'#urunler',contact:'#iletisim'};
+ if(parsed&&altSayfa[parsed.kind]){isaretle(altSayfa[parsed.kind]);return;}
+ if(!('IntersectionObserver' in window))return;
+ var hedefler=links.map(function(a){var h=(a.getAttribute('href')||'').replace(/^\/?/, '');return h==='#top'?null:document.querySelector(h);}).filter(Boolean);
+ var gorunur={};
+ var io=new IntersectionObserver(function(kayitlar){
+  kayitlar.forEach(function(k){gorunur[k.target.id]=k.isIntersecting?k.intersectionRatio:0;});
+  var enIyi=null,enIyiOran=0;Object.keys(gorunur).forEach(function(id){if(gorunur[id]>enIyiOran){enIyi=id;enIyiOran=gorunur[id];}});
+  isaretle(window.scrollY<200||!enIyi?'#top':'#'+enIyi);
+ },{rootMargin:'-90px 0px -45% 0px',threshold:[0,.1,.25,.5]});
+ hedefler.forEach(function(h){io.observe(h);});
+ window.addEventListener('scroll',function(){if(window.scrollY<200)isaretle('#top');},{passive:true});
+})();
 on('#bn-prev','click',function(){bnGo(-1);});
 on('#bn-next','click',function(){bnGo(1);});
 on('#rev-prev','click',function(){scrollRev(-1);});
