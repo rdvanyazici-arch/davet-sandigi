@@ -38,12 +38,12 @@ const LIVE = { is_active: 'eq.true', archived_at: 'is.null' };
 
 async function loadCatalog(config) {
   const [settingsRows, collections, categories, products, sections, banners, faqs] = await Promise.all([
-    query(config, 'site_settings_public', { select: 'brand_name,whatsapp_number,instagram_url,phone,email,delivery_text,shipping_note', id: 'eq.1', limit: '1' }),
+    query(config, 'site_settings_public', { select: 'brand_name,whatsapp_number,instagram_url,phone,email,delivery_text,shipping_note,address_locality,address_region', id: 'eq.1', limit: '1' }),
     query(config, 'collections', { ...LIVE, select: 'id,slug,name,short_description,media_assets!cover_media_id(' + MEDIA + ')', order: 'sort_order.asc,id.asc' }),
     query(config, 'categories', { ...LIVE, select: 'id,slug,name,description,category_collections(collection_id)', order: 'sort_order.asc,id.asc' }),
     query(config, 'products', { ...LIVE, select: 'id,slug,sku,name,short_description,description,price,is_price_visible,is_quote_only,min_quantity,quantity_step,category_id,product_collections(collection_id),product_images(alt_text,sort_order,is_primary,media_assets(' + MEDIA + '))', order: 'sort_order.asc,id.asc', limit: '1000' }),
     query(config, 'content_sections', { is_active: 'eq.true', select: 'section_key,eyebrow,title,body,content_json' }),
-    query(config, 'banners', { is_active: 'eq.true', select: 'eyebrow,title,description,starts_at,ends_at', order: 'sort_order.asc,id.asc' }),
+    query(config, 'banners', { is_active: 'eq.true', select: 'eyebrow,title,description,primary_button_text,primary_button_url,secondary_button_text,secondary_button_url,starts_at,ends_at,media_assets!media_id(' + MEDIA + ')', order: 'sort_order.asc,id.asc' }),
     query(config, 'faqs', { is_active: 'eq.true', select: 'question,answer', order: 'sort_order.asc,id.asc' })
   ]);
   const sectionsByKey = {};
@@ -75,7 +75,7 @@ const { pages, siteLinks } = buildPages(data, config.origin);
    bağlantıları ve gömülü içerik her yere aynı anda işlenmiş olur. */
 const homeFile = resolve(root, 'index.html');
 const home = await readFile(homeFile, 'utf8');
-const nextHome = injectHome(home, buildHomeBlocks(data, siteLinks));
+const nextHome = injectHome(home, buildHomeBlocks(data, siteLinks, config.origin));
 if (nextHome !== home) await writeFile(homeFile, nextHome, 'utf8');
 
 const written = [];

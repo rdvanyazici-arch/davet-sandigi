@@ -202,6 +202,10 @@ function showBanner(b){
 }
 function renderBanners(){
  var st=catalogState.banners;setSectionState('hero-section',st==='ready'&&!publicBanners.length?'empty':st);
+ /* Veri gelene kadar yapı sırasında yazılmış banner (başlık, görsel, düğmeler)
+    olduğu gibi kalır. Eskiden burada yedek "Davet Sandığı" başlığı basılıyor,
+    görsel siliniyor, veri gelince yeniden çiziliyordu: açılışta boş sayfa. */
+ if(st==='loading')return;
  var list=bannerList();if(bnIndex>=list.length)bnIndex=0;
  showBanner(list[bnIndex]);
  var multi=list.length>1,dots=$('#banner-dots');
@@ -254,11 +258,36 @@ function prepareCampaign(){
 }
 function renderSectionContent(){renderTopbar();renderProcess();renderWhy();renderStory();renderCta();prepareCampaign();}
 function renderTopbar(){
- var ul=$('#topbar-list');if(!ul)return;ul.innerHTML='';
+ var ul=$('#topbar-list');if(!ul)return;
  var s=publicSections.topbar,items=(s&&s.content_json&&Array.isArray(s.content_json.items)?s.content_json.items:[]).filter(Boolean),st=contentState('sections',items.length>0);
- setSectionState('topbar',st);if(st!=='ready')return;
+ setSectionState('topbar',st);
+ /* Yüklenirken yapı sırasında HTML'e yazılmış bilgiler yerinde kalır;
+    silinirse sayfa ilk açılışta boş görünüyordu. */
+ if(st==='loading'){fitTopbar();return;}
+ ul.innerHTML='';if(st!=='ready')return;
  items.forEach(function(t){var li=el('li');li.innerHTML=ICON.chk+' '+esc(t);ul.appendChild(li);});
+ fitTopbar();
 }
+/* Üst şerit: bilgiler yan yana sığmıyorsa sırayla aynı yerde gösterilir.
+   Ölçüm her seferinde düz dizilişte yapılır; böylece pencere büyüyünce
+   kendiliğinden yeniden yan yana dizilir. */
+var tbTimer=null,tbIndex=0;
+function fitTopbar(){
+ var bar=$('#topbar'),ul=$('#topbar-list');if(!bar||!ul)return;
+ var items=$all('#topbar-list li');
+ clearInterval(tbTimer);tbTimer=null;
+ bar.classList.remove('rotate');items.forEach(function(li){li.classList.remove('on');});
+ if(items.length<2||ul.scrollWidth<=ul.clientWidth+1)return;
+ bar.classList.add('rotate');
+ if(tbIndex>=items.length)tbIndex=0;
+ items[tbIndex].classList.add('on');
+ tbTimer=setInterval(function(){
+  items[tbIndex].classList.remove('on');
+  tbIndex=(tbIndex+1)%items.length;
+  items[tbIndex].classList.add('on');
+ },3500);
+}
+(function(){var t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(fitTopbar,150);});})();
 function renderStory(){
  var storyImg=$('#story-img');if(!storyImg)return;
  var s=publicSections.story,st=contentState('sections',!!(s&&(s.body||s.title))),txt=$('#story-text'),lead=$('#story-lead');

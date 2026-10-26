@@ -257,3 +257,18 @@ test('ürün kartı ürün sayfasına bağlanır ve JavaScript isteyen düğme t
   assert.ok(html.includes('<a href="/urun/kina-yelpazesi/">'), 'ürün bağlantısı yok');
   assert.ok(html.includes('class="prod-card"'), 'ürün kartı sitenin bileşeni değil');
 });
+
+test('banner görseli, düğmeleri ve üst şerit yapı sırasında HTML\'e yazılır', () => {
+  const data = {
+    settings: {}, collections: [], categories: [], products: [], faqs: [],
+    banners: [{ title: 'Başlık', primary_button_text: 'Keşfet', primary_button_url: '#urunler', secondary_button_text: 'Kötü', secondary_button_url: 'javascript:alert(1)', media_assets: { storage_path: 'banners/a b.webp', alt_text: 'Banner', width: 1600, height: 700 } }],
+    sections: { topbar: { content_json: { items: ['Bir', 'İki <b>'] } } }
+  };
+  const blocks = buildHomeBlocks(data, { collections: [], categories: [], pages: [] }, 'https://x.supabase.co');
+  assert.match(blocks['hero-img'], /src="https:\/\/x\.supabase\.co\/storage\/v1\/object\/public\/site-media\/banners\/a%20b\.webp"/);
+  assert.match(blocks['hero-img'], /fetchpriority="high"/);
+  assert.match(blocks['hero-cta'], /href="#urunler"/);
+  assert.ok(!blocks['hero-cta'].includes('javascript:'), 'güvensiz bağlantı yazılmamalı');
+  assert.equal((blocks.topbar.match(/<li>/g) || []).length, 2);
+  assert.ok(blocks.topbar.includes('İki &lt;b&gt;'));
+});

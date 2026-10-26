@@ -39,17 +39,17 @@ em{color:var(--gold);font-style:italic;}
 
 /* announcement bar */
 .topbar{background:var(--cream);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--ink);}
-/* Üst şerit her zaman tek satır. Yükseklik sabitken satır sayısı artarsa
-   taşan satır başlığın üstüne biniyordu; artık hem kutu esneyebiliyor hem de
-   sığmayan bilgiler sırayla gizleniyor. Panelde kaç bilgi olursa olsun
-   görünen sayı genişliğe göre belirlenir. */
-.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:38px;}
-.topbar ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;flex-wrap:nowrap;min-width:0;overflow:hidden;}
+/* Üst şerit her genişlikte tek satır ve bilgilerin HEPSİNİ gösterir. Yan yana
+   sığıyorsa ortalanmış dizilir; sığmıyorsa (site.js ölçer ve .rotate ekler)
+   bilgiler aynı yerde sırayla, yumuşak geçişle değişir. Eskiden sığmayanlar
+   gizleniyordu; dar ekranda ziyaretçi bilgilerin yarısını hiç görmüyordu. */
+.topbar .wrap{display:flex;align-items:center;justify-content:center;min-height:38px;}
+.topbar ul{display:flex;justify-content:center;gap:clamp(18px,2.4vw,40px);list-style:none;margin:0;padding:0;flex-wrap:nowrap;width:100%;min-width:0;overflow:hidden;}
 .topbar li{display:inline-flex;align-items:center;gap:7px;letter-spacing:.04em;white-space:nowrap;}
-.topbar li:nth-child(n+5){display:none;}
-@media(max-width:1460px){.topbar li:nth-child(n+4){display:none;}}
-@media(max-width:1140px){.topbar li:nth-child(n+3){display:none;}}
-.topbar li svg{width:13px;height:13px;color:var(--gold);}
+.topbar li svg{width:13px;height:13px;color:var(--gold);flex-shrink:0;}
+.topbar.rotate ul{position:relative;display:block;height:38px;}
+.topbar.rotate li{position:absolute;inset:0;justify-content:center;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s;}
+.topbar.rotate li.on{opacity:1;visibility:visible;}
 
 /* header */
 .header{position:sticky;top:0;z-index:80;background:color-mix(in srgb,var(--ivory) 97%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
@@ -58,7 +58,7 @@ em{color:var(--gold);font-style:italic;}
 .brand-mark{width:44px;height:44px;flex-shrink:0;color:var(--forest);}
 .brand-txt strong{display:block;font-family:var(--serif);font-size:21px;letter-spacing:.02em;color:var(--espresso);line-height:1;white-space:nowrap;}
 .brand-txt small{display:block;margin-top:4px;color:var(--gold);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;}
-.mainnav{display:flex;gap:clamp(14px,2vw,30px);margin-left:auto;flex-shrink:0;}
+.mainnav{display:flex;gap:clamp(14px,1.9vw,30px);margin-left:auto;flex-shrink:0;}
 .mainnav a{position:relative;white-space:nowrap;font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);padding:6px 0;}
 .mainnav a::after{content:"";position:absolute;left:0;bottom:-2px;width:0;height:1.5px;background:var(--gold);transition:width .25s;}
 .mainnav a:hover::after,.mainnav a.active::after{width:100%;}
@@ -206,8 +206,9 @@ em{color:var(--gold);font-style:italic;}
 /* Footer dört sütun: marka, kurumsal, ürünler (koleksiyon + kategori),
    iletişim. Ayrı "Sayfalar" ve "Kategoriler" sıraları kalktı; iletişim
    sayfası İletişim sütununun içinde. */
-.footer .cols{display:grid;grid-template-columns:1.5fr .9fr 1.1fr 1.2fr;gap:34px;}
-.footer .footer-sub{margin-top:22px;}
+/* Beş sütun: marka, kurumsal, koleksiyonlar, kategoriler, iletişim. Kategoriler
+   eskiden koleksiyonların altındaydı ve footer'ı iki kat uzatıyordu. */
+.footer .cols{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,.85fr)) minmax(0,1.35fr);gap:32px;}
 .footer .contact-page a{color:var(--gold-soft);font-weight:700;font-size:13px;}
 .footer .contact-page a:hover{color:var(--ivory);}
 .footer .brand-mark{color:var(--gold-soft);}
@@ -550,9 +551,6 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .hero .wrap{grid-template-columns:1fr;gap:34px;}
   .hero-media{order:-1;}
   .coll-grid,.prod-grid,.why-grid,.steps,.review-grid{grid-template-columns:repeat(2,1fr);}
-  .footer .cols{grid-template-columns:1fr 1fr;}
-  .footer .cols > div:first-child{grid-column:1/-1;}
-  .footer-about{max-width:none;}
   /* 1fr'in asgari genişliği içeriğe göre belirlenir; içerideki tek satırlık
      WhatsApp düğmesi sütunu kabın dışına taşırıyordu. minmax(0,1fr) sütunun
      küçülmesine izin verir. */
@@ -561,7 +559,15 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .story-grid{grid-template-columns:1fr;gap:34px;}
   .story-media{order:-1;}
 }
+/* Menü, sığdığı her genişlikte açık durur; yalnız tablet dikey ve telefonda
+   menü düğmesine iner. Arada yazılar ve boşluklar kademeli sıkılaşır. */
 @media(max-width:1320px){
+  .header .wrap{gap:18px;}
+  .mainnav{gap:clamp(12px,1.5vw,22px);}
+  .mainnav a{font-size:12px;letter-spacing:.06em;}
+  .header-actions{gap:8px;}
+}
+@media(max-width:980px){
   .mainnav{display:none;}
   .menu-toggle{display:block;}
   .mainnav.mob{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--ivory);border-bottom:1px solid var(--line);padding:14px 24px;gap:6px;z-index:81;}
@@ -598,7 +604,7 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
   .ctaband .cta-actions{flex-direction:column;}
 }
 @media(max-width:900px){
-  .topbar ul,.hero-proof{display:none;}
+  .hero-proof{display:none;}
   .icon-btn,.menu-toggle{width:44px;height:44px;}
   .section{padding:64px 0;}
   .filterbar button{min-height:44px;padding:10px 18px;}
@@ -672,3 +678,70 @@ a.pg-contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);bord
 body.maint-on{overflow:hidden;}
 body.maint-on>:not(.maint){display:none!important;}
 @media(max-width:600px){.maint-card .maint-title{font-size:26px;}.maint-actions .btn{width:100%;justify-content:center;}}
+
+/* ===== duyarlı düzen: başlık ve footer =====
+   Dosyanın sonunda: yukarıdaki genel düğme kurallarını (padding vb.) ezmesi
+   gerekiyor. */
+@media(max-width:1120px){
+  .header-actions .btn-instagram,.header-actions .btn-wa{padding:0;width:42px;height:42px;justify-content:center;gap:0;}
+}
+@media(max-width:1060px){
+  .brand-txt small{display:none;}
+}
+@media(max-width:1099px){
+  /* Marka satırı tam genişlik ve yatay: logo, kısa tanıtım, sosyal ikonlar.
+     Altında dört bağlantı sütunu yan yana. */
+  .footer .cols{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.5fr);gap:28px 24px;}
+  .footer-brand{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px 32px;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.10);}
+  .footer-about{margin:0;max-width:460px;}
+}
+@media(max-width:759px){
+  .footer{padding-top:48px;}
+  .footer .cols{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px;}
+  .footer-brand{grid-template-columns:minmax(0,1fr) auto;padding-bottom:22px;}
+  .footer-brand .footer-about{grid-column:1/-1;grid-row:2;max-width:none;}
+  .footer-brand .socials{grid-column:2;grid-row:1;}
+  /* Kategoriler tam genişlik ve yan yana akar; beş satırlık dikey liste
+     telefonda boş bir sütun bırakıyordu. */
+  .footer-cat-col{grid-column:1/-1;}
+  .footer-cat-col ul{flex-direction:row;flex-wrap:wrap;gap:10px 22px;}
+  .footer-contact{grid-column:1/-1;}
+  .footer h2{margin-bottom:14px;}
+}
+/* ===== iletişim sayfası =====
+   Diğer sayfalarla aynı iskelet: ortalı başlık, eşit genişlikte simgeli kartlar.
+   Kart sayısı kadar sütun (en çok beş); tablet iki, telefon tek sütun. */
+.pg-contact-grid{grid-template-columns:repeat(var(--cards,4),minmax(0,1fr));max-width:1100px;margin:0 auto 36px;}
+.pg-contact-grid[data-count="1"]{--cards:1;max-width:320px;}
+.pg-contact-grid[data-count="2"]{--cards:2;max-width:640px;}
+.pg-contact-grid[data-count="3"]{--cards:3;max-width:900px;}
+.pg-contact-grid[data-count="5"]{--cards:5;max-width:none;}
+.pg-contact-card{align-items:center;text-align:center;padding:28px 18px 26px;}
+.pg-contact-ic{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;background:var(--ivory);border:1px solid var(--gold-soft);color:var(--forest);}
+.pg-contact-ic svg{width:21px;height:21px;}
+.pg-contact-v{font-size:15px;}
+.pg-info{max-width:1100px;margin:0 auto;}
+.pg-contact-v{overflow-wrap:normal;word-break:normal;}
+/* Beş kart dar ekranda e-postayı ikiye bölüyordu: 3 + 2 dizilir. */
+@media(max-width:1240px){
+  .pg-contact-grid[data-count="5"]{--cards:6;max-width:900px;}
+  .pg-contact-grid[data-count="5"]>*{grid-column:span 2;}
+  .pg-contact-grid[data-count="5"]>:nth-child(n+4){grid-column:span 3;}
+}
+@media(max-width:1000px){
+  .pg-contact-grid[data-count]{--cards:2;max-width:640px;}
+  .pg-contact-grid[data-count]>*{grid-column:auto!important;}
+  .pg-contact-grid[data-count="5"]>:last-child,.pg-contact-grid[data-count="3"]>:last-child{grid-column:1/-1!important;}
+}
+@media(max-width:620px){
+  /* Telefonda kartlar yatay satır: simge solda, bilgi sağda. Tek sütun dik
+     kartlar sayfayı gereksiz uzatıyordu. */
+  .pg-contact-grid[data-count]{--cards:1;max-width:none;gap:10px;}
+  .pg-contact-grid[data-count]>*{grid-column:auto!important;}
+  .pg-contact-card{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:2px;align-items:center;text-align:left;padding:14px 16px;}
+  .pg-contact-ic{grid-row:1/3;width:44px;height:44px;margin:0;}
+  .pg-contact-k{align-self:end;}
+  .pg-contact-v{align-self:start;overflow-wrap:anywhere;}
+  .pg-info{padding:24px 20px;}
+}
+.hero-proof:empty{display:none;}

@@ -33,6 +33,14 @@ export function normalizeProducts(products) {
   });
 }
 
+const CONTACT_ICONS = {
+  WhatsApp: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 01-1.9-1.2 7.2 7.2 0 01-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.7-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.8 2.8 0 00-.9 2.1 4.9 4.9 0 001 2.6 11.2 11.2 0 004.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 001.7-1.2 2.1 2.1 0 00.1-1.2c0-.1-.2-.2-.4-.3z"/></svg>',
+  Telefon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.6a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.5-1.2a2 2 0 012.1-.4c.8.3 1.7.5 2.6.6a2 2 0 011.7 2z"/></svg>',
+  'E-posta': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+  Instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
+  Konum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+};
+
 function skip(label, error) { console.warn('[pages] ' + label + ' atlandı: ' + error.message); }
 
 export function buildPages(data, supabaseUrl) {
@@ -165,11 +173,14 @@ export function buildPages(data, supabaseUrl) {
       ...(settings.phone ? { telephone: settings.phone } : {}),
       ...(settings.instagram_url ? { sameAs: [settings.instagram_url] } : {})
     }],
-    body: contactCrumb.html + '<h1>İletişim</h1>'
-      + '<p class="pg-lead">Sipariş talebinizi WhatsApp üzerinden iletebilir, ürünleri Instagram hesabımızdan takip edebilirsiniz. Sitede çevrimiçi ödeme alınmaz.</p>'
+    /* Koleksiyon ve kategori sayfalarıyla aynı iskelet: ortalı bölüm başlığı,
+       altında eşit kartlar. Eskiden sola yaslı düz başlık ve 3+1 dağılan
+       kartlarla sitenin geri kalanından kopuk duruyordu. */
+    body: contactCrumb.html + '<div class="section-head"><div class="ornament"><span class="eyebrow">Bize Ulaşın</span></div><h1>İletişim</h1>'
+      + '<p>Sipariş talebinizi WhatsApp üzerinden iletebilir, ürünleri Instagram hesabımızdan takip edebilirsiniz. Sitede çevrimiçi ödeme alınmaz.</p></div>'
       + (contactCards.length
-        ? '<div class="pg-contact-grid">' + contactCards.map(card => {
-          const inner = '<span class="pg-contact-k">' + esc(card.label) + '</span><span class="pg-contact-v">' + esc(card.value) + '</span>';
+        ? '<div class="pg-contact-grid" data-count="' + contactCards.length + '">' + contactCards.map(card => {
+          const inner = '<span class="pg-contact-ic" aria-hidden="true">' + (CONTACT_ICONS[card.label] || '') + '</span><span class="pg-contact-k">' + esc(card.label) + '</span><span class="pg-contact-v">' + esc(card.value) + '</span>';
           if (!card.href) return '<div class="pg-contact-card">' + inner + '</div>';
           const rel = card.external ? ' rel="noopener noreferrer me"' : '';
           return '<a class="pg-contact-card" href="' + esc(card.href) + '"' + rel + '>' + inner + '</a>';
@@ -285,8 +296,38 @@ function faqSchema(entries) {
   };
 }
 
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>';
+const ICON_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const SAFE_LINK = /^(https:\/\/|#|\/(?!\/)|tel:|mailto:)/;
+
+/* Banner görseli ve düğmeleri yapı sırasında HTML'e yazılır: sayfa açılır
+   açılmaz görünür, tarayıcı veriyi beklemez. Biçim site.js'deki showBanner
+   ile aynıdır; veri gelince aynı içerik yeniden çizilir, fark oluşmaz. */
+function heroImage(banner, supabaseUrl) {
+  const asset = banner && (Array.isArray(banner.media_assets) ? banner.media_assets[0] : banner.media_assets);
+  const media = supabaseUrl && asset ? mediaUrl(supabaseUrl, asset) : null;
+  const attrs = media
+    ? ' src="' + esc(media.src) + '" alt="' + esc(media.alt || banner.title || 'Davet Sandığı görseli') + '" width="' + (media.width || 1903) + '" height="' + (media.height || 826) + '"'
+    : ' alt="" width="1903" height="826"';
+  return '<img id="hero-img"' + attrs + ' loading="eager" fetchpriority="high" decoding="async">';
+}
+
+function heroButtons(banner) {
+  if (!banner) return '';
+  const link = value => (SAFE_LINK.test(String(value || '').trim()) ? String(value).trim() : '');
+  const first = link(banner.primary_button_url), second = link(banner.secondary_button_url);
+  return (banner.primary_button_text && first ? '<a href="' + esc(first) + '" class="btn btn-primary">' + esc(banner.primary_button_text) + ' ' + ICON_ARROW + '</a>' : '')
+    + (banner.secondary_button_text && second ? '<a href="' + esc(second) + '" class="btn btn-ghost">' + esc(banner.secondary_button_text) + '</a>' : '');
+}
+
+function topbarItems(sections) {
+  const section = sections.topbar;
+  const list = section && section.content_json && Array.isArray(section.content_json.items) ? section.content_json.items : [];
+  return list.filter(Boolean).map(text => '<li>' + ICON_CHECK + ' ' + esc(text) + '</li>').join('');
+}
+
 /* İşaretçi anahtarı -> o bölgeye yazılacak HTML. */
-export function buildHomeBlocks(data, siteLinks) {
+export function buildHomeBlocks(data, siteLinks, supabaseUrl) {
   const settings = data.settings || {};
   const sections = data.sections || {};
   const banner = activeBanner(data.banners);
@@ -301,6 +342,9 @@ export function buildHomeBlocks(data, siteLinks) {
     'hero-eyebrow': banner ? esc(banner.eyebrow || '') : '',
     'hero-title': banner ? titleHtml(banner.title) : '',
     'hero-lead': banner ? esc(banner.description || '') : '',
+    'hero-img': heroImage(banner, supabaseUrl),
+    'hero-cta': heroButtons(banner),
+    topbar: topbarItems(sections),
     'story-title': esc(story.title || ''),
     'story-text': nl2br(story.body || ''),
     'howto-steps': cardList(sectionItems(sections, 'process', 'steps'), 'step', 'step-ic'),

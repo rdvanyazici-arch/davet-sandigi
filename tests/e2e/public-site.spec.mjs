@@ -986,3 +986,71 @@ test('menü kaydırılan bölümü işaretler', async ({ page }) => {
   await expect(page.locator('#mainnav a[href="#sss"]')).toHaveClass(/active/);
   await expect(page.locator('#mainnav a[href="#top"]')).not.toHaveClass(/active/);
 });
+
+test('üst şerit her genişlikte tüm bilgileri gösterir; sığmayınca sırayla döner', async ({ page }) => {
+  const db = makeDb();
+  db.content_sections.find(row => row.section_key === 'topbar').content_json.items = ['Kişiye özel tasarım', "Türkiye'nin her yerine kargo", 'Üretim öncesi tasarımınızı onaylarsınız', 'WhatsApp ile kolay sipariş'];
+  await setup(page, { db });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect(page.locator('#topbar-list li')).toHaveCount(4);
+  await expect(page.locator('#topbar')).not.toHaveClass(/rotate/);
+  for (const li of await page.locator('#topbar-list li').all()) await expect(li).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#topbar')).toHaveClass(/rotate/);
+  await expect(page.locator('#topbar-list li.on')).toHaveCount(1);
+  const first = await page.locator('#topbar-list li.on').textContent();
+  await expect.poll(() => page.locator('#topbar-list li.on').textContent(), { timeout: 6000 }).not.toBe(first);
+});
+
+test('menü 1000 piksellik ekranda açık kalır, dar ekranda düğmeye iner', async ({ page }) => {
+  await setup(page);
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect(page.locator('#mainnav')).toBeVisible();
+  await expect(page.locator('#menu-toggle')).toBeHidden();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.setViewportSize({ width: 820, height: 800 });
+  await expect(page.locator('#mainnav')).toBeHidden();
+  await expect(page.locator('#menu-toggle')).toBeVisible();
+});
+
+test('footer: kategoriler ayrı sütunda, dar ekranda taşma yok', async ({ page }) => {
+  await setup(page);
+  await page.goto('/index.html');
+  await waitReady(page);
+  await expect(page.locator('.footer .cols > div')).toHaveCount(5);
+  await expect(page.locator('.footer-cat-col #footer-cat')).toHaveCount(1);
+  const tops = await page.locator('.footer .cols > div').evaluateAll(cols => cols.map(col => Math.round(col.getBoundingClientRect().top)));
+  expect(new Set(tops).size, 'masaüstünde beş sütun aynı satırda').toBe(1);
+  for (const width of [1000, 760, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    expect(overflow, width + ' piksel').toBeLessThanOrEqual(0);
+  }
+});
+
+test('ana sayfa veri gelmeden boş görünmez: banner yazısı ve düğmeleri görünür', async ({ page }) => {
+  await setup(page, { delay: { banners: 3000, content_sections: 3000 } });
+  await page.goto('/index.html');
+  await expect(page.locator('#hero-title')).toBeVisible();
+  await expect(page.locator('.hero-copy')).toHaveCSS('opacity', '1');
+  await expect(page.locator('#hero-title')).not.toHaveText('Davet Sandığı');
+});
+
+test('iletişim sayfası diğer sayfalarla aynı başlık düzeninde ve kartlar simgeli', async ({ page }) => {
+  await setup(page);
+  await page.goto('/iletisim/');
+  await expect(page.locator('main .section-head h1')).toHaveText('İletişim');
+  await expect(page.locator('.pg-contact-card .pg-contact-ic svg').first()).toBeVisible();
+  const cards = page.locator('.pg-contact-card');
+  const count = await cards.count();
+  expect(count).toBeGreaterThanOrEqual(4);
+  for (const width of [1440, 820, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    expect(overflow, width + ' piksel').toBeLessThanOrEqual(0);
+  }
+});
